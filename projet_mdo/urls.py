@@ -24,13 +24,13 @@ from gui.views import (
     FournisseurList, FournisseurCreate,
     EditeurList, EditeurCreate,
     AuteurList, AuteurCreate,
-    LivreList, LivreCreate,
+    LivreList, LivreCreate, LivreResearch,
     EcrireList, EcrireCreate,
     CommanderList, CommanderCreate,
     NotifierList, NotifierCreate,
     AchatList, AchatCreate,
     ReserverList, ReserverCreate,
-    loginPage, registerPage
+    loginPage, registerPage, LivreDelete
 )
 
 urlpatterns = [
@@ -66,6 +66,8 @@ urlpatterns = [
     # Livres
     path('livres/', LivreList.as_view(), name='livres_list'),
     path('livres/create/', LivreCreate.as_view(), name='livres_create'),
+    path('livres/delete/',LivreDelete.as_view(), name='livres_delete'),
+    path('livres/research/', LivreResearch.as_view(), name='livres_research'),
 
     # Ecrire
     path('ecrits/', EcrireList.as_view(), name='ecrits_list'),

@@ -1,11 +1,11 @@
-from django.http import  HttpResponse
-from django.shortcuts import render
-from django.urls import reverse_lazy
+from django.http import  HttpResponseRedirect
+from django.shortcuts import render,redirect,get_object_or_404
+from django.urls import reverse_lazy,reverse
 from django.views.generic import CreateView, DeleteView, UpdateView, ListView
 from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Auteur, Livre, Ecrire, Commander, Notifier, Achat, Reserver
 
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView
+from django.views.generic import ListView, CreateView, View
 from django.contrib.auth.forms import UserCreationForm
 
 def registerPage(request):
@@ -108,7 +108,15 @@ class EditeurCreate(CreateView):
     fields = ['nom']
     template_name = 'gui/ajouter_editeur.html'
     success_url = reverse_lazy('editeurs_list')
-
+    """
+    def form_valid(self, form):
+        self.object = form.save()
+        referer_url = self.request.META.get('HTTP_REFERER')
+        if referer_url and 'livres/create/' in referer_url:
+            return redirect('livres_create')
+        else:
+            return redirect(reverse('editeurs_list'))
+    """
 # 7. Classe Auteur
 class AuteurList(ListView):
     model = Auteur
@@ -132,6 +140,33 @@ class LivreCreate(CreateView):
               'traducteur', 'quantite_disponible', 'quantite_totale', 'quantite_minimale', 'editeur']
     template_name = 'gui/ajouter_livre.html'
     success_url = reverse_lazy('livres_list')
+
+class LivreDelete(View):
+    template_name = 'gui/supprimer_livre.html'
+
+    def get(self, request):
+        # Afficher le formulaire où l'utilisateur entre l'ID du livre
+        return render(request, self.template_name)
+
+    def post(self, request):
+        # Récupérer l'ID du livre soumis dans le formulaire
+        livre_id = request.POST.get('livre_id')
+        if livre_id:
+            # Obtenir l'objet Livre avec l'ID fourni
+            livre = get_object_or_404(Livre, pk=livre_id)
+            # Supprimer le livre
+            livre.delete()
+            # Rediriger vers la liste des livres après la suppression
+            return redirect(reverse_lazy('livres_list'))
+        return render(request, self.template_name, {'error': 'ID du livre invalide.'})
+class LivreResearch(ListView):
+    model = Livre
+    template_name = 'gui/lister_livres.html'
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+        if search_query:
+            return Livre.objects.filter(titre__icontains=search_query)
+        return Livre.objects.all()
 
 # 9. Classe Ecrire
 class EcrireList(ListView):
@@ -187,5 +222,6 @@ class ReserverCreate(CreateView):
     fields = ['personne', 'livre', 'quantite', 'statut', 'date_reservation']
     template_name = 'gui/ajouter_reservation.html'
     success_url = reverse_lazy('reservations_list')
+
 
 

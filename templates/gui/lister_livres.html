@@ -1,10 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalogue des livres</title>
 </head>
 <body>
-
+    <h1>Catalogue des livres</h1>
+    <a href="/livres/create/"> <button>Ajouter un livre</button></a>
+    <a href="{% url 'livres_delete' %}"><button>Supprimer un livre</button></a>
+    <form method="GET" action="{% url 'livres_research' %}">
+        <label for="search">Rechercher :</label>
+        <input type="text" id="search" name="search" placeholder="Titre, Auteur, ISBN..." value="{{ request.GET.search }}">
+        <button type="submit">Rechercher</button>
+    </form>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ISBN13</th>
+                <th>Titre</th>
+                <th>Type</th>
+                <th>Genre Littéraire</th>
+                <th>Sous Genre</th>
+                <th>Illustrateur</th>
+                <th>Langue</th>
+                <th>Format</th>
+                <th>Nombre de Pages</th>
+                <th>Dimensions</th>
+                <th>Date de Parution</th>
+                <th>Localisation</th>
+                <th>Synopsis</th>
+                <th>Prix</th>
+                <th>URL de Référence</th>
+                <th>Traducteur</th>
+                <th>Quantité Disponible</th>
+                <th>Quantité Totale</th>
+                <th>Quantité Minimale</th>
+                <th>Éditeur</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for livre in object_list %}
+                <tr>
+                    <td>{{ livre.isbn13 }}</td>
+                    <td>{{ livre.titre }}</td>
+                    <td>{{ livre.type }}</td>
+                    <td>{{ livre.genre_litteraire }}</td>
+                    <td>{{ livre.sous_genre }}</td>
+                    <td>{{ livre.illustrateur }}</td>
+                    <td>{{ livre.langue }}</td>
+                    <td>{{ livre.format }}</td>
+                    <td>{{ livre.nombre_pages }}</td>
+                    <td>{{ livre.dimensions }}</td>
+                    <td>{{ livre.date_parution }}</td>
+                    <td>{{ livre.localisation }}</td>
+                    <td>{{ livre.synopsis }}</td>
+                    <td>{{ livre.prix }}</td>
+                    <td>{{ livre.url_reference }}</td>
+                    <td>{{ livre.traducteur }}</td>
+                    <td>{{ livre.quantite_disponible }}</td>
+                    <td>{{ livre.quantite_totale }}</td>
+                    <td>{{ livre.quantite_minimale }}</td>
+                    <td>{{ livre.editeur }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>
