@@ -30,6 +30,7 @@ from gui.views import (
     NotifierList, NotifierCreate,
     AchatList, AchatCreate,
     ReserverList, ReserverCreate,
+    loginPage, registerPage
 )
 
 urlpatterns = [
@@ -85,4 +86,6 @@ urlpatterns = [
     # Reserver
     path('reservations/', ReserverList.as_view(), name='reservations_list'),
     path('reservations/create/', ReserverCreate.as_view(), name='reservations_create'),
+    path('login/', loginPage, name='login'),
+    path('register/', registerPage, name='register')
 ]

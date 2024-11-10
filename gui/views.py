@@ -6,6 +6,21 @@ from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Aut
 
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView
+from django.contrib.auth.forms import UserCreationForm
+
+def registerPage(request):
+    form = UserCreationForm
+
+    if request.method == 'POST':
+        form = UserCreationForm(data=request.POST)
+        if form.is_valid():
+            form.save()
+    context = {'form': form}
+    return render(request, 'gui/register.html', context)
+
+def loginPage(request):
+    context = {}
+    return render(request, 'gui/login.html', context)
 
 # 1. Classe Ville
 class VilleList(ListView):
@@ -50,9 +65,27 @@ class PersonneList(ListView):
 
 class PersonneCreate(CreateView):
     model = Personne
-    fields = ['nom', 'prenom', 'date_naissance', 'telephone', 'email', 'mot_de_passe', 'solde', 'adresse', 'role']
+    fields = ['nom', 'prenom', 'date_naissance', 'telephone', 'email', 'password', 'solde', 'adresse', 'role']
     template_name = 'gui/ajouter_personne.html'
     success_url = reverse_lazy('personnes_list')
+
+    def form_valid(self, form):
+        personne = form.save(commit=False)
+        personne.set_password(form.cleaned_data['password'])
+        print("test validé")
+
+        # Exemple de définition d'attributs pour les rôles
+        if form.cleaned_data.get('role') == 'admin':
+            personne.is_staff = True
+            personne.is_superuser = True
+        elif form.cleaned_data.get('role') == 'employe':
+            personne.is_staff = True
+        else:
+            personne.is_staff = False
+            personne.is_superuser = False
+
+        personne.save()
+        return super().form_valid(form)
 
 # 5. Classe Fournisseur
 class FournisseurList(ListView):
