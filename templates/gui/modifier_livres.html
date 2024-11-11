@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier le livre</title>
+</head>
+<body>
+    <h1>Modifier le livre : {{ livre.titre }}</h1>
+
+    <form method="post">{% csrf_token %}
+        {{ form.as_p }}  <!-- Affiche le formulaire -->
+        <button type="submit">Modifier</button>
+    </form>
+
+    {% if form.errors %}
+        <p style="color: red;">Il y a des erreurs dans le formulaire. Veuillez les corriger.</p>
+    {% endif %}
+</body>
+</html>

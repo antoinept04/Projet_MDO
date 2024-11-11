@@ -1,11 +1,28 @@
-from django.http import  HttpResponse
-from django.shortcuts import render
-from django.urls import reverse_lazy
+from django.http import  HttpResponseRedirect
+from django.shortcuts import render,redirect,get_object_or_404
+from django.urls import reverse_lazy,reverse
 from django.views.generic import CreateView, DeleteView, UpdateView, ListView
 from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Auteur, Livre, Ecrire, Commander, Notifier, Achat, Reserver
-
+from .forms import PersonneForm, LivreForm, ISBNForm
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView
+from django.views.generic import ListView, CreateView, View
+from django.contrib.auth.forms import UserCreationForm
+
+
+
+def registerPage(request):
+    form = UserCreationForm
+
+    if request.method == 'POST':
+        form = UserCreationForm(data=request.POST)
+        if form.is_valid():
+            form.save()
+    context = {'form': form}
+    return render(request, 'gui/register.html', context)
+
+def loginPage(request):
+    context = {}
+    return render(request, 'gui/login.html', context)
 
 # 1. Classe Ville
 class VilleList(ListView):
@@ -48,11 +65,73 @@ class PersonneList(ListView):
     model = Personne
     template_name = 'gui/lister_personnes.html'
 
-class PersonneCreate(CreateView):
-    model = Personne
-    fields = ['nom', 'prenom', 'date_naissance', 'telephone', 'email', 'mot_de_passe', 'solde', 'adresse', 'role']
-    template_name = 'gui/ajouter_personne.html'
-    success_url = reverse_lazy('personnes_list')
+def personne_create(request):
+    if request.method == 'POST':
+        form = PersonneForm(request.POST)
+        if form.is_valid():
+            role = form.cleaned_data.get('role')
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+
+            # Vérifier si l'email existe déjà
+            if Personne.objects.filter(email=email).exists():
+                form.add_error('email', 'Cet email est déjà utilisé.')
+                return render(request, 'gui/ajouter_personne.html', {'form': form})
+
+            # Créer l'utilisateur en fonction du rôle
+            nom = form.cleaned_data['nom']
+            prenom = form.cleaned_data['prenom']
+            date_naissance = form.cleaned_data['date_naissance']
+            telephone = form.cleaned_data['telephone']
+            adresse = form.cleaned_data['adresse']
+            solde = form.cleaned_data['solde']
+
+            # Créer l'utilisateur
+            if str(role) == 'admin':
+                personne = Personne.objects.create_superuser(
+                    email=email,
+                    password=password,
+                    nom=nom,
+                    prenom=prenom,
+                    date_naissance=date_naissance,
+                    telephone=telephone,
+                    adresse=adresse,
+                    solde=solde,
+                    role=role
+                )
+            elif str(role) == "employe":
+                personne = Personne.objects.create_user(
+                    email=email,
+                    password=password,
+                    nom=nom,
+                    prenom=prenom,
+                    date_naissance=date_naissance,
+                    telephone=telephone,
+                    adresse=adresse,
+                    solde=solde,
+                    role=role,
+                    is_staff=True
+                )
+            else:
+                personne = Personne.objects.create_user(
+                    email=email,
+                    password=password,
+                    nom=nom,
+                    prenom=prenom,
+                    date_naissance=date_naissance,
+                    telephone=telephone,
+                    adresse=adresse,
+                    solde=solde,
+                    role=role
+                )
+
+            # Une fois l'utilisateur créé, rediriger vers la liste des personnes
+            return redirect('personnes_list')  # Redirection vers une autre vue
+
+    else:
+        form = PersonneForm()
+
+    return render(request, 'gui/ajouter_personne.html', {'form': form})
 
 # 5. Classe Fournisseur
 class FournisseurList(ListView):
@@ -75,7 +154,15 @@ class EditeurCreate(CreateView):
     fields = ['nom']
     template_name = 'gui/ajouter_editeur.html'
     success_url = reverse_lazy('editeurs_list')
-
+    """
+    def form_valid(self, form):
+        self.object = form.save()
+        referer_url = self.request.META.get('HTTP_REFERER')
+        if referer_url and 'livres/create/' in referer_url:
+            return redirect('livres_create')
+        else:
+            return redirect(reverse('editeurs_list'))
+    """
 # 7. Classe Auteur
 class AuteurList(ListView):
     model = Auteur
@@ -92,13 +179,81 @@ class LivreList(ListView):
     model = Livre
     template_name = 'gui/lister_livres.html'
 
-class LivreCreate(CreateView):
+
+class LivreCreate(View):
+    def get(self, request):
+        form = LivreForm()
+        return render(request, 'gui/ajouter_livre.html', {'form': form})
+
+    def post(self, request):
+        form = LivreForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('livres_list')  # Ou toute autre page de redirection
+
+        return render(request, 'gui/ajouter_livre.html', {'form': form})
+
+class LivreDelete(View):
+    template_name = 'gui/supprimer_livre.html'
+
+    def get(self, request):
+        # Afficher le formulaire où l'utilisateur entre l'ID du livre
+        return render(request, self.template_name)
+
+    def post(self, request):
+        # Récupérer l'ID du livre soumis dans le formulaire
+        livre_id = request.POST.get('livre_id')
+        if livre_id:
+            # Obtenir l'objet Livre avec l'ID fourni
+            livre = get_object_or_404(Livre, pk=livre_id)
+            # Supprimer le livre
+            livre.delete()
+            # Rediriger vers la liste des livres après la suppression
+            return redirect(reverse_lazy('livres_list'))
+        return render(request, self.template_name, {'error': 'ID du livre invalide.'})
+
+class LivreUpdate(View):
+    template_name = 'gui/modifier_livres.html'
+
+    def get(self, request, isbn13):
+        livre = get_object_or_404(Livre, isbn13=isbn13)
+        form = LivreForm(instance=livre)
+        return render(request, self.template_name, {'form': form, 'livre': livre})
+
+    def post(self, request, isbn13):
+        livre = get_object_or_404(Livre, isbn13=isbn13)
+        form = LivreForm(request.POST, instance=livre)
+
+        if form.is_valid():
+            form.save()
+            return redirect('livres_list')  # Rediriger vers la liste des livres après modification
+
+        return render(request, self.template_name, {'form': form, 'livre': livre})
+
+class LivreResearch(ListView):
     model = Livre
-    fields = ['isbn13', 'titre', 'type', 'genre_litteraire', 'sous_genre', 'illustrateur', 'langue', 'format',
-              'nombre_pages', 'dimensions', 'date_parution', 'localisation', 'synopsis', 'prix', 'url_reference',
-              'traducteur', 'quantite_disponible', 'quantite_totale', 'quantite_minimale', 'editeur']
-    template_name = 'gui/ajouter_livre.html'
-    success_url = reverse_lazy('livres_list')
+    template_name = 'gui/lister_livres.html'
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+        if search_query:
+            return Livre.objects.filter(titre__icontains=search_query)
+        return Livre.objects.all()
+
+def saisir_isbn(request):
+    if request.method == 'POST':
+        form = ISBNForm(request.POST)
+        if form.is_valid():
+            isbn13 = form.cleaned_data['isbn13']
+            # Vérifier si le livre existe
+            if Livre.objects.filter(isbn13=isbn13).exists():
+                return redirect(reverse('livre_update', kwargs={'isbn13': isbn13}))
+            else:
+                # Si le livre n'existe pas, afficher un message d'erreur
+                return render(request, 'gui/saisir_isbn.html', {'form': form, 'error': 'Livre non trouvé.'})
+    else:
+        form = ISBNForm()
+    return render(request, 'gui/saisir_isbn.html', {'form': form})
 
 # 9. Classe Ecrire
 class EcrireList(ListView):
@@ -154,5 +309,6 @@ class ReserverCreate(CreateView):
     fields = ['personne', 'livre', 'quantite', 'statut', 'date_reservation']
     template_name = 'gui/ajouter_reservation.html'
     success_url = reverse_lazy('reservations_list')
+
 
 

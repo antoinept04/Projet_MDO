@@ -1,4 +1,7 @@
 from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import BaseUserManager
+
 
 
 class Ville(models.Model):
@@ -32,23 +35,54 @@ class Role(models.Model):
     def __str__(self):
         return self.type
 
-class Personne(models.Model):
+class PersonneManager(BaseUserManager):
+    def get_by_natural_key(self, email):
+        return self.get(email=email)
+
+    def create_user(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('L\'adresse email doit être définie')
+        email = self.normalize_email(email)
+        extra_fields.pop('email', None)  # Supprimer email des extra_fields si elle existe
+        print(f"Creating user with email: {email} and extra_fields: {extra_fields}")
+        personne = self.model(email=email, **extra_fields)
+        personne.set_password(password)
+        personne.save(using=self._db)
+        return personne
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        return self.create_user(email, password, **extra_fields)
+
+class Personne(AbstractBaseUser, PermissionsMixin):
     nom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100)
     date_naissance = models.DateField()
     telephone = models.CharField(max_length=15)
-    email = models.EmailField()
+    email = models.EmailField(unique=True)  # Champ unique pour l'identification
     date_creation = models.DateField(auto_now_add=True)
-    mot_de_passe = models.CharField(max_length=128)
     solde = models.DecimalField(max_digits=10, decimal_places=2)
-    adresse = models.ForeignKey(Adresse, on_delete=models.CASCADE)
-    role = models.ForeignKey(Role, on_delete=models.CASCADE)
+    adresse = models.ForeignKey('Adresse', on_delete=models.CASCADE)
+    role = models.ForeignKey('Role', on_delete=models.CASCADE)
+
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    is_superuser = models.BooleanField(default=False)
+
+    objects = PersonneManager()
+
+    USERNAME_FIELD = 'email'  # Utiliser l'email comme identifiant unique
+    REQUIRED_FIELDS = ['nom', 'prenom']
 
     class Meta:
         db_table = 'Personne'
 
     def __str__(self):
         return f"{self.nom} {self.prenom}"
+
+
 
 class Fournisseur(models.Model):
     nom = models.CharField(max_length=100)

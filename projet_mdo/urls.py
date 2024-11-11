@@ -20,16 +20,17 @@ from gui.views import (
     VilleList, VilleCreate,
     AdresseList, AdresseCreate,
     RoleList, RoleCreate,
-    PersonneList, PersonneCreate,
+    PersonneList, personne_create,
     FournisseurList, FournisseurCreate,
     EditeurList, EditeurCreate,
     AuteurList, AuteurCreate,
-    LivreList, LivreCreate,
+    LivreList, LivreCreate, LivreDelete, LivreUpdate, LivreResearch, saisir_isbn,
     EcrireList, EcrireCreate,
     CommanderList, CommanderCreate,
     NotifierList, NotifierCreate,
     AchatList, AchatCreate,
     ReserverList, ReserverCreate,
+    loginPage, registerPage,
 )
 
 urlpatterns = [
@@ -48,7 +49,7 @@ urlpatterns = [
 
     # Personnes
     path('personnes/', PersonneList.as_view(), name='personnes_list'),
-    path('personnes/create/', PersonneCreate.as_view(), name='personnes_create'),
+    path('personnes/create/', personne_create, name='personnes_create'),
 
     # Fournisseurs
     path('fournisseurs/', FournisseurList.as_view(), name='fournisseurs_list'),
@@ -65,6 +66,10 @@ urlpatterns = [
     # Livres
     path('livres/', LivreList.as_view(), name='livres_list'),
     path('livres/create/', LivreCreate.as_view(), name='livres_create'),
+    path('livres/delete/',LivreDelete.as_view(), name='livres_delete'),
+    path('livres/saisir_isbn/', saisir_isbn, name='saisir_isbn'),  # Page pour saisir l'ISBN
+    path('livres/update/<str:isbn13>/', LivreUpdate.as_view(), name='livre_update'),  # Page pour modifier le livre
+    path('livres/research/', LivreResearch.as_view(), name='livres_research'),
 
     # Ecrire
     path('ecrits/', EcrireList.as_view(), name='ecrits_list'),
@@ -85,4 +90,6 @@ urlpatterns = [
     # Reserver
     path('reservations/', ReserverList.as_view(), name='reservations_list'),
     path('reservations/create/', ReserverCreate.as_view(), name='reservations_create'),
+    path('login/', loginPage, name='login'),
+    path('register/', registerPage, name='register')
 ]
