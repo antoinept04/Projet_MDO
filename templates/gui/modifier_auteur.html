@@ -6,7 +6,7 @@
     <title>Modifier l'auteur</title>
 </head>
 <body>
-    <h1>Modifier l'auteur : {{ auteur.nom }}{{ auteur.prenom }}</h1>
+    <h1>Modifier l'auteur : {{ auteur.nom }} {{ auteur.prenom }}</h1>
 
     <form method="post">{% csrf_token %}
         {{ form.as_p }}  <!-- Affiche le formulaire -->

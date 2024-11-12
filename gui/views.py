@@ -228,24 +228,6 @@ class EditeurCreate(CreateView):
     template_name = 'gui/ajouter_editeur.html'
     success_url = reverse_lazy('editeurs_list')
 
-class EditeurUpdate(View):
-    template_name = 'gui/modifier_editeurs.html'
-
-    def get(self, request, nom):
-        editeur = get_object_or_404(Editeur, nom=nom)
-        form = EditeurForm(instance=editeur)
-        return render(request, self.template_name, {'form': form, 'editeur': editeur})
-
-    def post(self, request, nom):
-        editeur = get_object_or_404(Editeur, nom=nom)
-        form = EditeurForm(request.POST, instance=editeur)
-
-        if form.is_valid():
-            form.save()
-            return redirect('editeurs_list')  # Rediriger vers la liste des livres après modification
-
-        return render(request, self.template_name, {'form': form, 'editeur': editeur})
-
 class EditeurDelete(View):
     template_name = 'gui/supprimer_editeur.html'
 
@@ -265,6 +247,24 @@ class EditeurDelete(View):
             return redirect(reverse_lazy('editeurs_list'))
         return render(request, self.template_name, {'error': "Nom de l'éditeur invalide."})
 
+class EditeurUpdate(View):
+    template_name = 'gui/modifier_editeurs.html'
+
+    def get(self, request, nom):
+        editeur = get_object_or_404(Editeur, nom=nom)
+        form = EditeurForm(instance=editeur)
+        return render(request, self.template_name, {'form': form, 'editeur': editeur})
+
+    def post(self, request, nom):
+        editeur = get_object_or_404(Editeur, nom=nom)
+        form = EditeurForm(request.POST, instance=editeur)
+
+        if form.is_valid():
+            form.save()
+            return redirect('editeurs_list')  # Rediriger vers la liste des livres après modification
+
+        return render(request, self.template_name, {'form': form, 'editeur': editeur})
+
 def saisir_nom_editeur(request):
     if request.method == 'POST':
         form = NomEditeurForm(request.POST)
@@ -276,7 +276,7 @@ def saisir_nom_editeur(request):
             else:
                 return render(request, 'gui/saisir_editeur_nom.html', {'form': form, 'error': 'Editeur non trouvé.'})
     else:
-        form = EditeurForm()
+        form = NomEditeurForm()
     return render(request, 'gui/saisir_editeur_nom.html', {'form': form})
 
 """########################################################"""
@@ -311,15 +311,15 @@ class AuteurDelete(View):
         return render(request, self.template_name, {'error': "ID de l'auteur invalide."})
 
 class AuteurUpdate(View):
-    template_name = 'gui/modifier_auteurs.html'
+    template_name = 'gui/modifier_auteur.html'
 
-    def get(self, request, nom):
-        auteur = get_object_or_404(Auteur, nom=nom)
+    def get(self, request, auteur_id):
+        auteur = get_object_or_404(Auteur, id=auteur_id)
         form = AuteurForm(instance=auteur)
         return render(request, self.template_name, {'form': form, 'auteur': auteur})
 
-    def post(self, request, nom):
-        auteur = get_object_or_404(Auteur, nom=nom)
+    def post(self, request, auteur_id):
+        auteur = get_object_or_404(Auteur, id=auteur_id)
         form = AuteurForm(request.POST, instance=auteur)
 
         if form.is_valid():
@@ -334,7 +334,7 @@ def saisir_ID_auteur(request):
         if form.is_valid():
             auteur_id = form.cleaned_data['auteur_id']
 
-            if Auteur.objects.filter(auteur_id=auteur_id).exists():
+            if Auteur.objects.filter(id=auteur_id).exists():
                 return redirect(reverse('auteurs_update', kwargs={'auteur_id': auteur_id}))
             else:
                 return render(request, 'gui/saisir_auteur_ID.html', {'form': form, 'error': 'Auteur non trouvé.'})
