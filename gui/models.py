@@ -1,11 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.models import BaseUserManager
+from django.utils import timezone
 
 
 
 class Ville(models.Model):
-    nom = models.CharField(max_length=100)
+    nom_ville = models.CharField(max_length=100)
     code_postal = models.CharField(max_length=10)
     pays = models.CharField(max_length=50)
 
@@ -142,7 +143,7 @@ class Livre(models.Model):
         return self.titre
 
 class Ecrire(models.Model):
-    livre = models.ForeignKey(Livre, on_delete=models.CASCADE)
+    livre = models.ForeignKey(Livre, on_delete=models.CASCADE, related_name="ecrire_set")
     auteur = models.ForeignKey(Auteur, on_delete=models.CASCADE)
 
     class Meta:
@@ -170,12 +171,17 @@ class Notifier(models.Model):
     quantite = models.IntegerField()
     type = models.CharField(max_length=50)
     commentaire = models.TextField()
+    date_creation = models.DateTimeField(default=timezone.now)
+    termine = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'Notifier'
 
     def __str__(self):
         return f"Notification de {self.personne.nom} pour {self.livre.titre}"
+
+
+
 
 class Achat(models.Model):
     personne = models.ForeignKey(Personne, on_delete=models.CASCADE)

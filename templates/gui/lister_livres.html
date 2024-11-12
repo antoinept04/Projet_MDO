@@ -7,19 +7,23 @@
 </head>
 <body>
     <h1>Catalogue des livres</h1>
-    <a href="/livres/create/"> <button>Ajouter un livre</button></a>
+
+    <a href="/livres/create/"><button>Ajouter un livre</button></a>
     <a href="/livres/saisir_isbn/"><button>Modifier un livre</button></a>
     <a href="{% url 'livres_delete' %}"><button>Supprimer un livre</button></a>
+
     <form method="GET" action="{% url 'livres_research' %}">
         <label for="search">Rechercher :</label>
         <input type="text" id="search" name="search" placeholder="Titre, Auteur, ISBN..." value="{{ request.GET.search }}">
         <button type="submit">Rechercher</button>
     </form>
+
     <table border="1">
         <thead>
             <tr>
                 <th>ISBN13</th>
                 <th>Titre</th>
+                <th>Auteur</th>
                 <th>Type</th>
                 <th>Genre Littéraire</th>
                 <th>Sous Genre</th>
@@ -45,6 +49,17 @@
                 <tr>
                     <td>{{ livre.isbn13 }}</td>
                     <td>{{ livre.titre }}</td>
+                    <td>
+                        {% if livre.ecrire_set.all %}
+                            {% for ecriture in livre.ecrire_set.all %}
+                                <p><strong>Nom :</strong> {{ ecriture.auteur.nom }}</p>
+                                <p><strong>Prénom :</strong> {{ ecriture.auteur.prenom }}</p>
+                                <p><strong>Date de naissance :</strong> {{ ecriture.auteur.date_naissance }}</p>
+                            {% endfor %}
+                        {% else %}
+                            Aucun auteur
+                        {% endif %}
+                    </td>
                     <td>{{ livre.type }}</td>
                     <td>{{ livre.genre_litteraire }}</td>
                     <td>{{ livre.sous_genre }}</td>

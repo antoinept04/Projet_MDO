@@ -2,9 +2,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des éditeurs</title>
 </head>
 <body>
-
+    <h1>Liste des éditeurs</h1>
+    <a href="create/"><button>Ajouter un éditeur</button></a>
+    <a href="saisir_editeur_nom/"><button>Modifier un éditeur</button></a>
+    <a href="delete/"><button>Supprimer un éditeur</button></a>
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for editeur in object_list %}
+                <tr>
+                    <td>{{ editeur.nom }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>

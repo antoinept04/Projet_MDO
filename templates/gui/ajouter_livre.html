@@ -9,8 +9,8 @@
     <h1>Ajout d'un livre</h1>
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        {{ form.auteur_form }}
+        {{ livre_form.as_p }}
+        {{ auteur_form.as_p }}
     <button type="submit">Ajouter</button>
 </form>
 </body>

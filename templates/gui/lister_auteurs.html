@@ -1,10 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des auteurs</title>
 </head>
 <body>
+    <h1>Liste des auteurs</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Date de naissance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for auteur in object_list %}
+                <tr>
+                    <td>{{ auteur.nom }}</td>
+                    <td>{{ auteur.prenom }}</td>
+                    <td>{{ auteur.date_naissance }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
 </body>
 </html>

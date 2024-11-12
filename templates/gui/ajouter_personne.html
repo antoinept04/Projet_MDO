@@ -50,23 +50,7 @@
             font-size: 14px;
             color: #333;
         }
-        .add-address-button {
-            background-color: #28a745;
-            color: white;
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            text-align: center;
-            transition: background-color 0.3s ease;
-            margin-top: 10px;  /* Ajouté pour espacer le bouton */
-            text-decoration: none;  /* Supprime la décoration par défaut du lien */
-            display: inline-block;
-        }
-        .add-address-button:hover {
-            background-color: #218838;
-        }
+        
         input[type="submit"] {
             background-color: #007BFF;
             color: white;
@@ -89,14 +73,27 @@
     <form method="post">
         {% csrf_token %}
         
-        <!-- Affichage des champs du formulaire Django -->
-        {{ form.as_p }}
+        <!-- Affichage des champs du formulaire de personne -->
+        <h3>Informations de la Personne</h3>
         
-        <!-- Lien pour ouvrir la page d'ajout d'adresse dans un nouvel onglet -->
-        <a href="http://127.0.0.1:8000/adresses/create" target="_blank">
-            <button type="button" class="add-address-button">Ajouter une adresse</button>
-        </a>
-
+        {{ form_personne.as_p }}
+        {% if form_personne.errors %}
+        <ul>
+            {% for error in form_personne.errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        
+    
+        <h3>Adresse</h3>
+        {{ form_ville.as_p }}
+        {{ form_adresse.as_p }}
+    
+        
+        
+        
+        <!-- Bouton de soumission commun -->
         <input type="submit" value="Ajouter">
     </form>
 </div>

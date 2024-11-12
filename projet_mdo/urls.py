@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+
+from gui.models import Editeur
 from gui.views import (
     VilleList, VilleCreate,
     AdresseList, AdresseCreate,
@@ -24,13 +26,14 @@ from gui.views import (
     FournisseurList, FournisseurCreate,
     EditeurList, EditeurCreate,
     AuteurList, AuteurCreate,
-    LivreList, LivreCreate, LivreDelete, LivreUpdate, LivreResearch, saisir_isbn,
+    LivreList, create_livre, LivreDelete, LivreUpdate, LivreResearch, saisir_isbn,
     EcrireList, EcrireCreate,
     CommanderList, CommanderCreate,
     NotifierList, NotifierCreate,
     AchatList, AchatCreate,
     ReserverList, ReserverCreate,
     loginPage, registerPage,
+    home, create_livre, saisir_nom_editeur, EditeurUpdate, EditeurDelete
 )
 
 urlpatterns = [
@@ -58,14 +61,16 @@ urlpatterns = [
     # Editeurs
     path('editeurs/', EditeurList.as_view(), name='editeurs_list'),
     path('editeurs/create/', EditeurCreate.as_view(), name='editeurs_create'),
-
+    path('editeurs/update/<str:nom>',EditeurUpdate.as_view(), name='editeurs_update'),
+    path('editeurs/saisir_editeur_nom/', saisir_nom_editeur, name='saisir_editeur_nom'),
+    path('editeurs/delete/',EditeurDelete.as_view(), name='editeurs_delete'),
     # Auteurs
     path('auteurs/', AuteurList.as_view(), name='auteurs_list'),
     path('auteurs/create/', AuteurCreate.as_view(), name='auteurs_create'),
 
     # Livres
     path('livres/', LivreList.as_view(), name='livres_list'),
-    path('livres/create/', LivreCreate.as_view(), name='livres_create'),
+    path('livres/create/', create_livre, name='livres_create'),
     path('livres/delete/',LivreDelete.as_view(), name='livres_delete'),
     path('livres/saisir_isbn/', saisir_isbn, name='saisir_isbn'),  # Page pour saisir l'ISBN
     path('livres/update/<str:isbn13>/', LivreUpdate.as_view(), name='livre_update'),  # Page pour modifier le livre
@@ -91,5 +96,7 @@ urlpatterns = [
     path('reservations/', ReserverList.as_view(), name='reservations_list'),
     path('reservations/create/', ReserverCreate.as_view(), name='reservations_create'),
     path('login/', loginPage, name='login'),
-    path('register/', registerPage, name='register')
+    path('register/', registerPage, name='register'),
+    path('', home, name='homepage')  # Route pour la page d'accueil
+
 ]

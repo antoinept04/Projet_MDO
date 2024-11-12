@@ -1,11 +1,31 @@
 # forms.py
 from django import forms
-from .models import Personne, Livre, Auteur, Ecrire, Editeur
+from .models import Personne, Livre, Auteur, Editeur, Adresse, Commander, Ville, Notifier
+
+"""-------------------AJOUTER-PERSONNE--------------------"""
+
+class VilleForm(forms.ModelForm):
+    class Meta:
+        model = Ville
+        fields = ['nom_ville', 'code_postal', 'pays']
 
 class PersonneForm(forms.ModelForm):
     class Meta:
         model = Personne
-        fields = ['nom', 'prenom', 'date_naissance', 'telephone', 'email', 'password', 'solde', 'adresse', 'role']
+        fields = ['nom', 'prenom', 'date_naissance', 'telephone', 'email', 'password', 'solde', 'role']
+
+class AdresseForm(forms.ModelForm):
+    class Meta:
+        model = Adresse
+        fields = ['rue', 'n_rue']
+
+"""########################################################"""
+
+"""
+class NotificationForm(forms.ModelForm):
+    class Meta:
+        model = Notifier
+        fields = ['personne', 'livre', 'quantite', 'type', 'commentaire', 'termine']"""
 
 class AuteurForm(forms.ModelForm):
     class Meta:
@@ -14,7 +34,6 @@ class AuteurForm(forms.ModelForm):
 
 class LivreForm(forms.ModelForm):
     editeur_nom = forms.CharField(max_length=255, required=False, label="Nom de l'éditeur")
-    auteur_form = AuteurForm()
     class Meta:
         model = Livre
         fields = ['isbn13', 'titre', 'type', 'genre_litteraire', 'sous_genre', 'illustrateur', 'langue',
@@ -32,17 +51,15 @@ class LivreForm(forms.ModelForm):
             editeur, created = Editeur.objects.get_or_create(nom=editeur_nom)
             livre.editeur = editeur
 
-        livre.save()
-
-        auteur_form = self.cleaned_data.get('auteur_form')
-        if auteur_form and auteur_form.is_valid():
-            auteur = auteur_form.save(commit=False)  # Créer ou récupérer l'auteur
-            auteur.save()  # Sauvegarder l'auteur
-            # Associer l'auteur au livre via la table 'Ecrire'
-            Ecrire.objects.create(livre=livre, auteur=auteur)
+        if commit:
+            livre.save()
 
         return livre
 
 class ISBNForm(forms.Form):
     isbn13 = forms.CharField(label='ISBN13 du livre', max_length=13)
 
+class EditeurForm(forms.ModelForm):
+    class Meta:
+        model = Editeur
+        fields = ['nom']
