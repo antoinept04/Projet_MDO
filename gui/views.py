@@ -3,7 +3,8 @@ from django.shortcuts import render,redirect,get_object_or_404
 from django.urls import reverse_lazy,reverse
 from django.views.generic import CreateView, DeleteView, UpdateView, ListView
 from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Auteur, Livre, Ecrire, Commander, Notifier, Achat, Reserver
-from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm
+from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, NomEditeurForm, IDAuteurForm
+
 """ NotificationForm"""
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, View
@@ -266,7 +267,7 @@ class EditeurDelete(View):
 
 def saisir_nom_editeur(request):
     if request.method == 'POST':
-        form = EditeurForm(request.POST)
+        form = NomEditeurForm(request.POST)
         if form.is_valid():
             nom = form.cleaned_data['nom']
 
@@ -289,6 +290,57 @@ class AuteurCreate(CreateView):
     fields = ['nom', 'prenom', 'date_naissance']
     template_name = 'gui/ajouter_auteur.html'
     success_url = reverse_lazy('auteurs_list')
+
+class AuteurDelete(View):
+    template_name = 'gui/supprimer_auteur.html'
+
+    def get(self, request):
+        # Afficher le formulaire où l'utilisateur entre l'ID du livre
+        return render(request, self.template_name)
+
+    def post(self, request):
+        # Récupérer l'ID du livre soumis dans le formulaire
+        auteur_id = request.POST.get('auteur_id')
+        if auteur_id:
+            # Obtenir l'objet Livre avec l'ID fourni
+            auteur = get_object_or_404(Auteur, pk=auteur_id)
+            # Supprimer le livre
+            auteur.delete()
+            # Rediriger vers la liste des livres après la suppression
+            return redirect(reverse_lazy('auteurs_list'))
+        return render(request, self.template_name, {'error': "ID de l'auteur invalide."})
+
+class AuteurUpdate(View):
+    template_name = 'gui/modifier_auteurs.html'
+
+    def get(self, request, nom):
+        auteur = get_object_or_404(Auteur, nom=nom)
+        form = AuteurForm(instance=auteur)
+        return render(request, self.template_name, {'form': form, 'auteur': auteur})
+
+    def post(self, request, nom):
+        auteur = get_object_or_404(Auteur, nom=nom)
+        form = AuteurForm(request.POST, instance=auteur)
+
+        if form.is_valid():
+            form.save()
+            return redirect('auteurs_list')  # Rediriger vers la liste des livres après modification
+
+        return render(request, self.template_name, {'form': form, 'auteur': auteur})
+
+def saisir_ID_auteur(request):
+    if request.method == 'POST':
+        form = IDAuteurForm(request.POST)
+        if form.is_valid():
+            auteur_id = form.cleaned_data['auteur_id']
+
+            if Auteur.objects.filter(auteur_id=auteur_id).exists():
+                return redirect(reverse('auteurs_update', kwargs={'auteur_id': auteur_id}))
+            else:
+                return render(request, 'gui/saisir_auteur_ID.html', {'form': form, 'error': 'Auteur non trouvé.'})
+    else:
+        form = IDAuteurForm()
+    return render(request, 'gui/saisir_auteur_ID.html', {'form': form})
 
 """########################################################"""
 

@@ -59,6 +59,12 @@ class LivreForm(forms.ModelForm):
 class ISBNForm(forms.Form):
     isbn13 = forms.CharField(label='ISBN13 du livre', max_length=13)
 
+class NomEditeurForm(forms.Form):
+    nom = forms.CharField(label="Nom de l'éditeur", max_length=255)
+
+class IDAuteurForm(forms.Form):
+    auteur_id = forms.IntegerField(label="ID d'auteur")
+
 class EditeurForm(forms.ModelForm):
     class Meta:
         model = Editeur
