@@ -268,12 +268,11 @@ def saisir_nom_editeur(request):
     if request.method == 'POST':
         form = EditeurForm(request.POST)
         if form.is_valid():
-            editeur_nom = form.cleaned_data['nom']
-            # Vérifier si le livre existe
-            if Editeur.objects.filter(nom=editeur_nom).exists():
-                return redirect(reverse('editeurs_update', kwargs={'nom': editeur_nom}))
+            nom = form.cleaned_data['nom']
+
+            if Editeur.objects.filter(nom=nom).exists():
+                return redirect(reverse('editeurs_update', kwargs={'nom': nom}))
             else:
-                # Si le livre n'existe pas, afficher un message d'erreur
                 return render(request, 'gui/saisir_editeur_nom.html', {'form': form, 'error': 'Editeur non trouvé.'})
     else:
         form = EditeurForm()

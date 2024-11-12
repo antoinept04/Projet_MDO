@@ -95,7 +95,7 @@ class Fournisseur(models.Model):
         return self.nom
 
 class Editeur(models.Model):
-    nom = models.CharField(max_length=100)
+    nom = models.CharField(max_length=100, primary_key=True)
 
     class Meta:
         db_table = 'Editeur'
@@ -134,7 +134,7 @@ class Livre(models.Model):
     quantite_disponible = models.IntegerField()
     quantite_totale = models.IntegerField()
     quantite_minimale = models.IntegerField()
-    editeur = models.ForeignKey(Editeur, on_delete=models.CASCADE)
+    editeur = models.ForeignKey(Editeur, on_delete=models.SET_NULL, null=True)
 
     class Meta:
         db_table = 'Livre'
