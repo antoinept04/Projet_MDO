@@ -32,7 +32,7 @@ from gui.views import (
     NotifierList, NotifierCreate,
     AchatList, AchatCreate,
     ReserverList, ReserverCreate,
-    loginPage, registerPage,
+    loginPage, logoutUser,
     home, create_livre, saisir_nom_editeur, EditeurUpdate, EditeurDelete, AuteurDelete, AuteurUpdate, saisir_ID_auteur
 )
 
@@ -98,7 +98,7 @@ urlpatterns = [
     path('reservations/', ReserverList.as_view(), name='reservations_list'),
     path('reservations/create/', ReserverCreate.as_view(), name='reservations_create'),
     path('login/', loginPage, name='login'),
-    path('register/', registerPage, name='register'),
+    path('logout/', logoutUser, name='logout'),
     path('', home, name='homepage')  # Route pour la page d'accueil
 
 ]

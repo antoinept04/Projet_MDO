@@ -9,22 +9,32 @@ from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, V
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, View
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
 
 
 """########################################################"""
-def registerPage(request):
-    form = UserCreationForm
-
-    if request.method == 'POST':
-        form = UserCreationForm(data=request.POST)
-        if form.is_valid():
-            form.save()
-    context = {'form': form}
-    return render(request, 'gui/register.html', context)
 
 def loginPage(request):
+
+    if request.method == 'POST':
+
+        user = authenticate(request, email=request.POST.get('email'), password=request.POST.get('password'))
+
+        if user is not None:
+            login(request, user)
+            return redirect('homepage')
+        else:
+            messages.info(request, "L'email ou le mot de passe est incorrect")
+
+
     context = {}
     return render(request, 'gui/login.html', context)
+
+def logoutUser(request):
+    logout(request)
+
+    return redirect('login')
 
 """########################################################"""
 
@@ -104,7 +114,7 @@ def personne_create(request):
             pays = form_ville.cleaned_data['pays']
 
             # Vérifier si la ville existe déjà
-            ville_existante = Ville.objects.filter(nom=nom_ville, code_postal=code_postal).first()
+            ville_existante = Ville.objects.filter(nom_ville=nom_ville, code_postal=code_postal).first()
 
             if not ville_existante:
                 # Si la ville n'existe pas, créer une nouvelle ville
