@@ -14,7 +14,7 @@ class Ville(models.Model):
         db_table = 'Ville'
 
     def __str__(self):
-        return self.nom
+        return self.nom_ville
 
 class Adresse(models.Model):
     rue = models.CharField(max_length=255)
@@ -25,7 +25,7 @@ class Adresse(models.Model):
         db_table = 'Adresse'
 
     def __str__(self):
-        return f"{self.rue}, {self.n_rue}, {self.ville.nom}"
+        return f"{self.rue}, {self.n_rue}, {self.ville.nom_ville}"
 
 class Role(models.Model):
     type = models.CharField(max_length=50)

@@ -123,6 +123,9 @@ def personne_create(request):
                 # Utiliser la ville existante
                 ville = ville_existante
 
+            # Utiliser commit=False pour différer l'enregistrement de l'adresse
+            adresse = form_adresse.save(commit=False)
+
             # Récupérer les champs de l'adresse depuis le formulaire AdresseForm
             rue = form_adresse.cleaned_data['rue']
             n_rue = form_adresse.cleaned_data['n_rue']
@@ -136,7 +139,9 @@ def personne_create(request):
                 adresse = adresse_existante
             else:
                 # Sinon, créer une nouvelle adresse
-                adresse = form_adresse.save()
+                adresse = form_adresse.save(commit=False)
+                adresse.ville = ville  # Lier la ville à l'adresse
+                adresse.save()
 
             role = form_personne.cleaned_data.get('role')
             email = form_personne.cleaned_data['email']

@@ -61,6 +61,10 @@
 </head>
 <body>
 
+<div class="button-container">
+    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
+</div>
+
 <div class="container">
     <h2>Liste des Personnes</h2>
     
@@ -75,6 +79,9 @@
                 <th>Téléphone</th>
                 <th>Email</th>
                 <th>Adresse</th>
+                <th>Ville</th>
+                <th>Code Postal</th>
+                <th>Pays</th>
                 <th>Rôle</th>
                 <th>Solde</th>
                 
@@ -85,10 +92,13 @@
             <tr>
                 <td>{{ personne.nom }}</td>
                 <td>{{ personne.prenom }}</td>
-                <td>{{ personne.date_naissance }}</td>
+                <td>{{ personne.date_naissance|date:"d/m/Y" }}</td>
                 <td>{{ personne.telephone }}</td>
                 <td>{{ personne.email }}</td>
-                <td>{{ personne.adresse }}</td>
+                <td>{{ personne.adresse.rue }} {{ personne.adresse.n_rue }}</td>
+                <td>{{ personne.adresse.ville.nom_ville }}</td>
+                <td>{{ personne.adresse.ville.code_postal }}</td>
+                <td>{{ personne.adresse.ville.pays }}</td>
                 <td>{{ personne.role }}</td>
                 <td>{{ personne.solde }}</td>
                 

@@ -6,6 +6,9 @@
     <title>Ajout d'un livre</title>
 </head>
 <body>
+<div class="button-container">
+    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
+</div>
     <h1>Ajout d'un livre</h1>
     <form method="post">
         {% csrf_token %}

@@ -60,7 +60,9 @@
     </style>
 </head>
 <body>
-
+<div class="button-container">
+    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
+</div>
 <div class="container">
     <h2>Liste des Villes</h2>
     
@@ -77,7 +79,7 @@
         <tbody>
             {% for ville in object_list %}
             <tr>
-                <td>{{ ville.nom }}</td>
+                <td>{{ ville.nom_ville }}</td>
                 <td>{{ ville.code_postal }}</td>
                 <td>{{ ville.pays }}</td>
             </tr>
@@ -89,6 +91,7 @@
         </tbody>
     </table>
 </div>
+
 
 </body>
 </html>
