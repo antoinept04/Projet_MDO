@@ -26,7 +26,7 @@
             <tr>
                 <th><a href="?sort_by=isbn13&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">ISBN13</a></th>
                 <th><a href="?sort_by=titre&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Titre</a></th>
-                <th><a href="?sort_by=auteur_nom&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Nom de l'Auteur</a></th>
+                <th><a href="?sort_by=auteur_nom&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Auteur</a></th>
                 <th><a href="?sort_by=type&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Type</a></th>
                 <th><a href="?sort_by=genre_litteraire&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Genre Littéraire</a></th>
                 <th><a href="?sort_by=sous_genre&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Sous Genre</a></th>
@@ -75,7 +75,17 @@
                     <td>{{ livre.localisation }}</td>
                     <td>{{ livre.synopsis }}</td>
                     <td>{{ livre.prix }}</td>
-                    <td>{{ livre.url_reference }}</td>
+                    <td>
+                        {% if livre.url_reference %}
+                            {% if livre.url_reference|slice:":4" == "http" %}
+                                <a href="{{ livre.url_reference }}" target="_blank">{{ livre.url_reference }}</a>
+                            {% else %}
+                                <a href="http://{{ livre.url_reference }}" target="_blank">{{ livre.url_reference }}</a>
+                            {% endif %}
+                        {% else %}
+                            Non disponible
+                        {% endif %}
+                    </td>
                     <td>{{ livre.traducteur }}</td>
                     <td>{{ livre.quantite_disponible }}</td>
                     <td>{{ livre.quantite_totale }}</td>

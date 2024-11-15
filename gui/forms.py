@@ -12,7 +12,17 @@ class VilleForm(forms.ModelForm):
 class PersonneForm(forms.ModelForm):
     class Meta:
         model = Personne
+
         fields = ['nom', 'prenom', 'date_naissance', 'telephone', 'email', 'password', 'solde', 'role']
+
+    def __init__(self, *args, **kwargs):
+        # Extraire l'utilisateur passé via les kwargs
+        self.user = kwargs.pop('user', None)
+        super(PersonneForm, self).__init__(*args, **kwargs)
+
+        # Si l'utilisateur n'est pas un superutilisateur, retirer le champ 'role'
+        if self.user and not getattr(self.user, 'is_superuser', False):
+            self.fields.pop('role')
 
 class AdresseForm(forms.ModelForm):
     class Meta:

@@ -33,7 +33,7 @@ from gui.views import (
     AchatList, AchatCreate,
     ReserverList, ReserverCreate,
     loginPage, logoutUser,
-    home, create_livre, saisir_nom_editeur, EditeurUpdate, EditeurDelete, AuteurDelete, AuteurUpdate, saisir_ID_auteur
+    home, create_livre, saisir_nom_editeur, EditeurUpdate, EditeurDelete, AuteurDelete, AuteurUpdate, saisir_ID_auteur, AuteurResearch, EditeurResearch
 )
 
 urlpatterns = [
@@ -64,11 +64,13 @@ urlpatterns = [
     path('editeurs/update/<str:nom>',EditeurUpdate.as_view(), name='editeurs_update'),
     path('editeurs/saisir_editeur_nom/', saisir_nom_editeur, name='saisir_editeur_nom'),
     path('editeurs/delete/',EditeurDelete.as_view(), name='editeurs_delete'),
+    path('editeurs/research/', EditeurResearch.as_view(), name='editeurs_research'),
     # Auteurs
     path('auteurs/', AuteurList.as_view(), name='auteurs_list'),
     path('auteurs/create/', AuteurCreate.as_view(), name='auteurs_create'),
     path('auteurs/delete/',AuteurDelete.as_view(),name='auteurs_delete'),
     path('auteurs/update/<int:auteur_id>/',AuteurUpdate.as_view(), name='auteurs_update'),
+    path('auteurs/research/', AuteurResearch.as_view(), name='auteurs_research'),
     path('auteurs/saisir_auteur_ID/',saisir_ID_auteur, name='saisir_auteur_ID'),
     # Livres
     path('livres/', LivreList.as_view(), name='livres_list'),

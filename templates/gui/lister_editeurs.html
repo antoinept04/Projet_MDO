@@ -10,13 +10,18 @@
     <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
 </div>
     <h1>Liste des éditeurs</h1>
-    <a href="create/"><button>Ajouter un éditeur</button></a>
-    <a href="saisir_editeur_nom/"><button>Modifier un éditeur</button></a>
-    <a href="delete/"><button>Supprimer un éditeur</button></a>
+    <a href="/editeurs/create/"><button>Ajouter un éditeur</button></a>
+    <a href="/editeurs/saisir_editeur_nom/"><button>Modifier un éditeur</button></a>
+    <a href="/editeurs/delete/"><button>Supprimer un éditeur</button></a>
+    <form method="GET" action="{% url 'editeurs_research' %}">
+        <label for="search">Rechercher :</label>
+        <input type="text" id="search" name="search" value="{{ request.GET.search }}">
+        <button type="submit">Rechercher</button>
+    </form>
     <table border="1">
         <thead>
             <tr>
-                <th>Nom</th>
+                <th><a href="?sort_by=nom&order={% if request.GET.sort_by == 'nom' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Nom de l'Éditeur</a></th>
             </tr>
         </thead>
         <tbody>

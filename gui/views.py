@@ -1,8 +1,10 @@
+from django.contrib.auth.decorators import login_required
 from django.http import  HttpResponseRedirect
 from django.shortcuts import render,redirect,get_object_or_404
 from django.urls import reverse_lazy,reverse
 from django.views.generic import CreateView, DeleteView, UpdateView, ListView
 from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Auteur, Livre, Ecrire, Commander, Notifier, Achat, Reserver
+from .decorators import unauthenticated_user_required
 from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, NomEditeurForm, IDAuteurForm
 
 """ NotificationForm"""
@@ -11,10 +13,12 @@ from django.views.generic import ListView, CreateView, View
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from django.db.models import Q
+from django.db.models import Q, Prefetch
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 """########################################################"""
 
+@unauthenticated_user_required
 def loginPage(request):
 
     if request.method == 'POST':
@@ -31,74 +35,163 @@ def loginPage(request):
     context = {}
     return render(request, 'gui/login.html', context)
 
+@login_required(login_url='login')
 def logoutUser(request):
     logout(request)
 
     return redirect('login')
 
 """########################################################"""
-
+@login_required(login_url='login')
 def home(request):
     return render(request, 'gui/homepage.html')
 
 """########################################################"""
+#Super classe définissant les permissions
+
+class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    login_url = 'login'  # URL de redirection si l'utilisateur n'est pas connecté
+
+    def test_func(self):
+        # Vérifie que l'utilisateur a le statut is_staff
+        return self.request.user.is_staff
+
 
 # 3. Classe Role
-class RoleList(ListView):
+
+class RoleList(StaffRequiredMixin,ListView):
     model = Role
     template_name = 'gui/lister_roles.html'
 
-class RoleCreate(CreateView):
+
+
+class RoleCreate(StaffRequiredMixin,CreateView):
     model = Role
     fields = ['type']
     template_name = 'gui/ajouter_role.html'
     success_url = reverse_lazy('roles_list')
 
 
+
 """########################################################"""
 
-class VilleList(ListView):
+class VilleList(StaffRequiredMixin,ListView):
     model = Ville
     template_name = 'gui/lister_villes.html'
 
-class VilleCreate(CreateView):
+
+
+class VilleCreate(StaffRequiredMixin,CreateView):
     model = Ville
     fields = ['nom', 'code_postal', 'pays']
     template_name = 'gui/ajouter_ville.html'
     success_url = reverse_lazy('villes_list')
 
+def ville_create(request):
+    if request.method == 'POST':
 
-class AdresseList(ListView):
+        form_ville = VilleForm(request.POST)
+
+        if form_ville.is_valid():
+            nom_ville = form_ville.cleaned_data['nom_ville']
+            code_postal = form_ville.cleaned_data['code_postal']
+            pays = form_ville.cleaned_data['pays']
+
+            # Vérifier si la ville existe déjà
+            ville_existante = Ville.objects.filter(nom_ville=nom_ville, code_postal=code_postal).first()
+
+            if not ville_existante:
+                # Si la ville n'existe pas, créer une nouvelle ville
+                ville = form_ville.save()
+            else:
+                # Utiliser la ville existante
+                ville = ville_existante
+            return redirect('villes_list')  # Assurez-vous que l'URL existe
+
+    else:
+        form_ville = VilleForm()
+
+
+
+    return render(request, 'gui/ajouter_ville.html', {
+        'form_ville': form_ville
+    })
+class AdresseList(StaffRequiredMixin,ListView):
     model = Adresse
     template_name = 'gui/lister_adresses.html'
 
-class AdresseCreate(CreateView):
+
+class AdresseCreate(StaffRequiredMixin,CreateView):
     model = Adresse
     fields = ['rue', 'n_rue', 'ville']
     template_name = 'gui/ajouter_adresse.html'
     success_url = reverse_lazy('adresses_list')
 
+@login_required(login_url='login')
 def adresse_create(request):
+    form_adresse = AdresseForm()
+    form_ville = VilleForm()
+
     if request.method == 'POST':
-        form = AdresseForm(request.POST)
-        if form.is_valid():
-            adresse = form.save()
-            # Rediriger vers une vue de confirmation ou vers la création de la personne
-            return redirect('personne_create')  # Redirection vers la création de personne
+        form_ville = VilleForm(request.POST)
+        form_adresse = AdresseForm(request.POST)
+
+        if form_adresse.is_valid()and form_ville.is_valid():
+            # Récupérer les champs de la ville depuis le formulaire VilleForm
+            nom_ville = form_ville.cleaned_data['nom_ville']
+            code_postal = form_ville.cleaned_data['code_postal']
+            pays = form_ville.cleaned_data['pays']
+
+            # Vérifier si la ville existe déjà
+            ville_existante = Ville.objects.filter(nom_ville=nom_ville, code_postal=code_postal).first()
+
+            if not ville_existante:
+                # Si la ville n'existe pas, créer une nouvelle ville
+                ville = form_ville.save()
+            else:
+                # Utiliser la ville existante
+                ville = ville_existante
+
+            # Utiliser commit=False pour différer l'enregistrement de l'adresse
+            adresse = form_adresse.save(commit=False)
+
+            # Récupérer les champs de l'adresse depuis le formulaire AdresseForm
+            rue = form_adresse.cleaned_data['rue']
+            n_rue = form_adresse.cleaned_data['n_rue']
+
+            # Vérifier si l'adresse existe déjà
+            adresse_existante = Adresse.objects.filter(rue=rue, n_rue=n_rue, ville=ville).first()
+
+            if adresse_existante:
+                # Si l'adresse existe déjà, l'utiliser
+                adresse = adresse_existante
+            else:
+                # Sinon, créer une nouvelle adresse
+                adresse = form_adresse.save(commit=False)
+                adresse.ville = ville  # Lier la ville à l'adresse
+                adresse.save()
+            # Une fois l'utilisateur créé, rediriger vers la liste des personnes
+            return redirect('adresse_list')  # Redirection vers une autre vue
+
     else:
-        form = AdresseForm()
+        form_adresse = AdresseForm()
+        form_ville = VilleForm()
 
-    return render(request, 'gui/ajouter_adresse.html', {'form': form})
-
+    return render(request, 'gui/ajouter_adresse.html', {
+        'form_adresse': form_adresse,
+        'form_ville': form_ville
+    })
 """########################################################"""
 
-class PersonneList(ListView):
+
+class PersonneList(StaffRequiredMixin, ListView):
     model = Personne
     template_name = 'gui/lister_personnes.html'
 
+#@login_required(login_url='login')
 def personne_create(request):
     # Initialiser les formulaires
-    form_personne = PersonneForm()
+    form_personne = PersonneForm(user = request.user)
     form_adresse = AdresseForm()
     form_ville = VilleForm()
 
@@ -143,7 +236,19 @@ def personne_create(request):
                 adresse.ville = ville  # Lier la ville à l'adresse
                 adresse.save()
 
-            role = form_personne.cleaned_data.get('role')
+            if request.user.is_superuser :
+                role = form_personne.cleaned_data.get('role')
+            else:
+                try:
+                    role = Role.objects.get(type='Client')  # Récupérer l'instance Role avec le nom 'client'
+                except Role.DoesNotExist:
+                    # Gérer le cas où le rôle 'client' n'existe pas
+                    form_personne.add_error('role', 'Le rôle "client" n\'existe pas.')
+                    return render(request, 'gui/ajouter_personne.html', {
+                        'form_personne': form_personne,
+                        'form_adresse': form_adresse,
+                        'form_ville': form_ville
+                    })
             email = form_personne.cleaned_data['email']
             password = form_personne.cleaned_data['password']
 
@@ -164,7 +269,7 @@ def personne_create(request):
             solde = form_personne.cleaned_data['solde']
 
 
-
+            
             # Créer l'utilisateur
             if str(role) == 'admin':
                 personne = Personne.objects.create_superuser(
@@ -194,7 +299,7 @@ def personne_create(request):
             else:
                 personne = Personne.objects.create_user(
                     email=email,
-                    password=password,
+                    password="client",
                     nom=nom,
                     prenom=prenom,
                     date_naissance=date_naissance,
@@ -220,12 +325,14 @@ def personne_create(request):
 
 """########################################################"""
 
+
 # 5. Classe Fournisseur
-class FournisseurList(ListView):
+class FournisseurList(StaffRequiredMixin,ListView):
     model = Fournisseur
     template_name = 'gui/lister_fournisseurs.html'
 
-class FournisseurCreate(CreateView):
+
+class FournisseurCreate(StaffRequiredMixin,CreateView):
     model = Fournisseur
     fields = ['nom']
     template_name = 'gui/ajouter_fournisseur.html'
@@ -233,17 +340,43 @@ class FournisseurCreate(CreateView):
 
 """########################################################"""
 
+
 class EditeurList(ListView):
     model = Editeur
     template_name = 'gui/lister_editeurs.html'
 
-class EditeurCreate(CreateView):
+    def get_queryset(self):
+        # Récupérer les paramètres GET
+        sort_by = self.request.GET.get('sort_by', 'nom')  # Par défaut : tri par 'nom'
+        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+
+        # Définir le préfixe pour la direction du tri
+        sort_prefix = '' if order == 'asc' else '-'
+
+        # Options de tri supportées
+        sorting_options = {
+            'nom': 'nom'
+        }
+
+        # Récupérer le queryset initial
+        queryset = super().get_queryset()
+
+        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
+        if sort_by in sorting_options:
+            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
+
+        return queryset
+
+
+
+class EditeurCreate(StaffRequiredMixin,CreateView):
     model = Editeur
     fields = ['nom']
     template_name = 'gui/ajouter_editeur.html'
     success_url = reverse_lazy('editeurs_list')
 
-class EditeurDelete(View):
+
+class EditeurDelete(StaffRequiredMixin,View):
     template_name = 'gui/supprimer_editeur.html'
 
     def get(self, request):
@@ -262,7 +395,8 @@ class EditeurDelete(View):
             return redirect(reverse_lazy('editeurs_list'))
         return render(request, self.template_name, {'error': "Nom de l'éditeur invalide."})
 
-class EditeurUpdate(View):
+
+class EditeurUpdate(StaffRequiredMixin,View):
     template_name = 'gui/modifier_editeurs.html'
 
     def get(self, request, nom):
@@ -280,6 +414,21 @@ class EditeurUpdate(View):
 
         return render(request, self.template_name, {'form': form, 'editeur': editeur})
 
+class EditeurResearch(StaffRequiredMixin,ListView):
+    model = Editeur  # Modèle pour les éditeurs
+    template_name = 'gui/lister_editeurs.html'  # Template pour afficher les résultats
+
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+
+        if search_query:
+            # Rechercher le terme dans le champ nom
+            return Editeur.objects.filter(nom__icontains=search_query).distinct()
+
+        # Si aucun terme de recherche, retourner tous les éditeurs
+        return Editeur.objects.all()
+
+@login_required(login_url='login')
 def saisir_nom_editeur(request):
     if request.method == 'POST':
         form = NomEditeurForm(request.POST)
@@ -296,17 +445,44 @@ def saisir_nom_editeur(request):
 
 """########################################################"""
 
-class AuteurList(ListView):
+
+class AuteurList(StaffRequiredMixin,ListView):
     model = Auteur
     template_name = 'gui/lister_auteurs.html'
 
-class AuteurCreate(CreateView):
+    def get_queryset(self):
+        # Récupérer les paramètres GET
+        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : tri par 'nom'
+        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+
+        # Définir le préfixe pour la direction du tri
+        sort_prefix = '' if order == 'asc' else '-'
+
+        # Options de tri supportées
+        sorting_options = {
+            'id':'id',
+            'nom': 'nom',
+            'prenom': 'prenom',
+        }
+
+        # Récupérer le queryset initial
+        queryset = super().get_queryset()
+
+        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
+        if sort_by in sorting_options:
+            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
+
+        return queryset
+
+
+class AuteurCreate(StaffRequiredMixin,CreateView):
     model = Auteur
     fields = ['nom', 'prenom', 'date_naissance']
     template_name = 'gui/ajouter_auteur.html'
     success_url = reverse_lazy('auteurs_list')
 
-class AuteurDelete(View):
+
+class AuteurDelete(StaffRequiredMixin,View):
     template_name = 'gui/supprimer_auteur.html'
 
     def get(self, request):
@@ -325,7 +501,8 @@ class AuteurDelete(View):
             return redirect(reverse_lazy('auteurs_list'))
         return render(request, self.template_name, {'error': "ID de l'auteur invalide."})
 
-class AuteurUpdate(View):
+
+class AuteurUpdate(StaffRequiredMixin,View):
     template_name = 'gui/modifier_auteur.html'
 
     def get(self, request, auteur_id):
@@ -343,6 +520,31 @@ class AuteurUpdate(View):
 
         return render(request, self.template_name, {'form': form, 'auteur': auteur})
 
+class AuteurResearch(StaffRequiredMixin,ListView):
+    model = Auteur
+    template_name = 'gui/lister_auteurs.html'
+
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+
+        if search_query:
+            # Diviser la chaîne de recherche en mots-clés
+            keywords = search_query.split()
+            query = Q()
+
+            for keyword in keywords:
+                # Ajouter chaque mot aux différents champs de recherche
+                query |= Q(nom__icontains=keyword) | \
+                         Q(prenom__icontains=keyword)|\
+                        Q(id__icontains=keyword)
+
+            # Retourner les livres correspondant aux critères
+            return Auteur.objects.filter(query).distinct()
+
+        # Si aucun terme de recherche, retourner tous les livres
+        return Auteur.objects.all()
+
+@login_required(login_url='login')
 def saisir_ID_auteur(request):
     if request.method == 'POST':
         form = IDAuteurForm(request.POST)
@@ -359,47 +561,48 @@ def saisir_ID_auteur(request):
 
 """########################################################"""
 
-class LivreList(ListView):
+
+class LivreList(StaffRequiredMixin,ListView):
     model = Livre
     template_name = 'gui/lister_livres.html'
 
     def get_queryset(self):
-        queryset = Livre.objects.all()
+        # Précharger les relations pour optimiser les requêtes
+        queryset = Livre.objects.prefetch_related(
+            Prefetch('ecrire_set', queryset=Ecrire.objects.select_related('auteur'))
+        )
 
-        # Récupération des paramètres de tri
-        sort_by = self.request.GET.get('sort_by', 'titre')  # Valeur par défaut : titre
-        order = self.request.GET.get('order', 'asc')  # Valeur par défaut : ascendant
+        # Récupérer les paramètres GET
+        sort_by = self.request.GET.get('sort_by', 'titre')  # Par défaut : titre
+        order = self.request.GET.get('order', 'asc')  # Par défaut : asc
 
-        # Appliquer le tri en fonction des paramètres
-        if sort_by == 'isbn13':
-            queryset = queryset.order_by('isbn13' if order == 'asc' else '-isbn13')
-        elif sort_by == 'titre':
-            queryset = queryset.order_by('titre' if order == 'asc' else '-titre')
-        elif sort_by == 'auteur_nom':
-            queryset = queryset.order_by('ecrire_set__auteur__nom' if order == 'asc' else '-ecrire_set__auteur__nom')
-        elif sort_by == 'type':
-            queryset = queryset.order_by('type' if order == 'asc' else '-type')
-        elif sort_by == 'genre_litteraire':
-            queryset = queryset.order_by('genre_litteraire' if order == 'asc' else '-genre_litteraire')
-        elif sort_by == 'sous_genre':
-            queryset = queryset.order_by('sous_genre' if order == 'asc' else '-sous_genre')
-        elif sort_by == 'illustrateur':
-            queryset = queryset.order_by('illustrateur' if order == 'asc' else '-illustrateur')
-        elif sort_by == 'langue':
-            queryset = queryset.order_by('langue' if order == 'asc' else '-langue')
-        elif sort_by == 'format':
-            queryset = queryset.order_by('format' if order == 'asc' else '-format')
-        elif sort_by == 'date_parution':
-            queryset = queryset.order_by('date_parution' if order == 'asc' else '-date_parution')
-        elif sort_by == 'localisation':
-            queryset = queryset.order_by('localisation' if order == 'asc' else '-localisation')
-        elif sort_by == 'prix':
-            queryset = queryset.order_by('prix' if order == 'asc' else '-prix')
-        elif sort_by == 'editeur':
-            queryset = queryset.order_by('editeur' if order == 'asc' else '-editeur')
+        # Définir le préfixe pour la direction du tri
+        sort_prefix = '' if order == 'asc' else '-'
+
+        # Options de tri supportées
+        sorting_options = {
+            'isbn13': 'isbn13',
+            'titre': 'titre',
+            'auteur_nom': 'ecrire_set__auteur__nom',
+            'type': 'type',
+            'genre_litteraire': 'genre_litteraire',
+            'sous_genre': 'sous_genre',
+            'illustrateur': 'illustrateur',
+            'langue': 'langue',
+            'format': 'format',
+            'date_parution': 'date_parution',
+            'localisation': 'localisation',
+            'prix': 'prix',
+            'editeur': 'editeur',
+        }
+
+        # Appliquer le tri si valide, sinon fallback au tri par titre
+        if sort_by in sorting_options:
+            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
         return queryset
 
+@login_required(login_url='login')
 def create_livre(request):
     if request.method == 'POST':
         livre_form = LivreForm(request.POST)
@@ -426,7 +629,8 @@ def create_livre(request):
         'auteur_form': auteur_form,
     })
 
-class LivreDelete(View):
+
+class LivreDelete(StaffRequiredMixin,View):
     template_name = 'gui/supprimer_livre.html'
 
     def get(self, request):
@@ -445,7 +649,8 @@ class LivreDelete(View):
             return redirect(reverse_lazy('livres_list'))
         return render(request, self.template_name, {'error': 'ID du livre invalide.'})
 
-class LivreUpdate(View):
+
+class LivreUpdate(StaffRequiredMixin,View):
     template_name = 'gui/modifier_livres.html'
 
     def get(self, request, isbn13):
@@ -463,7 +668,8 @@ class LivreUpdate(View):
 
         return render(request, self.template_name, {'form': form, 'livre': livre})
 
-class LivreResearch(ListView):
+
+class LivreResearch(StaffRequiredMixin,ListView):
     model = Livre
     template_name = 'gui/lister_livres.html'
 
@@ -494,6 +700,7 @@ class LivreResearch(ListView):
         # Si aucun terme de recherche, retourner tous les livres
         return Livre.objects.all()
 
+@login_required(login_url='login')
 def saisir_isbn(request):
     if request.method == 'POST':
         form = ISBNForm(request.POST)
@@ -511,11 +718,12 @@ def saisir_isbn(request):
 
 """########################################################"""
 
-class EcrireList(ListView):
+class EcrireList(StaffRequiredMixin,ListView):
     model = Ecrire
     template_name = 'gui/lister_ecrits.html'
 
-class EcrireCreate(CreateView):
+
+class EcrireCreate(StaffRequiredMixin,CreateView):
     model = Ecrire
     fields = ['livre', 'auteur']
     template_name = 'gui/ajouter_ecrire.html'
@@ -523,11 +731,13 @@ class EcrireCreate(CreateView):
 
 """########################################################"""
 
-class CommanderList(ListView):
+
+class CommanderList(StaffRequiredMixin,ListView):
     model = Commander
     template_name = 'gui/lister_commandes.html'
 
-class CommanderCreate(CreateView):
+
+class CommanderCreate(StaffRequiredMixin,CreateView):
     model = Commander
     fields =['personne', 'livre', 'quantite', 'date_commande', 'quantite', 'statut']
     template_name = 'gui/ajouter_commande.html'
@@ -536,22 +746,26 @@ class CommanderCreate(CreateView):
 """########################################################"""
 
 # 13. Classe Reserver
-class ReserverList(ListView):
+
+class ReserverList(StaffRequiredMixin,ListView):
     model = Reserver
     template_name = 'gui/lister_reservations.html'
 
-class ReserverCreate(CreateView):
+
+class ReserverCreate(StaffRequiredMixin,CreateView):
     model = Reserver
     fields = ['personne', 'livre', 'quantite', 'statut', 'date_reservation']
     template_name = 'gui/ajouter_reservation.html'
     success_url = reverse_lazy('reservations_list')
 
 """########################################################"""
-class AchatList(ListView):
+
+class AchatList(StaffRequiredMixin,ListView):
     model = Achat
     template_name = 'gui/lister_achats.html'
 
-class AchatCreate(CreateView):
+
+class AchatCreate(StaffRequiredMixin,CreateView):
     model = Achat
     fields = ['personne', 'livre', 'quantite', 'date_achat']
     template_name = 'gui/ajouter_achat.html'
@@ -559,11 +773,13 @@ class AchatCreate(CreateView):
 
 """########################################################"""
 
-class NotifierList(ListView):
+
+class NotifierList(StaffRequiredMixin,ListView):
     model = Notifier
     template_name = 'gui/lister_notifications.html'
 
-class NotifierCreate(CreateView):
+
+class NotifierCreate(StaffRequiredMixin,CreateView):
     model = Notifier
     fields = ['personne', 'livre', 'quantite', 'type', 'commentaire']
     template_name = 'gui/ajouter_notification.html'

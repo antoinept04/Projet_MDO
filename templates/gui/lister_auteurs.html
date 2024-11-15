@@ -10,16 +10,22 @@
     <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
 </div>
     <h1>Liste des auteurs</h1>
-    <a href="create/"><button>Ajouter un auteur</button></a>
-    <a href="saisir_auteur_ID/"><button>Modifier un auteur</button></a>
-    <a href="delete/"><button>Supprimer un auteur</button></a>
+    <a href="/auteurs/create/"><button>Ajouter un auteur</button></a>
+    <a href="/auteurs/saisir_auteur_ID/"><button>Modifier un auteur</button></a>
+    <a href="/auteurs/delete/"><button>Supprimer un auteur</button></a>
+
+    <form method="GET" action="{% url 'auteurs_research' %}">
+        <label for="search">Rechercher :</label>
+        <input type="text" id="search" name="search" value="{{ request.GET.search }}">
+        <button type="submit">Rechercher</button>
+    </form>
     <table border="1">
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Nom</th>
-                <th>Prénom</th>
-                <th>Date de naissance</th>
+                <th><a href="?sort_by=id&order={% if request.GET.sort_by == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">ID</a></th>
+                <th><a href="?sort_by=nom&order={% if request.GET.sort_by == 'nom' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Nom</a></th>
+                <th><a href="?sort_by=prenom&order={% if request.GET.sort_by == 'prenom' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Prénom</a></th>
+                <th><a href="?sort_by=date_naissance&order={% if request.GET.sort_by == 'date_naissance' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Date de Naissance</a></th>
             </tr>
         </thead>
         <tbody>

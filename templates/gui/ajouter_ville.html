@@ -58,13 +58,18 @@
     </style>
 </head>
 <body>
+
 <div class="button-container">
     <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
 </div>
+
 <div class="form-container">
     <h2>Ajouter une Ville</h2>
+
     <form method="post">
+
         {% csrf_token %}
+
         {{ form.as_p }}
         <input type="submit" value="Ajouter">
     </form>
