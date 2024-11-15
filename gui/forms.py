@@ -31,6 +31,19 @@ class AuteurForm(forms.ModelForm):
     class Meta:
         model = Auteur
         fields = ['nom','prenom','date_naissance']
+        labels = {
+            'nom' : "Nom de l'auteur",
+            'prenom' : "Prenom de l'auteur",
+            'date_naissance' : "Date de naissance"
+        }
+        widgets = {
+            'date_naissance': forms.DateInput(
+                attrs={
+                    'placeholder': 'JJ/MM/AAAA',
+                    'type': 'date'
+                }),
+        }
+
 
 class LivreForm(forms.ModelForm):
     editeur_nom = forms.CharField(max_length=255, required=False, label="Nom de l'éditeur")
@@ -40,6 +53,35 @@ class LivreForm(forms.ModelForm):
                   'format', 'nombre_pages', 'dimensions', 'date_parution', 'localisation', 'synopsis',
                   'prix', 'url_reference', 'traducteur', 'quantite_disponible', 'quantite_totale',
                   'quantite_minimale', 'editeur_nom']
+        labels = {
+            'isbn13' : "ISBN13",
+            'titre' : "Titre",
+            'type' : "Type (roman, BD, manga, comics)",
+            'genre_litteraire' : "Genre littéraire",
+            'sous_genre' : "Sous-genre littéraire",
+            'illustrateur' : "Illustrateur",
+            'langue' : "Langue",
+            'format' : "Format",
+            'nombre_pages' : "Nombre de pages",
+            'dimensions' : "Dimensions",
+            'date_parution' : "Date de parution",
+            'localisation' : "Localisation dans le magasin",
+            'synopsis' : "Synopsis",
+            'prix' : "Prix",
+            'url_reference' : "URL de reference",
+            'traducteur' : "Traducteur",
+            'quantite_disponible' : "Quantité disponible",
+            'quantite_totale' : "Quantité totale",
+            'quantite_minimale' : "Quantité minimale",
+            'editeur_nom' : "Nom de l'editeur"
+        }
+        widgets ={
+            'date_parution' : forms.DateInput(
+                attrs={
+                    'placeholder': 'JJ/MM/AAAA',
+                    'type' : 'date'
+                    }),
+        }
 
     def save(self, commit=True):
         # Sauvegarde du livre

@@ -24,27 +24,27 @@
     <table border="1">
         <thead>
             <tr>
-                <th>ISBN13</th>
-                <th>Titre</th>
-                <th>Auteur</th>
-                <th>Type</th>
-                <th>Genre Littéraire</th>
-                <th>Sous Genre</th>
-                <th>Illustrateur</th>
-                <th>Langue</th>
-                <th>Format</th>
+                <th><a href="?sort_by=isbn13&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">ISBN13</a></th>
+                <th><a href="?sort_by=titre&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Titre</a></th>
+                <th><a href="?sort_by=auteur_nom&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Nom de l'Auteur</a></th>
+                <th><a href="?sort_by=type&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Type</a></th>
+                <th><a href="?sort_by=genre_litteraire&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Genre Littéraire</a></th>
+                <th><a href="?sort_by=sous_genre&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Sous Genre</a></th>
+                <th><a href="?sort_by=illustrateur&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Illustrateur</a></th>
+                <th><a href="?sort_by=langue&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Langue</a></th>
+                <th><a href="?sort_by=format&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Format</a></th>
                 <th>Nombre de Pages</th>
                 <th>Dimensions</th>
-                <th>Date de Parution</th>
-                <th>Localisation</th>
+                <th><a href="?sort_by=date_parution&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Date de Parution</a></th>
+                <th><a href="?sort_by=localisation&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Localisation</a></th>
                 <th>Synopsis</th>
-                <th>Prix</th>
+                <th><a href="?sort_by=prix&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Prix</a></th>
                 <th>URL de Référence</th>
                 <th>Traducteur</th>
                 <th>Quantité Disponible</th>
                 <th>Quantité Totale</th>
                 <th>Quantité Minimale</th>
-                <th>Éditeur</th>
+                <th><a href="?sort_by=editeur&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Éditeur</a></th>
             </tr>
         </thead>
         <tbody>

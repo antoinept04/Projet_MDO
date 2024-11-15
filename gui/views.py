@@ -11,7 +11,7 @@ from django.views.generic import ListView, CreateView, View
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-
+from django.db.models import Q
 
 """########################################################"""
 
@@ -363,6 +363,42 @@ class LivreList(ListView):
     model = Livre
     template_name = 'gui/lister_livres.html'
 
+    def get_queryset(self):
+        queryset = Livre.objects.all()
+
+        # Récupération des paramètres de tri
+        sort_by = self.request.GET.get('sort_by', 'titre')  # Valeur par défaut : titre
+        order = self.request.GET.get('order', 'asc')  # Valeur par défaut : ascendant
+
+        # Appliquer le tri en fonction des paramètres
+        if sort_by == 'isbn13':
+            queryset = queryset.order_by('isbn13' if order == 'asc' else '-isbn13')
+        elif sort_by == 'titre':
+            queryset = queryset.order_by('titre' if order == 'asc' else '-titre')
+        elif sort_by == 'auteur_nom':
+            queryset = queryset.order_by('ecrire_set__auteur__nom' if order == 'asc' else '-ecrire_set__auteur__nom')
+        elif sort_by == 'type':
+            queryset = queryset.order_by('type' if order == 'asc' else '-type')
+        elif sort_by == 'genre_litteraire':
+            queryset = queryset.order_by('genre_litteraire' if order == 'asc' else '-genre_litteraire')
+        elif sort_by == 'sous_genre':
+            queryset = queryset.order_by('sous_genre' if order == 'asc' else '-sous_genre')
+        elif sort_by == 'illustrateur':
+            queryset = queryset.order_by('illustrateur' if order == 'asc' else '-illustrateur')
+        elif sort_by == 'langue':
+            queryset = queryset.order_by('langue' if order == 'asc' else '-langue')
+        elif sort_by == 'format':
+            queryset = queryset.order_by('format' if order == 'asc' else '-format')
+        elif sort_by == 'date_parution':
+            queryset = queryset.order_by('date_parution' if order == 'asc' else '-date_parution')
+        elif sort_by == 'localisation':
+            queryset = queryset.order_by('localisation' if order == 'asc' else '-localisation')
+        elif sort_by == 'prix':
+            queryset = queryset.order_by('prix' if order == 'asc' else '-prix')
+        elif sort_by == 'editeur':
+            queryset = queryset.order_by('editeur' if order == 'asc' else '-editeur')
+
+        return queryset
 
 def create_livre(request):
     if request.method == 'POST':
@@ -430,10 +466,32 @@ class LivreUpdate(View):
 class LivreResearch(ListView):
     model = Livre
     template_name = 'gui/lister_livres.html'
+
     def get_queryset(self):
         search_query = self.request.GET.get('search', '')
+
         if search_query:
-            return Livre.objects.filter(titre__icontains=search_query)
+            # Diviser la chaîne de recherche en mots-clés
+            keywords = search_query.split()
+            query = Q()
+
+            for keyword in keywords:
+                # Ajouter chaque mot aux différents champs de recherche
+                query |= Q(titre__icontains=keyword) | \
+                         Q(editeur__nom__icontains=keyword) | \
+                         Q(ecrire_set__auteur__nom__icontains=keyword) | \
+                         Q(isbn13__icontains=keyword) | \
+                         Q(type__icontains=keyword) | \
+                         Q(genre_litteraire__icontains=keyword) | \
+                         Q(sous_genre__icontains=keyword) | \
+                         Q(illustrateur__icontains=keyword) | \
+                         Q(langue__icontains=keyword) | \
+                         Q(ecrire_set__auteur__prenom__icontains=keyword)
+
+            # Retourner les livres correspondant aux critères
+            return Livre.objects.filter(query).distinct()
+
+        # Si aucun terme de recherche, retourner tous les livres
         return Livre.objects.all()
 
 def saisir_isbn(request):
