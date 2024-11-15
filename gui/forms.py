@@ -21,8 +21,8 @@ class PersonneForm(forms.ModelForm):
         super(PersonneForm, self).__init__(*args, **kwargs)
 
         # Si l'utilisateur n'est pas un superutilisateur, retirer le champ 'role'
-        if self.user and not getattr(self.user, 'is_superuser', False):
-            self.fields.pop('role')
+        if self.user and not self.user.is_superuser:
+            self.fields.pop('role', None)
 
 class AdresseForm(forms.ModelForm):
     class Meta:

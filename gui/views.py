@@ -188,15 +188,15 @@ class PersonneList(StaffRequiredMixin, ListView):
     model = Personne
     template_name = 'gui/lister_personnes.html'
 
-#@login_required(login_url='login')
+
 def personne_create(request):
     # Initialiser les formulaires
-    form_personne = PersonneForm(user = request.user)
-    form_adresse = AdresseForm()
-    form_ville = VilleForm()
+    #form_personne = PersonneForm(user = request.user)
+    #form_adresse = AdresseForm()
+    #form_ville = VilleForm()
 
     if request.method == 'POST':
-        form_personne = PersonneForm(request.POST)
+        form_personne = PersonneForm(request.POST, user = request.user)
         form_adresse = AdresseForm(request.POST)
         form_ville = VilleForm(request.POST)
 
@@ -249,6 +249,7 @@ def personne_create(request):
                         'form_adresse': form_adresse,
                         'form_ville': form_ville
                     })
+
             email = form_personne.cleaned_data['email']
             password = form_personne.cleaned_data['password']
 
@@ -313,7 +314,7 @@ def personne_create(request):
             return redirect('personnes_list')  # Redirection vers une autre vue
 
     else:
-        form_personne = PersonneForm()
+        form_personne = PersonneForm(user=request.user)
         form_adresse = AdresseForm()
         form_ville = VilleForm()
 
