@@ -67,18 +67,17 @@
     </style>
 </head>
 <body>
-
-<div class="form-container">
-    <h2>Ajouter une Commande</h2>
-    <form method="post">
-        {% csrf_token %}
-        
-        {{ form.as_p }}
-        
-        <!-- Bouton de soumission commun -->
-        <input type="submit" value="Ajouter la Commande">
-    </form>
+<div class="button-container">
+    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
 </div>
+<h1>Créer une nouvelle commande</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Enregistrer</button>
+    <a href="{% url 'commandes_list' %}" class="btn btn-secondary">Annuler</a>
+</form>
 
 </body>
 </html>

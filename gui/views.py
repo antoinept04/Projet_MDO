@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.http import  HttpResponseRedirect
+from django.http import  HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render,redirect,get_object_or_404
 from django.urls import reverse_lazy,reverse
 from django.views.generic import CreateView, DeleteView, UpdateView, ListView
@@ -15,6 +15,8 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q, Prefetch
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+
+
 
 """########################################################"""
 
@@ -737,12 +739,27 @@ class CommanderList(StaffRequiredMixin,ListView):
     model = Commander
     template_name = 'gui/lister_commandes.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['commandes_en_cours'] = Commander.objects.filter(statut='en cours')
+        context['commandes_terminees'] = Commander.objects.filter(statut='terminé')
+        return context
+
 
 class CommanderCreate(StaffRequiredMixin,CreateView):
     model = Commander
-    fields =['personne', 'livre', 'quantite', 'date_commande', 'quantite', 'statut']
+    fields =['personne', 'livre', 'date_commande', 'quantite', 'statut']
     template_name = 'gui/ajouter_commande.html'
     success_url = reverse_lazy('commandes_list')
+
+def terminer_commande(request, pk):
+    if not request.user.is_staff:  # Vérifie que l'utilisateur est autorisé
+        return HttpResponseForbidden("Vous n'avez pas la permission de faire cette action.")
+    commande = get_object_or_404(Commander, pk=pk)
+    if commande.statut == 'en cours':
+        commande.statut = 'terminé'
+        commande.save()
+    return redirect('commandes_list')
 
 """########################################################"""
 
@@ -752,12 +769,26 @@ class ReserverList(StaffRequiredMixin,ListView):
     model = Reserver
     template_name = 'gui/lister_reservations.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['reservations_en_cours'] = Reserver.objects.filter(statut='en cours')
+        context['reservations_terminees'] = Reserver.objects.filter(statut='terminé')
+        return context
 
 class ReserverCreate(StaffRequiredMixin,CreateView):
     model = Reserver
     fields = ['personne', 'livre', 'quantite', 'statut', 'date_reservation']
     template_name = 'gui/ajouter_reservation.html'
     success_url = reverse_lazy('reservations_list')
+
+def terminer_reservation(request, pk):
+    if not request.user.is_staff:  # Vérifie que l'utilisateur est autorisé
+        return HttpResponseForbidden("Vous n'avez pas la permission d'effectuer cette action.")
+    reservation = get_object_or_404(Reserver, pk=pk)
+    if reservation.statut == 'en cours':
+        reservation.statut = 'terminé'
+        reservation.save()
+    return redirect('reservations_list')
 
 """########################################################"""
 

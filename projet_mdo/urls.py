@@ -28,10 +28,10 @@ from gui.views import (
     AuteurList, AuteurCreate,
     LivreList, create_livre, LivreDelete, LivreUpdate, LivreResearch, saisir_isbn,
     EcrireList, EcrireCreate,
-    CommanderList, CommanderCreate,
+    CommanderList, CommanderCreate, terminer_commande,
     NotifierList, NotifierCreate,
     AchatList, AchatCreate,
-    ReserverList, ReserverCreate,
+    ReserverList, ReserverCreate, terminer_reservation,
     loginPage, logoutUser,
     home, create_livre, saisir_nom_editeur, EditeurUpdate, EditeurDelete, AuteurDelete, AuteurUpdate, saisir_ID_auteur, AuteurResearch, EditeurResearch
 )
@@ -88,6 +88,8 @@ urlpatterns = [
     path('commandes/', CommanderList.as_view(), name='commandes_list'),
     path('commandes/create/', CommanderCreate.as_view(), name='commandes_create'),
 
+    path('commandes/<int:pk>/terminer/', terminer_commande, name='terminer_commande'),
+
     # Notifier
     path('notifications/', NotifierList.as_view(), name='notifications_list'),
     path('notifications/create/', NotifierCreate.as_view(), name='notifications_create'),
@@ -99,6 +101,9 @@ urlpatterns = [
     # Reserver
     path('reservations/', ReserverList.as_view(), name='reservations_list'),
     path('reservations/create/', ReserverCreate.as_view(), name='reservations_create'),
+
+    path('reservations/<int:pk>/terminer/', terminer_reservation, name='terminer_reservation'),
+
     path('login/', loginPage, name='login'),
     path('logout/', logoutUser, name='logout'),
     path('', home, name='homepage')  # Route pour la page d'accueil

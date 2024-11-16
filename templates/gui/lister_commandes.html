@@ -60,39 +60,78 @@
     </style>
 </head>
 <body>
-
-<div class="container">
-    <h2>Liste des Commandes</h2>
-
-    <a href="/commandes/create/" class="add-button">Ajouter une Commande</a>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Personne</th>
-                <th>Livre</th>
-                <th>Date de Commande</th>
-                <th>Quantité</th>
-                <th>Statut</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for commande in object_list %}
-            <tr>
-                <td>{{ commande.personne.nom }}</td>
-                <td>{{ commande.livre.titre }}</td>
-                <td>{{ commande.date_commande }}</td>
-                <td>{{ commande.quantite }}</td>
-                <td>{{ commande.statut }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" style="text-align: center;">Aucune commande trouvée.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="button-container">
+    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
 </div>
+<h1>Liste des Commandes</h1>
+<a href="{% url 'commandes_create' %}" class="btn btn-primary">Créer une nouvelle commande</a>
+
+<h2>Commandes en cours</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Personne</th>
+            <th>Livre</th>
+            <th>Date</th>
+            <th>Quantité</th>
+            <th>Statut</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for commande in commandes_en_cours %}
+        <tr>
+            <td>{{ commande.id }}</td>
+            <td>{{ commande.personne.nom }}</td>
+            <td>{{ commande.livre.titre }}</td>
+            <td>{{ commande.date_commande }}</td>
+            <td>{{ commande.quantite }}</td>
+            <td>{{ commande.statut }}</td>
+            <td>
+                <form method="post" action="{% url 'terminer_commande' commande.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">Terminer</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">Aucune commande en cours.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Commandes terminées</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Personne</th>
+            <th>Livre</th>
+            <th>Date</th>
+            <th>Quantité</th>
+            <th>Statut</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for commande in commandes_terminees %}
+        <tr>
+            <td>{{ commande.id }}</td>
+            <td>{{ commande.personne.nom }}</td>
+            <td>{{ commande.livre.titre }}</td>
+            <td>{{ commande.date_commande }}</td>
+            <td>{{ commande.quantite }}</td>
+            <td>{{ commande.statut }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6">Aucune commande terminée.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 </body>
 </html>

@@ -2,9 +2,129 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liste des Reservations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        table th, table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        table th {
+            background-color: #007BFF;
+            color: white;
+        }
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .add-button {
+            display: block;
+            width: fit-content;
+            margin: 20px auto;
+            padding: 10px 20px;
+            text-align: center;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .add-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
+<div class="button-container">
+    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
+</div>
+<h1>Liste des Réservations</h1>
+<a href="{% url 'reservations_create' %}" class="btn btn-primary">Créer une nouvelle réservation</a>
 
+<h2>Réservations en cours</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Personne</th>
+            <th>Livre</th>
+            <th>Date</th>
+            <th>Quantité</th>
+            <th>Statut</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for reservation in reservations_en_cours %}
+        <tr>
+            <td>{{ reservation.id }}</td>
+            <td>{{ reservation.personne.nom }}</td>
+            <td>{{ reservation.livre.titre }}</td>
+            <td>{{ reservation.date_reservation }}</td>
+            <td>{{ reservation.quantite }}</td>
+            <td>{{ reservation.statut }}</td>
+            <td>
+                <form method="post" action="{% url 'terminer_reservation' reservation.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">Terminer</button>
+                </form>
+            </td>
+        </tr>
+        
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Réservations terminées</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Personne</th>
+            <th>Livre</th>
+            <th>Date</th>
+            <th>Quantité</th>
+            <th>Statut</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for reservation in reservations_terminees %}
+        <tr>
+            <td>{{ reservation.id }}</td>
+            <td>{{ reservation.personne.nom }}</td>
+            <td>{{ reservation.livre.titre }}</td>
+            <td>{{ reservation.date_reservation }}</td>
+            <td>{{ reservation.quantite }}</td>
+            <td>{{ reservation.statut }}</td>
+        </tr>
+        
+        {% endfor %}
+    </tbody>
+</table>
 </body>
 </html>

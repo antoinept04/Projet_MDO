@@ -121,3 +121,11 @@ class EditeurForm(forms.ModelForm):
     class Meta:
         model = Editeur
         fields = ['nom']
+
+class CommanderForm(forms.ModelForm):
+    class Meta:
+        model = Commander
+        fields = ['personne', 'livre', 'date_commande', 'quantite', 'statut']
+        widgets = {
+            'date_commande': forms.DateInput(attrs={'type': 'date'}),
+        }
