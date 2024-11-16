@@ -11,7 +11,7 @@
 </div>
     <h1>Liste des éditeurs</h1>
     <a href="/editeurs/create/"><button>Ajouter un éditeur</button></a>
-    <a href="/editeurs/saisir_editeur_nom/"><button>Modifier un éditeur</button></a>
+    <a href="/editeurs/saisir_editeur_ID/"><button>Modifier un éditeur</button></a>
     <a href="/editeurs/delete/"><button>Supprimer un éditeur</button></a>
     <form method="GET" action="{% url 'editeurs_research' %}">
         <label for="search">Rechercher :</label>
@@ -21,12 +21,14 @@
     <table border="1">
         <thead>
             <tr>
+                <th><a href="?sort_by=id&order={% if request.GET.sort_by == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">ID de l'Éditeur</a></th>
                 <th><a href="?sort_by=nom&order={% if request.GET.sort_by == 'nom' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Nom de l'Éditeur</a></th>
             </tr>
         </thead>
         <tbody>
             {% for editeur in object_list %}
                 <tr>
+                    <td>{{ editeur.id }}</td>
                     <td>{{ editeur.nom }}</td>
                 </tr>
             {% endfor %}

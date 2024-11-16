@@ -6,7 +6,7 @@ from django.utils import timezone
 
 
 class Ville(models.Model):
-    nom_ville = models.CharField(max_length=100)
+    nom_ville = models.CharField(max_length=100, primary_key=True)
     code_postal = models.CharField(max_length=10)
     pays = models.CharField(max_length=50)
 
@@ -83,8 +83,6 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.nom} {self.prenom}"
 
-
-
 class Fournisseur(models.Model):
     nom = models.CharField(max_length=100)
 
@@ -95,7 +93,7 @@ class Fournisseur(models.Model):
         return self.nom
 
 class Editeur(models.Model):
-    nom = models.CharField(max_length=100, primary_key=True)
+    nom = models.CharField(max_length=100)
 
     class Meta:
         db_table = 'Editeur'
@@ -106,7 +104,7 @@ class Editeur(models.Model):
 class Auteur(models.Model):
     nom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100)
-    date_naissance = models.DateField()
+    date_naissance = models.DateField(blank=True,null=True)
 
     class Meta:
         db_table = 'Auteur'
@@ -117,24 +115,24 @@ class Auteur(models.Model):
 class Livre(models.Model):
     isbn13 = models.CharField(max_length=13, primary_key=True)
     titre = models.CharField(max_length=255)
-    type = models.CharField(max_length=50)
-    genre_litteraire = models.CharField(max_length=100)
-    sous_genre = models.CharField(max_length=100)
+    type = models.CharField(max_length=50, blank=True, null=True)
+    genre_litteraire = models.CharField(max_length=100,blank=True, null=True)
+    sous_genre = models.CharField(max_length=100,blank=True, null=True)
     illustrateur = models.CharField(max_length=100, blank=True, null=True)
-    langue = models.CharField(max_length=50)
-    format = models.CharField(max_length=50)
-    nombre_pages = models.IntegerField()
-    dimensions = models.CharField(max_length=50)
-    date_parution = models.DateField()
-    localisation = models.CharField(max_length=100)
-    synopsis = models.TextField()
-    prix = models.DecimalField(max_digits=10, decimal_places=2)
+    langue = models.CharField(max_length=50,blank=True, null=True)
+    format = models.CharField(max_length=50,blank=True, null=True)
+    nombre_pages = models.IntegerField(blank=True,null=True)
+    dimensions = models.CharField(max_length=50,blank=True,null=True)
+    date_parution = models.DateField(blank=True,null=True)
+    localisation = models.CharField(max_length=100,blank=True,null=True)
+    synopsis = models.TextField(blank=True,null=True)
+    prix = models.DecimalField(max_digits=10, decimal_places=2,blank=True,null=True)
     url_reference = models.URLField(blank=True, null=True)
     traducteur = models.CharField(max_length=100, blank=True, null=True)
     quantite_disponible = models.IntegerField()
     quantite_totale = models.IntegerField()
     quantite_minimale = models.IntegerField()
-    editeur = models.ForeignKey(Editeur, on_delete=models.SET_NULL, null=True)
+    editeur = models.ForeignKey(Editeur, on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'Livre'
@@ -151,6 +149,48 @@ class Ecrire(models.Model):
 
     def __str__(self):
         return f"{self.auteur.nom} a écrit {self.livre.titre}"
+
+class Illustrateur(models.Model):
+    nom = models.CharField(max_length=100)
+    prenom = models.CharField(max_length=100)
+    date_naissance = models.DateField()
+
+    class Meta:
+        db_table = 'Illustrateur'
+
+    def __str__(self):
+        return f"{self.nom} {self.prenom}"
+
+class Illustrer(models.Model):
+    livre = models.ForeignKey(Livre, on_delete=models.CASCADE, related_name="illustrer_set")
+    illustrateur = models.ForeignKey(Illustrateur, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'Illustrer'
+
+    def __str__(self):
+        return f"{self.illustrateur.nom} a écrit {self.livre.titre}"
+
+class Traducteur(models.Model):
+    nom = models.CharField(max_length=100)
+    prenom = models.CharField(max_length=100)
+    date_naissance = models.DateField()
+
+    class Meta:
+        db_table = 'Traducteur'
+
+    def __str__(self):
+        return f"{self.nom} {self.prenom}"
+
+class Traduire(models.Model):
+    livre = models.ForeignKey(Livre, on_delete=models.CASCADE, related_name="traduire_set")
+    traducteur = models.ForeignKey(Traducteur, on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'Traduire'
+
+    def __str__(self):
+        return f"{self.traducteur.nom} a écrit {self.livre.titre}"
 
 class Commander(models.Model):
     personne = models.ForeignKey(Personne, on_delete=models.CASCADE)
@@ -179,9 +219,6 @@ class Notifier(models.Model):
 
     def __str__(self):
         return f"Notification de {self.personne.nom} pour {self.livre.titre}"
-
-
-
 
 class Achat(models.Model):
     personne = models.ForeignKey(Personne, on_delete=models.CASCADE)

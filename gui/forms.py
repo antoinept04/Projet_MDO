@@ -50,7 +50,7 @@ class AuteurForm(forms.ModelForm):
             'date_naissance': forms.DateInput(
                 attrs={
                     'placeholder': 'JJ/MM/AAAA',
-                    'type': 'date'
+                    'type': 'date',
                 }),
         }
 
@@ -111,8 +111,8 @@ class LivreForm(forms.ModelForm):
 class ISBNForm(forms.Form):
     isbn13 = forms.CharField(label='ISBN13 du livre', max_length=13)
 
-class NomEditeurForm(forms.Form):
-    nom = forms.CharField(label="Nom de l'éditeur", max_length=255)
+class IDEditeurForm(forms.Form):
+    id = forms.IntegerField(label="ID de l'éditeur")
 
 class IDAuteurForm(forms.Form):
     auteur_id = forms.IntegerField(label="ID d'auteur")

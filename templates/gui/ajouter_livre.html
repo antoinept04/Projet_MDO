@@ -13,8 +13,34 @@
     <form method="post">
         {% csrf_token %}
         {{ livre_form.as_p }}
-        {{ auteur_form.as_p }}
+        <div id="auteurs-container">
+        <!-- Premier champ pour l'ajout d'un auteur -->
+        <div class="auteur-container">
+            <input type="text" name="nom_auteur" placeholder="Nom de l'auteur" required />
+            <input type="text" name="prenom_auteur" placeholder="Prénom de l'auteur" required />
+            <input type="date" name="date_naissance_auteur" placeholder="Date de naissance" required />
+        </div>
+    </div>
+     <!-- Bouton pour ajouter un autre auteur -->
+    <button type="button" id="add-author-btn">Ajouter un auteur +</button>
+
     <button type="submit">Ajouter</button>
+</form>
+
+<script>
+    // Ajouter un nouvel auteur lorsque l'utilisateur clique sur le bouton "+"
+    document.getElementById('add-author-btn').addEventListener('click', function() {
+        // Créer un nouveau champ pour l'ajout d'un auteur
+        var newAuteurField = document.createElement('div');
+        newAuteurField.classList.add('auteur-container');
+        newAuteurField.innerHTML = '<input type="text" name="nom_auteur" placeholder="Nom de l\'auteur"  />' +
+                                  '<input type="text" name="prenom_auteur" placeholder="Prénom de l\'auteur"  />' +
+                                  '<input type="date" name="date_naissance_auteur" placeholder="Date de naissance"  />';
+        
+        // Ajouter le champ au conteneur des auteurs
+        document.getElementById('auteurs-container').appendChild(newAuteurField);
+    });
+</script>
 </form>
 </body>
 </html>

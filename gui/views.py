@@ -5,7 +5,7 @@ from django.urls import reverse_lazy,reverse
 from django.views.generic import CreateView, DeleteView, UpdateView, ListView
 from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Auteur, Livre, Ecrire, Commander, Notifier, Achat, Reserver
 from .decorators import unauthenticated_user_required
-from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, NomEditeurForm, IDAuteurForm
+from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, IDEditeurForm, IDAuteurForm
 
 """ NotificationForm"""
 from django.urls import reverse_lazy
@@ -350,7 +350,7 @@ class EditeurList(ListView):
 
     def get_queryset(self):
         # Récupérer les paramètres GET
-        sort_by = self.request.GET.get('sort_by', 'nom')  # Par défaut : tri par 'nom'
+        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : tri par 'id'
         order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
 
         # Définir le préfixe pour la direction du tri
@@ -358,6 +358,7 @@ class EditeurList(ListView):
 
         # Options de tri supportées
         sorting_options = {
+            'id' : 'id',
             'nom': 'nom'
         }
 
@@ -388,27 +389,27 @@ class EditeurDelete(StaffRequiredMixin,View):
 
     def post(self, request):
         # Récupérer l'ID du livre soumis dans le formulaire
-        editeur_nom = request.POST.get('editeur_nom')
-        if editeur_nom:
+        editeur_id = request.POST.get('editeur_id')
+        if editeur_id:
             # Obtenir l'objet Livre avec l'ID fourni
-            editeur = get_object_or_404(Editeur, pk=editeur_nom)
+            editeur = get_object_or_404(Editeur, pk=editeur_id)
             # Supprimer le livre
             editeur.delete()
             # Rediriger vers la liste des livres après la suppression
             return redirect(reverse_lazy('editeurs_list'))
-        return render(request, self.template_name, {'error': "Nom de l'éditeur invalide."})
+        return render(request, self.template_name, {'error': "ID de l'éditeur invalide."})
 
 
 class EditeurUpdate(StaffRequiredMixin,View):
     template_name = 'gui/modifier_editeurs.html'
 
-    def get(self, request, nom):
-        editeur = get_object_or_404(Editeur, nom=nom)
+    def get(self, request, id):
+        editeur = get_object_or_404(Editeur, id=id)
         form = EditeurForm(instance=editeur)
         return render(request, self.template_name, {'form': form, 'editeur': editeur})
 
-    def post(self, request, nom):
-        editeur = get_object_or_404(Editeur, nom=nom)
+    def post(self, request, id):
+        editeur = get_object_or_404(Editeur, id=id)
         form = EditeurForm(request.POST, instance=editeur)
 
         if form.is_valid():
@@ -432,19 +433,19 @@ class EditeurResearch(StaffRequiredMixin,ListView):
         return Editeur.objects.all()
 
 @login_required(login_url='login')
-def saisir_nom_editeur(request):
+def saisir_ID_editeur(request):
     if request.method == 'POST':
-        form = NomEditeurForm(request.POST)
+        form = IDEditeurForm(request.POST)
         if form.is_valid():
-            nom = form.cleaned_data['nom']
+            id = form.cleaned_data['id']
 
-            if Editeur.objects.filter(nom=nom).exists():
-                return redirect(reverse('editeurs_update', kwargs={'nom': nom}))
+            if Editeur.objects.filter(id=id).exists():
+                return redirect(reverse('editeurs_update', kwargs={'id': id}))
             else:
-                return render(request, 'gui/saisir_editeur_nom.html', {'form': form, 'error': 'Editeur non trouvé.'})
+                return render(request, 'gui/saisir_editeur_ID.html', {'form': form, 'error': 'Editeur non trouvé.'})
     else:
-        form = NomEditeurForm()
-    return render(request, 'gui/saisir_editeur_nom.html', {'form': form})
+        form = IDEditeurForm()
+    return render(request, 'gui/saisir_editeur_ID.html', {'form': form})
 
 """########################################################"""
 
@@ -611,18 +612,25 @@ def create_livre(request):
         livre_form = LivreForm(request.POST)
         auteur_form = AuteurForm(request.POST)
 
-        if livre_form.is_valid() and auteur_form.is_valid():
-            # Sauvegarder l'auteur en premier
-            auteur = auteur_form.save()
+        if livre_form.is_valid():
+            # Sauvegarder le livre
+            livre = livre_form.save()
 
-            # Sauvegarder le livre et associer l'éditeur
-            livre = livre_form.save(commit=False)
-            livre.save()
+            # Créer les auteurs à partir des données soumises pour chaque auteur
+            noms_auteurs = request.POST.getlist('nom_auteur')  # Récupère tous les noms d'auteur
+            prenoms_auteurs = request.POST.getlist('prenom_auteur')  # Récupère tous les prénoms d'auteur
+            dates_naissance_auteurs = request.POST.getlist('date_naissance_auteur')  # Récupère toutes les dates de naissance
 
-            # Créer la relation entre le livre et l'auteur dans 'Ecrire'
-            Ecrire.objects.create(livre=livre, auteur=auteur)
+            for nom, prenom, date_naissance in zip(noms_auteurs, prenoms_auteurs, dates_naissance_auteurs):
+                auteur, created = Auteur.objects.get_or_create(
+                    nom=nom,
+                    prenom=prenom,
+                    date_naissance=date_naissance
+                )
+                # Associer l'auteur au livre dans la table intermédiaire 'Ecrire'
+                Ecrire.objects.create(livre=livre, auteur=auteur)
 
-            return redirect('livres_list')  # Redirige vers une page de succès
+            return redirect('livres_list')  # Redirige vers la liste des livres ou une page de succès
     else:
         livre_form = LivreForm()
         auteur_form = AuteurForm()
