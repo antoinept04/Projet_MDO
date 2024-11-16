@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from gui.models import Editeur
+from gui.models import Editeur, Illustrateur
 from gui.views import (
     VilleList, VilleCreate,
     AdresseList, AdresseCreate,
@@ -33,8 +33,8 @@ from gui.views import (
     AchatList, AchatCreate,
     ReserverList, ReserverCreate, terminer_reservation,
     loginPage, logoutUser,
-    home, create_livre, saisir_ID_editeur, EditeurUpdate, EditeurDelete, AuteurDelete, AuteurUpdate, saisir_ID_auteur,
-    AuteurResearch, EditeurResearch, saisir_ID_editeur
+    home, create_livre, EditeurUpdate, EditeurDelete, AuteurDelete, AuteurUpdate, saisir_ID_auteur,
+    AuteurResearch, EditeurResearch, saisir_ID_editeur, IllustrateurList, IllustrateurCreate, IllustrateurResearch, IllustrateurDelete, IllustrateurUpdate, saisir_ID_illustrateur, TraducteurList, TraducteurCreate, TraducteurResearch, TraducteurDelete, TraducteurUpdate, saisir_ID_traducteur,
 )
 
 urlpatterns = [
@@ -84,6 +84,21 @@ urlpatterns = [
     # Ecrire
     path('ecrits/', EcrireList.as_view(), name='ecrits_list'),
     path('ecrits/create/', EcrireCreate.as_view(), name='ecrits_create'),
+    # Illustrateur
+    path('illustrateurs/', IllustrateurList.as_view(), name='illustrateurs_list'),
+    path('illustrateurs/create/', IllustrateurCreate.as_view(), name='illustrateurs_create'),
+    path('illustrateurs/delete/', IllustrateurDelete.as_view(), name='illustrateurs_delete'),
+    path('illustrateurs/update/<int:illustrateur_id>/', IllustrateurUpdate.as_view(), name='illustrateurs_update'),
+    path('illustrateurs/research/', IllustrateurResearch.as_view(), name='illustrateurs_research'),
+    path('illustrateurs/saisir_illustrateur_ID/', saisir_ID_illustrateur, name='saisir_illustrateur_ID'),
+
+    # Traducteur
+    path('traducteurs/', TraducteurList.as_view(), name='traducteurs_list'),
+    path('traducteurs/create/', TraducteurCreate.as_view(), name='traducteurs_create'),
+    path('traducteurs/delete/', TraducteurDelete.as_view(), name='traducteurs_delete'),
+    path('traducteurs/update/<int:traducteur_id>/', TraducteurUpdate.as_view(), name='traducteurs_update'),
+    path('traducteurs/research/', TraducteurResearch.as_view(), name='traducteurs_research'),
+    path('traducteurs/saisir_traducteur_ID/', saisir_ID_traducteur, name='saisir_traducteur_ID'),
 
     # Commander
     path('commandes/', CommanderList.as_view(), name='commandes_list'),

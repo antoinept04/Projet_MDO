@@ -118,7 +118,6 @@ class Livre(models.Model):
     type = models.CharField(max_length=50, blank=True, null=True)
     genre_litteraire = models.CharField(max_length=100,blank=True, null=True)
     sous_genre = models.CharField(max_length=100,blank=True, null=True)
-    illustrateur = models.CharField(max_length=100, blank=True, null=True)
     langue = models.CharField(max_length=50,blank=True, null=True)
     format = models.CharField(max_length=50,blank=True, null=True)
     nombre_pages = models.IntegerField(blank=True,null=True)
@@ -128,7 +127,6 @@ class Livre(models.Model):
     synopsis = models.TextField(blank=True,null=True)
     prix = models.DecimalField(max_digits=10, decimal_places=2,blank=True,null=True)
     url_reference = models.URLField(blank=True, null=True)
-    traducteur = models.CharField(max_length=100, blank=True, null=True)
     quantite_disponible = models.IntegerField()
     quantite_totale = models.IntegerField()
     quantite_minimale = models.IntegerField()
@@ -153,7 +151,7 @@ class Ecrire(models.Model):
 class Illustrateur(models.Model):
     nom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100)
-    date_naissance = models.DateField()
+    date_naissance = models.DateField(blank=True,null=True)
 
     class Meta:
         db_table = 'Illustrateur'
@@ -174,7 +172,7 @@ class Illustrer(models.Model):
 class Traducteur(models.Model):
     nom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100)
-    date_naissance = models.DateField()
+    date_naissance = models.DateField(blank=True,null=True)
 
     class Meta:
         db_table = 'Traducteur'

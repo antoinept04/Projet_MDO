@@ -3,9 +3,10 @@ from django.http import  HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render,redirect,get_object_or_404
 from django.urls import reverse_lazy,reverse
 from django.views.generic import CreateView, DeleteView, UpdateView, ListView
-from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Auteur, Livre, Ecrire, Commander, Notifier, Achat, Reserver
+from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Auteur, Livre, Ecrire, Commander, Notifier, Illustrer, Traduire, \
+    Achat, Reserver, Illustrateur, Traducteur
 from .decorators import unauthenticated_user_required
-from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, IDEditeurForm, IDAuteurForm
+from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, IDEditeurForm, IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm
 
 """ NotificationForm"""
 from django.urls import reverse_lazy
@@ -481,7 +482,7 @@ class AuteurList(StaffRequiredMixin,ListView):
 
 class AuteurCreate(StaffRequiredMixin,CreateView):
     model = Auteur
-    fields = ['nom', 'prenom', 'date_naissance']
+    form_class = AuteurForm
     template_name = 'gui/ajouter_auteur.html'
     success_url = reverse_lazy('auteurs_list')
 
@@ -573,7 +574,9 @@ class LivreList(StaffRequiredMixin,ListView):
     def get_queryset(self):
         # Précharger les relations pour optimiser les requêtes
         queryset = Livre.objects.prefetch_related(
-            Prefetch('ecrire_set', queryset=Ecrire.objects.select_related('auteur'))
+            Prefetch('ecrire_set', queryset=Ecrire.objects.select_related('auteur')),
+            Prefetch('illustrer_set', queryset=Illustrer.objects.select_related('illustrateur')),
+            Prefetch('traduire_set', queryset=Traduire.objects.select_related('traducteur')),
         )
 
         # Récupérer les paramètres GET
@@ -588,10 +591,11 @@ class LivreList(StaffRequiredMixin,ListView):
             'isbn13': 'isbn13',
             'titre': 'titre',
             'auteur_nom': 'ecrire_set__auteur__nom',
+            'illustrateur_nom' : 'illustrer_set__illustrateur__nom',
+            'traducteur_nom' : 'traduire_set__traducteur__nom',
             'type': 'type',
             'genre_litteraire': 'genre_litteraire',
             'sous_genre': 'sous_genre',
-            'illustrateur': 'illustrateur',
             'langue': 'langue',
             'format': 'format',
             'date_parution': 'date_parution',
@@ -610,35 +614,64 @@ class LivreList(StaffRequiredMixin,ListView):
 def create_livre(request):
     if request.method == 'POST':
         livre_form = LivreForm(request.POST)
-        auteur_form = AuteurForm(request.POST)
 
         if livre_form.is_valid():
             # Sauvegarder le livre
             livre = livre_form.save()
 
-            # Créer les auteurs à partir des données soumises pour chaque auteur
-            noms_auteurs = request.POST.getlist('nom_auteur')  # Récupère tous les noms d'auteur
-            prenoms_auteurs = request.POST.getlist('prenom_auteur')  # Récupère tous les prénoms d'auteur
+            # Récupérer les informations des auteurs depuis le formulaire
+            noms_auteurs = request.POST.getlist('nom_auteur')  # Récupère tous les noms d'auteurs
+            prenoms_auteurs = request.POST.getlist('prenom_auteur')  # Récupère tous les prénoms d'auteurs
             dates_naissance_auteurs = request.POST.getlist('date_naissance_auteur')  # Récupère toutes les dates de naissance
 
             for nom, prenom, date_naissance in zip(noms_auteurs, prenoms_auteurs, dates_naissance_auteurs):
-                auteur, created = Auteur.objects.get_or_create(
-                    nom=nom,
-                    prenom=prenom,
-                    date_naissance=date_naissance
-                )
-                # Associer l'auteur au livre dans la table intermédiaire 'Ecrire'
-                Ecrire.objects.create(livre=livre, auteur=auteur)
+                if nom and prenom:  # Vérifier que les informations sont présentes
+                    auteur, created = Auteur.objects.get_or_create(
+                        nom=nom,
+                        prenom=prenom,
+                        date_naissance=date_naissance if date_naissance else None
+                    )
+                    # Associer l'auteur au livre dans la table intermédiaire 'Ecrire'
+                    Ecrire.objects.create(livre=livre, auteur=auteur)
+
+            # Gérer les traducteurs
+            noms_traducteurs = request.POST.getlist('nom_traducteur')
+            prenoms_traducteurs = request.POST.getlist('prenom_traducteur')
+            dates_naissance_traducteurs = request.POST.getlist('date_naissance_traducteur')
+
+            for nom, prenom, date_naissance in zip(noms_traducteurs, prenoms_traducteurs, dates_naissance_traducteurs):
+                if nom and prenom:
+                    traducteur, created = Traducteur.objects.get_or_create(
+                        nom=nom,
+                        prenom=prenom,
+                        date_naissance=date_naissance if date_naissance else None
+                    )
+                    # Associer le traducteur au livre
+                    Traduire.objects.create(livre=livre, traducteur=traducteur)
+
+            # Gérer les illustrateurs
+            noms_illustrateurs = request.POST.getlist('nom_illustrateur')
+            prenoms_illustrateurs = request.POST.getlist('prenom_illustrateur')
+            dates_naissance_illustrateurs = request.POST.getlist('date_naissance_illustrateur')
+
+            for nom, prenom, date_naissance in zip(noms_illustrateurs, prenoms_illustrateurs, dates_naissance_illustrateurs):
+                if nom and prenom:
+                    illustrateur, created = Illustrateur.objects.get_or_create(
+                        nom=nom,
+                        prenom=prenom,
+                        date_naissance=date_naissance if date_naissance else None
+                    )
+                    # Associer l'illustrateur au livre
+                    Illustrer.objects.create(livre=livre, illustrateur=illustrateur)
 
             return redirect('livres_list')  # Redirige vers la liste des livres ou une page de succès
     else:
         livre_form = LivreForm()
-        auteur_form = AuteurForm()
 
     return render(request, 'gui/ajouter_livre.html', {
         'livre_form': livre_form,
-        'auteur_form': auteur_form,
     })
+
 
 
 class LivreDelete(StaffRequiredMixin,View):
@@ -741,7 +774,228 @@ class EcrireCreate(StaffRequiredMixin,CreateView):
     success_url = reverse_lazy('ecrits_list')
 
 """########################################################"""
+class IllustrateurList(StaffRequiredMixin,ListView):
+    model = Illustrateur
+    template_name = 'gui/lister_illustrateurs.html'
 
+    def get_queryset(self):
+        # Récupérer les paramètres GET
+        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : tri par 'nom'
+        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+
+        # Définir le préfixe pour la direction du tri
+        sort_prefix = '' if order == 'asc' else '-'
+
+        # Options de tri supportées
+        sorting_options = {
+            'id':'id',
+            'nom': 'nom',
+            'prenom': 'prenom',
+        }
+
+        # Récupérer le queryset initial
+        queryset = super().get_queryset()
+
+        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
+        if sort_by in sorting_options:
+            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
+
+        return queryset
+
+class IllustrateurCreate(StaffRequiredMixin, CreateView):
+    model = Illustrateur
+    form_class = IllustrateurForm
+    template_name = 'gui/ajouter_illustrateur.html'
+    success_url = reverse_lazy('illustrateurs_list')
+
+class IllustrateurDelete(StaffRequiredMixin,View):
+    template_name = 'gui/supprimer_illustrateur.html'
+
+    def get(self, request):
+        # Afficher le formulaire où l'utilisateur entre l'ID du livre
+        return render(request, self.template_name)
+
+    def post(self, request):
+        # Récupérer l'ID du livre soumis dans le formulaire
+        illustrateur_id = request.POST.get('illustrateur_id')
+        if illustrateur_id:
+            # Obtenir l'objet Livre avec l'ID fourni
+            illustrateur = get_object_or_404(Illustrateur, pk=illustrateur_id)
+            # Supprimer le livre
+            illustrateur.delete()
+            # Rediriger vers la liste des livres après la suppression
+            return redirect(reverse_lazy('illustrateurs_list'))
+        return render(request, self.template_name, {'error': "ID de l'illustrateur invalide."})
+
+
+class IllustrateurUpdate(StaffRequiredMixin,View):
+    template_name = 'gui/modifier_illustrateur.html'
+
+    def get(self, request, illustrateur_id):
+        illustrateur = get_object_or_404(Illustrateur, id=illustrateur_id)
+        form = IllustrateurForm(instance=illustrateur)
+        return render(request, self.template_name, {'form': form, 'illustrateur': illustrateur})
+
+    def post(self, request, illustrateur_id):
+        illustrateur = get_object_or_404(Illustrateur, id=illustrateur_id)
+        form = IllustrateurForm(request.POST, instance=illustrateur)
+
+        if form.is_valid():
+            form.save()
+            return redirect('illustrateurs_list')  # Rediriger vers la liste des livres après modification
+
+        return render(request, self.template_name, {'form': form, 'illustrateur': illustrateur})
+
+class IllustrateurResearch(StaffRequiredMixin,ListView):
+    model = Illustrateur
+    template_name = 'gui/lister_illustrateurs.html'
+
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+
+        if search_query:
+            # Diviser la chaîne de recherche en mots-clés
+            keywords = search_query.split()
+            query = Q()
+
+            for keyword in keywords:
+                # Ajouter chaque mot aux différents champs de recherche
+                query |= Q(nom__icontains=keyword) | \
+                         Q(prenom__icontains=keyword)|\
+                        Q(id__icontains=keyword)
+
+            # Retourner les livres correspondant aux critères
+            return Illustrateur.objects.filter(query).distinct()
+
+        # Si aucun terme de recherche, retourner tous les livres
+        return Illustrateur.objects.all()
+
+@login_required(login_url='login')
+def saisir_ID_illustrateur(request):
+    if request.method == 'POST':
+        form = IDIllustrateurForm(request.POST)
+        if form.is_valid():
+            illustrateur_id = form.cleaned_data['illustrateur_id']
+
+            if Illustrateur.objects.filter(id=illustrateur_id).exists():
+                return redirect(reverse('illustrateurs_update', kwargs={'illustrateur_id': illustrateur_id}))
+            else:
+                return render(request, 'gui/saisir_illustrateur_ID.html', {'form': form, 'error': 'Illustrateur non trouvé.'})
+    else:
+        form = IDIllustrateurForm()
+    return render(request, 'gui/saisir_illustrateur_ID.html', {'form': form})
+"""##############################################################"""
+class TraducteurList(StaffRequiredMixin, ListView):
+    model = Traducteur
+    template_name = 'gui/lister_traducteurs.html'
+
+    def get_queryset(self):
+        # Récupérer les paramètres GET
+        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : tri par 'nom'
+        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+
+        # Définir le préfixe pour la direction du tri
+        sort_prefix = '' if order == 'asc' else '-'
+
+        # Options de tri supportées
+        sorting_options = {
+            'id':'id',
+            'nom': 'nom',
+            'prenom': 'prenom',
+        }
+
+        # Récupérer le queryset initial
+        queryset = super().get_queryset()
+
+        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
+        if sort_by in sorting_options:
+            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
+
+        return queryset
+
+class TraducteurCreate(StaffRequiredMixin, CreateView):
+    model = Traducteur
+    form_class = TraducteurForm
+    template_name = 'gui/ajouter_traducteur.html'
+    success_url = reverse_lazy('traducteurs_list')
+
+class TraducteurDelete(StaffRequiredMixin, View):
+    template_name = 'gui/supprimer_traducteur.html'
+
+    def get(self, request):
+        # Afficher le formulaire où l'utilisateur entre l'ID du traducteur
+        return render(request, self.template_name)
+
+    def post(self, request):
+        # Récupérer l'ID du traducteur soumis dans le formulaire
+        traducteur_id = request.POST.get('traducteur_id')
+        if traducteur_id:
+            # Obtenir l'objet Traducteur avec l'ID fourni
+            traducteur = get_object_or_404(Traducteur, pk=traducteur_id)
+            # Supprimer le traducteur
+            traducteur.delete()
+            # Rediriger vers la liste des traducteurs après la suppression
+            return redirect(reverse_lazy('traducteurs_list'))
+        return render(request, self.template_name, {'error': "ID du traducteur invalide."})
+
+class TraducteurUpdate(StaffRequiredMixin, View):
+    template_name = 'gui/modifier_traducteur.html'
+
+    def get(self, request, traducteur_id):
+        traducteur = get_object_or_404(Traducteur, id=traducteur_id)
+        form = TraducteurForm(instance=traducteur)
+        return render(request, self.template_name, {'form': form, 'traducteur': traducteur})
+
+    def post(self, request, traducteur_id):
+        traducteur = get_object_or_404(Traducteur, id=traducteur_id)
+        form = TraducteurForm(request.POST, instance=traducteur)
+
+        if form.is_valid():
+            form.save()
+            return redirect('traducteurs_list')  # Rediriger vers la liste des traducteurs après modification
+
+        return render(request, self.template_name, {'form': form, 'traducteur': traducteur})
+
+class TraducteurResearch(StaffRequiredMixin, ListView):
+    model = Traducteur
+    template_name = 'gui/lister_traducteurs.html'
+
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+
+        if search_query:
+            # Diviser la chaîne de recherche en mots-clés
+            keywords = search_query.split()
+            query = Q()
+
+            for keyword in keywords:
+                # Ajouter chaque mot aux différents champs de recherche
+                query |= Q(nom__icontains=keyword) | \
+                         Q(prenom__icontains=keyword) | \
+                         Q(id__icontains=keyword)
+
+            # Retourner les traducteurs correspondant aux critères
+            return Traducteur.objects.filter(query).distinct()
+
+        # Si aucun terme de recherche, retourner tous les traducteurs
+        return Traducteur.objects.all()
+
+@login_required(login_url='login')
+def saisir_ID_traducteur(request):
+    if request.method == 'POST':
+        form = IDTraducteurForm(request.POST)
+        if form.is_valid():
+            traducteur_id = form.cleaned_data['traducteur_id']
+
+            if Traducteur.objects.filter(id=traducteur_id).exists():
+                return redirect(reverse('traducteurs_update', kwargs={'traducteur_id': traducteur_id}))
+            else:
+                return render(request, 'gui/saisir_traducteur_ID.html', {'form': form, 'error': 'Traducteur non trouvé.'})
+    else:
+        form = IDTraducteurForm()
+    return render(request, 'gui/saisir_traducteur_ID.html', {'form': form})
+
+"""##############################################################"""
 
 class CommanderList(StaffRequiredMixin,ListView):
     model = Commander

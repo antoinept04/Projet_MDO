@@ -1,6 +1,6 @@
 # forms.py
 from django import forms
-from .models import Personne, Livre, Auteur, Editeur, Adresse, Commander, Ville, Notifier
+from .models import Personne, Livre, Auteur, Editeur, Adresse, Commander, Ville, Notifier, Illustrateur, Traducteur
 
 """-------------------AJOUTER-PERSONNE--------------------"""
 
@@ -54,14 +54,13 @@ class AuteurForm(forms.ModelForm):
                 }),
         }
 
-
 class LivreForm(forms.ModelForm):
     editeur_nom = forms.CharField(max_length=255, required=False, label="Nom de l'éditeur")
     class Meta:
         model = Livre
-        fields = ['isbn13', 'titre', 'type', 'genre_litteraire', 'sous_genre', 'illustrateur', 'langue',
+        fields = ['isbn13', 'titre', 'type', 'genre_litteraire', 'sous_genre', 'langue',
                   'format', 'nombre_pages', 'dimensions', 'date_parution', 'localisation', 'synopsis',
-                  'prix', 'url_reference', 'traducteur', 'quantite_disponible', 'quantite_totale',
+                  'prix', 'url_reference', 'quantite_disponible', 'quantite_totale',
                   'quantite_minimale', 'editeur_nom']
         labels = {
             'isbn13' : "ISBN13",
@@ -69,7 +68,6 @@ class LivreForm(forms.ModelForm):
             'type' : "Type (roman, BD, manga, comics)",
             'genre_litteraire' : "Genre littéraire",
             'sous_genre' : "Sous-genre littéraire",
-            'illustrateur' : "Illustrateur",
             'langue' : "Langue",
             'format' : "Format",
             'nombre_pages' : "Nombre de pages",
@@ -79,7 +77,6 @@ class LivreForm(forms.ModelForm):
             'synopsis' : "Synopsis",
             'prix' : "Prix",
             'url_reference' : "URL de reference",
-            'traducteur' : "Traducteur",
             'quantite_disponible' : "Quantité disponible",
             'quantite_totale' : "Quantité totale",
             'quantite_minimale' : "Quantité minimale",
@@ -129,3 +126,44 @@ class CommanderForm(forms.ModelForm):
         widgets = {
             'date_commande': forms.DateInput(attrs={'type': 'date'}),
         }
+
+class IllustrateurForm(forms.ModelForm):
+    class Meta:
+        model = Illustrateur  # Remplacez par le nom correct du modèle si ce n'est pas "Illustrateur"
+        fields = ['nom', 'prenom', 'date_naissance']
+        labels = {
+            'nom': "Nom de l'illustrateur",
+            'prenom': "Prénom de l'illustrateur",
+            'date_naissance': "Date de naissance",
+        }
+        widgets = {
+            'date_naissance': forms.DateInput(
+                attrs={
+                    'placeholder': 'JJ/MM/AAAA',
+                    'type': 'date',
+                }),
+        }
+
+class IDIllustrateurForm(forms.Form):
+    illustrateur_id = forms.IntegerField(label="ID d'illustrateur")
+
+class TraducteurForm(forms.ModelForm):
+    class Meta:
+        model = Traducteur  # Remplacez par le nom correct du modèle si ce n'est pas "Traducteur"
+        fields = ['nom', 'prenom', 'date_naissance']
+        labels = {
+            'nom': "Nom du traducteur",
+            'prenom': "Prénom du traducteur",
+            'date_naissance': "Date de naissance",
+        }
+        widgets = {
+            'date_naissance': forms.DateInput(
+                attrs={
+                    'placeholder': 'JJ/MM/AAAA',
+                    'type': 'date',
+                }),
+        }
+
+class IDTraducteurForm(forms.Form):
+    traducteur_id = forms.IntegerField(label="ID du traducteur")
+
