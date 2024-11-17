@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.models import BaseUserManager
 from django.utils import timezone
-
+import datetime
 
 
 class Ville(models.Model):
@@ -84,13 +84,13 @@ class Personne(AbstractBaseUser, PermissionsMixin):
         return f"{self.nom} {self.prenom}"
 
 class Fournisseur(models.Model):
-    nom = models.CharField(max_length=100)
+    nom_fournisseur = models.CharField(max_length=100)
 
     class Meta:
         db_table = 'Fournisseur'
 
     def __str__(self):
-        return self.nom
+        return self.nom_fournisseur
 
 class Editeur(models.Model):
     nom = models.CharField(max_length=100)
@@ -100,17 +100,6 @@ class Editeur(models.Model):
 
     def __str__(self):
         return self.nom
-
-class Auteur(models.Model):
-    nom = models.CharField(max_length=100)
-    prenom = models.CharField(max_length=100)
-    date_naissance = models.DateField(blank=True,null=True)
-
-    class Meta:
-        db_table = 'Auteur'
-
-    def __str__(self):
-        return f"{self.nom} {self.prenom}"
 
 class Livre(models.Model):
     isbn13 = models.CharField(max_length=13, primary_key=True)
@@ -138,6 +127,39 @@ class Livre(models.Model):
     def __str__(self):
         return self.titre
 
+    def save(self, *args, **kwargs):
+        # Vérifie si la quantité disponible est en dessous du minimum requis
+        notification_exists = Notifier.objects.filter(livre=self, type='quantite_min', termine=False).exists()
+
+        # Si la quantité est en dessous du minimum et qu'aucune notification n'existe, en crée une
+        if self.quantite_disponible < self.quantite_minimale:
+            if not notification_exists:
+                Notifier.objects.create(
+                    personne=None,  # Pas de personne spécifique
+                    livre=self,
+                    quantite=self.quantite_disponible,
+                    type='quantite_min',
+                    commentaire=f"La quantité disponible de '{self.titre}' est en dessous du seuil minimum ({self.quantite_minimale})."
+                )
+        else:
+            # Si la quantité est au-dessus du minimum et une notification existe, la supprimer
+            if notification_exists:
+                notification = Notifier.objects.filter(livre=self, type='quantite_min', termine=False).first()
+                notification.delete()
+
+        # Appelle la méthode save de la classe parente pour effectuer la sauvegarde réelle
+        super().save(*args, **kwargs)
+
+class Auteur(models.Model):
+    nom = models.CharField(max_length=100)
+    prenom = models.CharField(max_length=100)
+    date_naissance = models.DateField(blank=True,null=True)
+
+    class Meta:
+        db_table = 'Auteur'
+
+    def __str__(self):
+        return f"{self.nom} {self.prenom}"
 class Ecrire(models.Model):
     livre = models.ForeignKey(Livre, on_delete=models.CASCADE, related_name="ecrire_set")
     auteur = models.ForeignKey(Auteur, on_delete=models.CASCADE)
@@ -158,7 +180,6 @@ class Illustrateur(models.Model):
 
     def __str__(self):
         return f"{self.nom} {self.prenom}"
-
 class Illustrer(models.Model):
     livre = models.ForeignKey(Livre, on_delete=models.CASCADE, related_name="illustrer_set")
     illustrateur = models.ForeignKey(Illustrateur, on_delete=models.CASCADE)
@@ -179,7 +200,6 @@ class Traducteur(models.Model):
 
     def __str__(self):
         return f"{self.nom} {self.prenom}"
-
 class Traduire(models.Model):
     livre = models.ForeignKey(Livre, on_delete=models.CASCADE, related_name="traduire_set")
     traducteur = models.ForeignKey(Traducteur, on_delete=models.CASCADE)
@@ -189,34 +209,6 @@ class Traduire(models.Model):
 
     def __str__(self):
         return f"{self.traducteur.nom} a écrit {self.livre.titre}"
-
-class Commander(models.Model):
-    personne = models.ForeignKey(Personne, on_delete=models.CASCADE)
-    livre = models.ForeignKey(Livre, on_delete=models.CASCADE)
-    date_commande = models.DateField()
-    quantite = models.IntegerField()
-    statut = models.CharField(max_length=50)
-
-    class Meta:
-        db_table = 'Commander'
-
-    def __str__(self):
-        return f"Commande de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
-
-class Notifier(models.Model):
-    personne = models.ForeignKey(Personne, on_delete=models.CASCADE)
-    livre = models.ForeignKey(Livre, on_delete=models.CASCADE)
-    quantite = models.IntegerField()
-    type = models.CharField(max_length=50)
-    commentaire = models.TextField()
-    date_creation = models.DateTimeField(default=timezone.now)
-    termine = models.BooleanField(default=False)
-
-    class Meta:
-        db_table = 'Notifier'
-
-    def __str__(self):
-        return f"Notification de {self.personne.nom} pour {self.livre.titre}"
 
 class Achat(models.Model):
     personne = models.ForeignKey(Personne, on_delete=models.CASCADE)
@@ -230,12 +222,38 @@ class Achat(models.Model):
     def __str__(self):
         return f"Achat de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
 
-class Reserver(models.Model):
+class Commander(models.Model):
+    STATUT_CHOICES = [
+        ('en cours', 'En cours'),
+        ('terminé', 'Terminé'),
+    ]
+
     personne = models.ForeignKey(Personne, on_delete=models.CASCADE)
     livre = models.ForeignKey(Livre, on_delete=models.CASCADE)
-    quantite = models.IntegerField()
-    statut = models.CharField(max_length=50)
-    date_reservation = models.DateField()
+    date_commande = models.DateField(default=datetime.date.today)
+    quantite = models.PositiveIntegerField()
+    fournisseur = models.ForeignKey(Fournisseur, null=True, blank=True, on_delete=models.SET_NULL)  # Replace 1 with the actual Fournisseur ID
+    statut = models.CharField(max_length=50, choices=STATUT_CHOICES, default='en cours')
+
+
+    class Meta:
+        db_table = 'Commander'
+
+    def __str__(self):
+        return f"Commande de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
+
+
+class Reserver(models.Model):
+    STATUT_CHOICES = [
+        ('en cours', 'En cours'),
+        ('terminé', 'Terminé'),
+    ]
+    personne = models.ForeignKey(Personne, on_delete=models.CASCADE)
+    livre = models.ForeignKey(Livre, on_delete=models.CASCADE)
+    date_reservation = models.DateField(default=datetime.date.today)
+    quantite = models.PositiveIntegerField()
+    statut = models.CharField(max_length=50,choices=STATUT_CHOICES, default='en cours')
+
 
     class Meta:
         db_table = 'Reserver'
@@ -243,3 +261,17 @@ class Reserver(models.Model):
     def __str__(self):
         return f"Réservation de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
 
+class Notifier(models.Model):
+    personne = models.ForeignKey(Personne, on_delete=models.CASCADE, null=True, blank=True)  # Autorise les valeurs NULL
+    livre = models.ForeignKey(Livre, on_delete=models.CASCADE)
+    quantite = models.IntegerField()
+    type = models.CharField(max_length=50)
+    commentaire = models.TextField()
+    date_creation = models.DateTimeField(default=timezone.now)
+    termine = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'Notifier'
+
+    def __str__(self):
+        return f"Notification pour {self.livre.titre} ({self.type})"

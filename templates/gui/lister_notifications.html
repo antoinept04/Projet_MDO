@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+        }
+        table th, table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        table th {
+            background-color: #007BFF;
+            color: white;
+        }
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .add-button {
+            display: block;
+            width: fit-content;
+            margin: 20px auto;
+            padding: 10px 20px;
+            text-align: center;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .add-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<div class="button-container">
+    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
+</div>
+<h1>Notifications</h1>
+
+<h2>Commandes</h2>
+<ul>
+    {% for notif in notifications_commande %}
+    <li>{{ notif.date_creation }} - {{ notif.commentaire }}</li>
+    {% empty %}
+    <li>Aucune notification pour les commandes.</li>
+    {% endfor %}
+</ul>
+
+<h2>Stock</h2>
+<ul>
+    {% for notif in notifications_quantite_min %}
+    <li>{{ notif.date_creation }} - {{ notif.commentaire }}</li>
+    {% empty %}
+    <li>Aucune notification liée au stock.</li>
+    {% endfor %}
+</ul>
+
+<h2>Réservations</h2>
+<ul>
+    {% for notif in notifications_reservation %}
+    <li>{{ notif.date_creation }} - {{ notif.commentaire }}</li>
+    {% empty %}
+    <li>Aucune notification pour les réservations.</li>
+    {% endfor %}
+</ul>
+</body>
+</html>

@@ -1,25 +1,23 @@
-from django.contrib.auth.decorators import login_required
-from django.http import  HttpResponseRedirect, HttpResponseForbidden
-from django.shortcuts import render,redirect,get_object_or_404
-from django.urls import reverse_lazy,reverse
-from django.views.generic import CreateView, DeleteView, UpdateView, ListView
+from datetime import timedelta
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required #accès aux pages seulement si login
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db.models import Q, Prefetch
+from django.http import HttpResponseRedirect, HttpResponseForbidden #rediriger vers une autre url, refuser l'accès à une url
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy, reverse
+from django.utils.timezone import now
+from django.views.generic import ListView, CreateView, DeleteView, UpdateView, View, TemplateView
 from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Auteur, Livre, Ecrire, Commander, Notifier, Illustrer, Traduire, \
     Achat, Reserver, Illustrateur, Traducteur
 from .decorators import unauthenticated_user_required
-from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, IDEditeurForm, IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm
-
-""" NotificationForm"""
-from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, View
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
-from django.db.models import Q, Prefetch
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, IDEditeurForm, \
+    IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm, CommanderForm, ReserverForm
 
 
-
-"""########################################################"""
+"""------------------------------LOGIN/LOGOUT------------------------------"""
 
 @unauthenticated_user_required
 def loginPage(request):
@@ -34,7 +32,6 @@ def loginPage(request):
         else:
             messages.info(request, "L'email ou le mot de passe est incorrect")
 
-
     context = {}
     return render(request, 'gui/login.html', context)
 
@@ -44,10 +41,12 @@ def logoutUser(request):
 
     return redirect('login')
 
-"""########################################################"""
+
+"""------------------------------HOMEPAGE------------------------------"""
 @login_required(login_url='login')
 def home(request):
     return render(request, 'gui/homepage.html')
+
 
 """########################################################"""
 #Super classe définissant les permissions
@@ -60,13 +59,11 @@ class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
         return self.request.user.is_staff
 
 
-# 3. Classe Role
+"""------------------------------GERER-LES-ROLES------------------------------"""
 
 class RoleList(StaffRequiredMixin,ListView):
     model = Role
     template_name = 'gui/lister_roles.html'
-
-
 
 class RoleCreate(StaffRequiredMixin,CreateView):
     model = Role
@@ -75,14 +72,11 @@ class RoleCreate(StaffRequiredMixin,CreateView):
     success_url = reverse_lazy('roles_list')
 
 
-
-"""########################################################"""
+"""------------------------------GERER-LES-VILLES------------------------------"""
 
 class VilleList(StaffRequiredMixin,ListView):
     model = Ville
     template_name = 'gui/lister_villes.html'
-
-
 
 class VilleCreate(StaffRequiredMixin,CreateView):
     model = Ville
@@ -119,10 +113,13 @@ def ville_create(request):
     return render(request, 'gui/ajouter_ville.html', {
         'form_ville': form_ville
     })
+
+
+"""------------------------------GERER-LES-ADRESSES------------------------------"""
+
 class AdresseList(StaffRequiredMixin,ListView):
     model = Adresse
     template_name = 'gui/lister_adresses.html'
-
 
 class AdresseCreate(StaffRequiredMixin,CreateView):
     model = Adresse
@@ -184,13 +181,13 @@ def adresse_create(request):
         'form_adresse': form_adresse,
         'form_ville': form_ville
     })
-"""########################################################"""
 
+
+"""------------------------------GERER-LES-PERSONNES------------------------------"""
 
 class PersonneList(StaffRequiredMixin, ListView):
     model = Personne
     template_name = 'gui/lister_personnes.html'
-
 
 def personne_create(request):
     # Initialiser les formulaires
@@ -327,14 +324,12 @@ def personne_create(request):
         'form_ville': form_ville
     })
 
-"""########################################################"""
 
+"""------------------------------GERER-LES-FOURNISSEURS------------------------------"""
 
-# 5. Classe Fournisseur
 class FournisseurList(StaffRequiredMixin,ListView):
     model = Fournisseur
     template_name = 'gui/lister_fournisseurs.html'
-
 
 class FournisseurCreate(StaffRequiredMixin,CreateView):
     model = Fournisseur
@@ -342,8 +337,8 @@ class FournisseurCreate(StaffRequiredMixin,CreateView):
     template_name = 'gui/ajouter_fournisseur.html'
     success_url = reverse_lazy('fournisseurs_list')
 
-"""########################################################"""
 
+"""------------------------------GERER-LES-EDITEURS------------------------------"""
 
 class EditeurList(ListView):
     model = Editeur
@@ -372,14 +367,11 @@ class EditeurList(ListView):
 
         return queryset
 
-
-
 class EditeurCreate(StaffRequiredMixin,CreateView):
     model = Editeur
     fields = ['nom']
     template_name = 'gui/ajouter_editeur.html'
     success_url = reverse_lazy('editeurs_list')
-
 
 class EditeurDelete(StaffRequiredMixin,View):
     template_name = 'gui/supprimer_editeur.html'
@@ -399,7 +391,6 @@ class EditeurDelete(StaffRequiredMixin,View):
             # Rediriger vers la liste des livres après la suppression
             return redirect(reverse_lazy('editeurs_list'))
         return render(request, self.template_name, {'error': "ID de l'éditeur invalide."})
-
 
 class EditeurUpdate(StaffRequiredMixin,View):
     template_name = 'gui/modifier_editeurs.html'
@@ -448,8 +439,8 @@ def saisir_ID_editeur(request):
         form = IDEditeurForm()
     return render(request, 'gui/saisir_editeur_ID.html', {'form': form})
 
-"""########################################################"""
 
+"""------------------------------GERER-LES-AUTEURS------------------------------"""
 
 class AuteurList(StaffRequiredMixin,ListView):
     model = Auteur
@@ -479,13 +470,11 @@ class AuteurList(StaffRequiredMixin,ListView):
 
         return queryset
 
-
 class AuteurCreate(StaffRequiredMixin,CreateView):
     model = Auteur
     form_class = AuteurForm
     template_name = 'gui/ajouter_auteur.html'
     success_url = reverse_lazy('auteurs_list')
-
 
 class AuteurDelete(StaffRequiredMixin,View):
     template_name = 'gui/supprimer_auteur.html'
@@ -505,7 +494,6 @@ class AuteurDelete(StaffRequiredMixin,View):
             # Rediriger vers la liste des livres après la suppression
             return redirect(reverse_lazy('auteurs_list'))
         return render(request, self.template_name, {'error': "ID de l'auteur invalide."})
-
 
 class AuteurUpdate(StaffRequiredMixin,View):
     template_name = 'gui/modifier_auteur.html'
@@ -564,8 +552,8 @@ def saisir_ID_auteur(request):
         form = IDAuteurForm()
     return render(request, 'gui/saisir_auteur_ID.html', {'form': form})
 
-"""########################################################"""
 
+"""------------------------------GERER-LES-LIVRES------------------------------"""
 
 class LivreList(StaffRequiredMixin,ListView):
     model = Livre
@@ -672,8 +660,6 @@ def create_livre(request):
         'livre_form': livre_form,
     })
 
-
-
 class LivreDelete(StaffRequiredMixin,View):
     template_name = 'gui/supprimer_livre.html'
 
@@ -693,7 +679,6 @@ class LivreDelete(StaffRequiredMixin,View):
             return redirect(reverse_lazy('livres_list'))
         return render(request, self.template_name, {'error': 'ID du livre invalide.'})
 
-
 class LivreUpdate(StaffRequiredMixin,View):
     template_name = 'gui/modifier_livres.html'
 
@@ -711,7 +696,6 @@ class LivreUpdate(StaffRequiredMixin,View):
             return redirect('livres_list')  # Rediriger vers la liste des livres après modification
 
         return render(request, self.template_name, {'form': form, 'livre': livre})
-
 
 class LivreResearch(StaffRequiredMixin,ListView):
     model = Livre
@@ -760,12 +744,12 @@ def saisir_isbn(request):
         form = ISBNForm()
     return render(request, 'gui/saisir_isbn.html', {'form': form})
 
-"""########################################################"""
+
+"""------------------------------LIEN-LIVRE/AUTEUR------------------------------"""
 
 class EcrireList(StaffRequiredMixin,ListView):
     model = Ecrire
     template_name = 'gui/lister_ecrits.html'
-
 
 class EcrireCreate(StaffRequiredMixin,CreateView):
     model = Ecrire
@@ -773,7 +757,9 @@ class EcrireCreate(StaffRequiredMixin,CreateView):
     template_name = 'gui/ajouter_ecrire.html'
     success_url = reverse_lazy('ecrits_list')
 
-"""########################################################"""
+
+"""------------------------------GERER-LES-ILLUSTRATEURS------------------------------"""
+
 class IllustrateurList(StaffRequiredMixin,ListView):
     model = Illustrateur
     template_name = 'gui/lister_illustrateurs.html'
@@ -826,7 +812,6 @@ class IllustrateurDelete(StaffRequiredMixin,View):
             # Rediriger vers la liste des livres après la suppression
             return redirect(reverse_lazy('illustrateurs_list'))
         return render(request, self.template_name, {'error': "ID de l'illustrateur invalide."})
-
 
 class IllustrateurUpdate(StaffRequiredMixin,View):
     template_name = 'gui/modifier_illustrateur.html'
@@ -884,7 +869,10 @@ def saisir_ID_illustrateur(request):
     else:
         form = IDIllustrateurForm()
     return render(request, 'gui/saisir_illustrateur_ID.html', {'form': form})
-"""##############################################################"""
+
+
+"""------------------------------GERER-LES-TRADUCTEURS------------------------------"""
+
 class TraducteurList(StaffRequiredMixin, ListView):
     model = Traducteur
     template_name = 'gui/lister_traducteurs.html'
@@ -995,53 +983,253 @@ def saisir_ID_traducteur(request):
         form = IDTraducteurForm()
     return render(request, 'gui/saisir_traducteur_ID.html', {'form': form})
 
-"""##############################################################"""
 
-class CommanderList(StaffRequiredMixin,ListView):
+"""------------------------------GERER-LES-ACHATS------------------------------"""
+
+class AchatList(StaffRequiredMixin,ListView):
+    model = Achat
+    template_name = 'gui/lister_achats.html'
+
+class AchatCreate(StaffRequiredMixin,CreateView):
+    model = Achat
+    fields = ['personne', 'livre', 'quantite', 'date_achat']
+    template_name = 'gui/ajouter_achat.html'
+    success_url = reverse_lazy('achats_list')
+
+
+"""------------------------------GERER-LES-COMMANDES------------------------------"""
+
+class CommanderList(StaffRequiredMixin, ListView):
     model = Commander
     template_name = 'gui/lister_commandes.html'
+    context_object_name = 'commandes'
+
+    def get_queryset(self):
+        # Récupérer les paramètres GET pour le tri et la recherche
+        search_query = self.request.GET.get('search', '')
+        sort_by = self.request.GET.get('sort_by', 'date_commande')  # Par défaut : tri par date_commande
+        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+
+        sort_prefix = '' if order == 'asc' else '-'
+        valid_sort_fields = ['date_commande', 'quantite', 'statut']
+
+        # Assurer que le champ de tri est valide
+        if sort_by not in valid_sort_fields:
+            sort_by = 'date_commande'
+
+        # Appliquer le tri
+        queryset = Commander.objects.order_by(f"{sort_prefix}{sort_by}")
+
+        # Si un terme de recherche est présent
+        if search_query:
+            queryset = queryset.filter(
+                Q(personne__nom__icontains=search_query) |
+                Q(livre__titre__icontains=search_query) |
+                Q(date_commande__icontains=search_query) |
+                Q(fournisseur__nom_fournisseur__icontains=search_query)
+            )
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['commandes_en_cours'] = Commander.objects.filter(statut='en cours')
-        context['commandes_terminees'] = Commander.objects.filter(statut='terminé')
-        return context
 
+        # Récupérer les commandes en cours et terminées
+        commandes_en_cours = Commander.objects.filter(statut='en cours')
+        commandes_terminees = Commander.objects.filter(statut='terminé')
+
+        # Appliquer le tri si un paramètre de tri est défini
+        sort_by = self.request.GET.get('sort_by', 'date_commande')
+        order = self.request.GET.get('order', 'asc')
+        sort_prefix = '' if order == 'asc' else '-'
+
+        commandes_en_cours = commandes_en_cours.order_by(f"{sort_prefix}{sort_by}")
+        commandes_terminees = commandes_terminees.order_by(f"{sort_prefix}{sort_by}")
+
+        context['commandes_en_cours'] = commandes_en_cours
+        context['commandes_terminees'] = commandes_terminees
+        return context
 
 class CommanderCreate(StaffRequiredMixin,CreateView):
     model = Commander
-    fields =['personne', 'livre', 'date_commande', 'quantite', 'statut']
+    form_class = CommanderForm
     template_name = 'gui/ajouter_commande.html'
     success_url = reverse_lazy('commandes_list')
 
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.save()
+        return super().form_valid(form)
+
+class CommanderUpdate(StaffRequiredMixin, UpdateView):
+    model = Commander
+    form_class = CommanderForm
+    template_name = 'gui/modifier_commandes.html'
+    success_url = reverse_lazy('commandes_list')
+
+    def get_object(self):
+        return get_object_or_404(Commander, pk=self.kwargs['pk'])
+
+class CommanderDelete(StaffRequiredMixin, View):
+    template_name = 'gui/supprimer_commande.html'
+
+    def get(self, request, pk):
+        commande = get_object_or_404(Commander, pk=pk)
+        return render(request, self.template_name, {'commande': commande})
+
+    def post(self, request, pk):
+        commande = get_object_or_404(Commander, pk=pk)
+        commande.delete()
+        return redirect(reverse_lazy('commandes_list'))
+
+class CommanderSearchResult(StaffRequiredMixin, ListView):
+    model = Commander
+    template_name = 'gui/search_commandes_result.html'  # Nouveau template pour les résultats
+    context_object_name = 'commandes'
+
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+        if search_query:
+            query = Q()
+            keywords = search_query.split()
+            for keyword in keywords:
+                query |= Q(personne__nom__icontains=keyword) | \
+                         Q(personne__prenom__icontains=keyword) | \
+                         Q(livre__titre__icontains=keyword) | \
+                         Q(statut__icontains=keyword)
+
+            return Commander.objects.filter(query).distinct()
+
+        return Commander.objects.all()
 def terminer_commande(request, pk):
     if not request.user.is_staff:  # Vérifie que l'utilisateur est autorisé
         return HttpResponseForbidden("Vous n'avez pas la permission de faire cette action.")
+
     commande = get_object_or_404(Commander, pk=pk)
     if commande.statut == 'en cours':
         commande.statut = 'terminé'
         commande.save()
+
+        livre = commande.livre
+        if livre.quantite_disponible < 0:
+            livre.quantite_disponible = 0
+            livre.save()
+
+            # Création d'une notification
+            Notifier.objects.create(
+                personne=commande.personne,
+                livre=livre,
+                quantite=livre.quantite_disponible,
+                type='commande',
+                commentaire=f"Stock du livre '{livre.titre}' mis à jour suite à la commande terminée.",
+            )
+
     return redirect('commandes_list')
 
-"""########################################################"""
 
-# 13. Classe Reserver
+"""------------------------------GERER-LES-RESERVATIONS------------------------------"""
 
-class ReserverList(StaffRequiredMixin,ListView):
+class ReserverList(StaffRequiredMixin, ListView):
     model = Reserver
     template_name = 'gui/lister_reservations.html'
+    context_object_name = 'reservations'
+
+    def get_queryset(self):
+        # Récupérer les paramètres GET pour le tri et la recherche
+        search_query = self.request.GET.get('search', '')
+        sort_by = self.request.GET.get('sort_by', 'date_reservation')  # Par défaut : tri par date_reservation
+        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+
+        sort_prefix = '' if order == 'asc' else '-'
+        valid_sort_fields = ['date_reservation', 'quantite', 'statut']
+
+        # Assurer que le champ de tri est valide
+        if sort_by not in valid_sort_fields:
+            sort_by = 'date_reservation'
+
+        # Appliquer le tri
+        queryset = Reserver.objects.order_by(f"{sort_prefix}{sort_by}")
+
+        # Si un terme de recherche est présent
+        if search_query:
+            queryset = queryset.filter(
+                Q(personne__nom__icontains=search_query) |
+                Q(livre__titre__icontains=search_query) |
+                Q(date_reservation__icontains=search_query) |
+                Q(statut__icontains=search_query)
+            )
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['reservations_en_cours'] = Reserver.objects.filter(statut='en cours')
-        context['reservations_terminees'] = Reserver.objects.filter(statut='terminé')
+        # Récupérer les commandes en cours et terminées
+        réservations_en_cours = Reserver.objects.filter(statut='en cours')
+        réservations_terminees = Reserver.objects.filter(statut='terminé')
+
+        # Appliquer le tri si un paramètre de tri est défini
+        sort_by = self.request.GET.get('sort_by', 'date_reservation')
+        order = self.request.GET.get('order', 'asc')
+        sort_prefix = '' if order == 'asc' else '-'
+
+        réservations_en_cours = réservations_en_cours.order_by(f"{sort_prefix}{sort_by}")
+        réservations_terminees = réservations_terminees.order_by(f"{sort_prefix}{sort_by}")
+
+        context['réservations_en_cours'] = réservations_en_cours
+        context['réservations_terminees'] = réservations_terminees
         return context
 
-class ReserverCreate(StaffRequiredMixin,CreateView):
+class ReserverCreate(StaffRequiredMixin, CreateView):
     model = Reserver
-    fields = ['personne', 'livre', 'quantite', 'statut', 'date_reservation']
+    form_class = ReserverForm  # Formulaire à créer pour Reserver
     template_name = 'gui/ajouter_reservation.html'
     success_url = reverse_lazy('reservations_list')
+
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.save()
+        return super().form_valid(form)
+
+class ReserverUpdate(StaffRequiredMixin, UpdateView):
+    model = Reserver
+    form_class = ReserverForm  # Formulaire à créer pour Reserver
+    template_name = 'gui/modifier_reservation.html'
+    success_url = reverse_lazy('reservations_list')
+
+    def get_object(self):
+        return get_object_or_404(Reserver, pk=self.kwargs['pk'])
+
+class ReserverDelete(StaffRequiredMixin, View):
+    template_name = 'gui/supprimer_reservation.html'
+
+    def get(self, request, pk):
+        reservation = get_object_or_404(Reserver, pk=pk)
+        return render(request, self.template_name, {'reservation': reservation})
+
+    def post(self, request, pk):
+        reservation = get_object_or_404(Reserver, pk=pk)
+        reservation.delete()
+        return redirect(reverse_lazy('reservations_list'))
+
+class ReserverSearchResult(StaffRequiredMixin, ListView):
+    model = Reserver
+    template_name = 'gui/search_reservations_result.html'  # Nouveau template pour les résultats
+    context_object_name = 'reservations'
+
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+        if search_query:
+            query = Q()
+            keywords = search_query.split()
+            for keyword in keywords:
+                query |= Q(personne__nom__icontains=keyword) | \
+                         Q(personne__prenom__icontains=keyword) | \
+                         Q(livre__titre__icontains=keyword) | \
+                         Q(statut__icontains=keyword)
+
+            return Reserver.objects.filter(query).distinct()
+
+        return Reserver.objects.all()
 
 def terminer_reservation(request, pk):
     if not request.user.is_staff:  # Vérifie que l'utilisateur est autorisé
@@ -1052,33 +1240,35 @@ def terminer_reservation(request, pk):
         reservation.save()
     return redirect('reservations_list')
 
-"""########################################################"""
+"""def verifier_reservations():
+    trois_semaines = now() - timedelta(weeks=3)
+    reservations = Reserver.objects.filter(statut='en cours', date_reservation__lt=trois_semaines)
 
-class AchatList(StaffRequiredMixin,ListView):
-    model = Achat
-    template_name = 'gui/lister_achats.html'
+    for reservation in reservations:
+        reservation.statut = 'terminé'
+        reservation.save()
+
+        # Création d'une notification
+        Notifier.objects.create(
+            personne=reservation.personne,
+            livre=reservation.livre,
+            quantite=reservation.quantite,
+            type='reservation',
+            commentaire=f"La réservation du livre '{reservation.livre.titre}' a expiré après 3 semaines.",
+        )"""
 
 
-class AchatCreate(StaffRequiredMixin,CreateView):
-    model = Achat
-    fields = ['personne', 'livre', 'quantite', 'date_achat']
-    template_name = 'gui/ajouter_achat.html'
-    success_url = reverse_lazy('achats_list')
+"""------------------------------GERER-LES-NOTIFICATIONS------------------------------"""
 
-"""########################################################"""
-
-
-class NotifierList(StaffRequiredMixin,ListView):
-    model = Notifier
+class NotificationList(StaffRequiredMixin, TemplateView):
     template_name = 'gui/lister_notifications.html'
 
-
-class NotifierCreate(StaffRequiredMixin,CreateView):
-    model = Notifier
-    fields = ['personne', 'livre', 'quantite', 'type', 'commentaire']
-    template_name = 'gui/ajouter_notification.html'
-    success_url = reverse_lazy('notifications_list')
-
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['notifications_commande'] = Notifier.objects.filter(type='commande', termine=False)
+        context['notifications_quantite_min'] = Notifier.objects.filter(type='quantite_min', termine=False)
+        context['notifications_reservation'] = Notifier.objects.filter(type='reservation', termine=False)
+        return context
 
 
 

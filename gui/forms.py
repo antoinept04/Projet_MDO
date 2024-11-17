@@ -1,13 +1,17 @@
 # forms.py
 from django import forms
-from .models import Personne, Livre, Auteur, Editeur, Adresse, Commander, Ville, Notifier, Illustrateur, Traducteur
+from .models import Personne, Livre, Auteur, Editeur, Adresse, Commander, Ville, Notifier, Illustrateur, Traducteur, Reserver
 
-"""-------------------AJOUTER-PERSONNE--------------------"""
 
 class VilleForm(forms.ModelForm):
     class Meta:
         model = Ville
         fields = ['nom_ville', 'code_postal', 'pays']
+
+class AdresseForm(forms.ModelForm):
+    class Meta:
+        model = Adresse
+        fields = ['rue', 'n_rue']
 
 class PersonneForm(forms.ModelForm):
     class Meta:
@@ -23,36 +27,6 @@ class PersonneForm(forms.ModelForm):
         # Si l'utilisateur n'est pas un superutilisateur, retirer le champ 'role'
         if self.user and not self.user.is_superuser:
             self.fields.pop('role', None)
-
-class AdresseForm(forms.ModelForm):
-    class Meta:
-        model = Adresse
-        fields = ['rue', 'n_rue']
-
-"""########################################################"""
-
-"""
-class NotificationForm(forms.ModelForm):
-    class Meta:
-        model = Notifier
-        fields = ['personne', 'livre', 'quantite', 'type', 'commentaire', 'termine']"""
-
-class AuteurForm(forms.ModelForm):
-    class Meta:
-        model = Auteur
-        fields = ['nom','prenom','date_naissance']
-        labels = {
-            'nom' : "Nom de l'auteur",
-            'prenom' : "Prenom de l'auteur",
-            'date_naissance' : "Date de naissance"
-        }
-        widgets = {
-            'date_naissance': forms.DateInput(
-                attrs={
-                    'placeholder': 'JJ/MM/AAAA',
-                    'type': 'date',
-                }),
-        }
 
 class LivreForm(forms.ModelForm):
     editeur_nom = forms.CharField(max_length=255, required=False, label="Nom de l'éditeur")
@@ -104,13 +78,25 @@ class LivreForm(forms.ModelForm):
             livre.save()
 
         return livre
-
 class ISBNForm(forms.Form):
     isbn13 = forms.CharField(label='ISBN13 du livre', max_length=13)
 
-class IDEditeurForm(forms.Form):
-    id = forms.IntegerField(label="ID de l'éditeur")
-
+class AuteurForm(forms.ModelForm):
+    class Meta:
+        model = Auteur
+        fields = ['nom','prenom','date_naissance']
+        labels = {
+            'nom' : "Nom de l'auteur",
+            'prenom' : "Prenom de l'auteur",
+            'date_naissance' : "Date de naissance"
+        }
+        widgets = {
+            'date_naissance': forms.DateInput(
+                attrs={
+                    'placeholder': 'JJ/MM/AAAA',
+                    'type': 'date',
+                }),
+        }
 class IDAuteurForm(forms.Form):
     auteur_id = forms.IntegerField(label="ID d'auteur")
 
@@ -118,14 +104,8 @@ class EditeurForm(forms.ModelForm):
     class Meta:
         model = Editeur
         fields = ['nom']
-
-class CommanderForm(forms.ModelForm):
-    class Meta:
-        model = Commander
-        fields = ['personne', 'livre', 'date_commande', 'quantite', 'statut']
-        widgets = {
-            'date_commande': forms.DateInput(attrs={'type': 'date'}),
-        }
+class IDEditeurForm(forms.Form):
+    id = forms.IntegerField(label="ID de l'éditeur")
 
 class IllustrateurForm(forms.ModelForm):
     class Meta:
@@ -143,7 +123,6 @@ class IllustrateurForm(forms.ModelForm):
                     'type': 'date',
                 }),
         }
-
 class IDIllustrateurForm(forms.Form):
     illustrateur_id = forms.IntegerField(label="ID d'illustrateur")
 
@@ -163,7 +142,44 @@ class TraducteurForm(forms.ModelForm):
                     'type': 'date',
                 }),
         }
-
 class IDTraducteurForm(forms.Form):
     traducteur_id = forms.IntegerField(label="ID du traducteur")
 
+class CommanderForm(forms.ModelForm):
+    class Meta:
+        model = Commander
+        fields = ['personne', 'livre', 'date_commande', 'quantite', 'fournisseur', 'statut']  # Ajout du fournisseur 'fournisseur',
+        widgets = {
+            'date_commande': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrer les personnes ayant le rôle "Employé" ou "Admin"
+        self.fields['personne'].queryset = Personne.objects.filter(
+            role__type__in=['employé', 'admin']  # Filtrage par 'role__type'
+        )
+        # Ajouter un queryset pour le champ fournisseur (si nécessaire)
+        #self.fields['fournisseur'].queryset = Fournisseur.objects.all()  # Toutes les valeurs de Fournisseur
+
+class ReserverForm(forms.ModelForm):
+    class Meta:
+        model = Reserver
+        fields = ['personne', 'livre', 'quantite', 'statut', 'date_reservation']
+
+        widgets = {
+            'date_reservation': forms.DateInput(attrs={'type': 'date'}),
+            'quantite': forms.NumberInput(attrs={'min': 1}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(ReserverForm, self).__init__(*args, **kwargs)
+        # Filtrer les personnes ayant le rôle "client"
+        self.fields['personne'].queryset = Personne.objects.filter(role__type='Client')
+
+        # Ajoutez des labels personnalisés si nécessaire
+        self.fields['personne'].label = "Personne"
+        self.fields['livre'].label = "Livre"
+        self.fields['quantite'].label = "Quantité"
+        self.fields['statut'].label = "Statut"
+        self.fields['date_reservation'].label = "Date de réservation"

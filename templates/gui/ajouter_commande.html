@@ -67,17 +67,24 @@
     </style>
 </head>
 <body>
-<div class="button-container">
-    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="{% url 'homepage' %}" class="btn btn-secondary">Retour à l'Accueil</a>
+    </div>
+
+    <h1>Créer une nouvelle commande</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            {{ form.as_p }}  <!-- Le formulaire inclura le champ fournisseur -->
+        </div>
+
+        <button type="submit" class="btn btn-success">Enregistrer</button>
+        <a href="{% url 'commandes_list' %}" class="btn btn-secondary">Annuler</a>
+    </form>
 </div>
-<h1>Créer une nouvelle commande</h1>
-
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-success">Enregistrer</button>
-    <a href="{% url 'commandes_list' %}" class="btn btn-secondary">Annuler</a>
-</form>
-
 </body>
+
 </html>

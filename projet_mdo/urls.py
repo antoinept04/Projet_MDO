@@ -16,8 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-
-from gui.models import Editeur, Illustrateur
+from gui.models import Editeur, Illustrateur, Commander
 from gui.views import (
     VilleList, VilleCreate,
     AdresseList, AdresseCreate,
@@ -28,10 +27,10 @@ from gui.views import (
     AuteurList, AuteurCreate,
     LivreList, create_livre, LivreDelete, LivreUpdate, LivreResearch, saisir_isbn,
     EcrireList, EcrireCreate,
-    CommanderList, CommanderCreate, terminer_commande,
-    NotifierList, NotifierCreate,
+    CommanderList, CommanderCreate, CommanderUpdate, CommanderDelete, CommanderSearchResult, terminer_commande ,
+    NotificationList,
     AchatList, AchatCreate,
-    ReserverList, ReserverCreate, terminer_reservation,
+    ReserverList, ReserverCreate, ReserverUpdate, ReserverDelete, ReserverSearchResult, terminer_reservation,
     loginPage, logoutUser,
     home, create_livre, EditeurUpdate, EditeurDelete, AuteurDelete, AuteurUpdate, saisir_ID_auteur,
     AuteurResearch, EditeurResearch, saisir_ID_editeur, IllustrateurList, IllustrateurCreate, IllustrateurResearch, IllustrateurDelete, IllustrateurUpdate, saisir_ID_illustrateur, TraducteurList, TraducteurCreate, TraducteurResearch, TraducteurDelete, TraducteurUpdate, saisir_ID_traducteur,
@@ -39,41 +38,47 @@ from gui.views import (
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-# Villes
+    path('', home, name='homepage'),
+    path('login/', loginPage, name='login'),
+    path('logout/', logoutUser, name='logout'),
+
+
     path('villes/', VilleList.as_view(), name='villes_list'),
     path('villes/create/', VilleCreate.as_view(), name='villes_create'),
 
-    # Adresses
+
     path('adresses/', AdresseList.as_view(), name='adresses_list'),
     path('adresses/create/', AdresseCreate.as_view(), name='adresses_create'),
 
-    # Roles
+
     path('roles/', RoleList.as_view(), name='roles_list'),
     path('roles/create/', RoleCreate.as_view(), name='roles_create'),
 
-    # Personnes
+
     path('personnes/', PersonneList.as_view(), name='personnes_list'),
     path('personnes/create/', personne_create, name='personnes_create'),
 
-    # Fournisseurs
+
     path('fournisseurs/', FournisseurList.as_view(), name='fournisseurs_list'),
     path('fournisseurs/create/', FournisseurCreate.as_view(), name='fournisseurs_create'),
 
-    # Editeurs
+
     path('editeurs/', EditeurList.as_view(), name='editeurs_list'),
     path('editeurs/create/', EditeurCreate.as_view(), name='editeurs_create'),
     path('editeurs/update/<int:id>',EditeurUpdate.as_view(), name='editeurs_update'),
     path('editeurs/saisir_editeur_ID/', saisir_ID_editeur, name='saisir_editeur_ID'),
     path('editeurs/delete/',EditeurDelete.as_view(), name='editeurs_delete'),
     path('editeurs/research/', EditeurResearch.as_view(), name='editeurs_research'),
-    # Auteurs
+
+
     path('auteurs/', AuteurList.as_view(), name='auteurs_list'),
     path('auteurs/create/', AuteurCreate.as_view(), name='auteurs_create'),
     path('auteurs/delete/',AuteurDelete.as_view(),name='auteurs_delete'),
     path('auteurs/update/<int:auteur_id>/',AuteurUpdate.as_view(), name='auteurs_update'),
     path('auteurs/research/', AuteurResearch.as_view(), name='auteurs_research'),
     path('auteurs/saisir_auteur_ID/',saisir_ID_auteur, name='saisir_auteur_ID'),
-    # Livres
+
+
     path('livres/', LivreList.as_view(), name='livres_list'),
     path('livres/create/', create_livre, name='livres_create'),
     path('livres/delete/',LivreDelete.as_view(), name='livres_delete'),
@@ -81,10 +86,11 @@ urlpatterns = [
     path('livres/update/<str:isbn13>/', LivreUpdate.as_view(), name='livre_update'),  # Page pour modifier le livre
     path('livres/research/', LivreResearch.as_view(), name='livres_research'),
 
-    # Ecrire
+
     path('ecrits/', EcrireList.as_view(), name='ecrits_list'),
     path('ecrits/create/', EcrireCreate.as_view(), name='ecrits_create'),
-    # Illustrateur
+
+
     path('illustrateurs/', IllustrateurList.as_view(), name='illustrateurs_list'),
     path('illustrateurs/create/', IllustrateurCreate.as_view(), name='illustrateurs_create'),
     path('illustrateurs/delete/', IllustrateurDelete.as_view(), name='illustrateurs_delete'),
@@ -92,7 +98,7 @@ urlpatterns = [
     path('illustrateurs/research/', IllustrateurResearch.as_view(), name='illustrateurs_research'),
     path('illustrateurs/saisir_illustrateur_ID/', saisir_ID_illustrateur, name='saisir_illustrateur_ID'),
 
-    # Traducteur
+
     path('traducteurs/', TraducteurList.as_view(), name='traducteurs_list'),
     path('traducteurs/create/', TraducteurCreate.as_view(), name='traducteurs_create'),
     path('traducteurs/delete/', TraducteurDelete.as_view(), name='traducteurs_delete'),
@@ -100,28 +106,26 @@ urlpatterns = [
     path('traducteurs/research/', TraducteurResearch.as_view(), name='traducteurs_research'),
     path('traducteurs/saisir_traducteur_ID/', saisir_ID_traducteur, name='saisir_traducteur_ID'),
 
-    # Commander
-    path('commandes/', CommanderList.as_view(), name='commandes_list'),
-    path('commandes/create/', CommanderCreate.as_view(), name='commandes_create'),
 
-    path('commandes/<int:pk>/terminer/', terminer_commande, name='terminer_commande'),
-
-    # Notifier
-    path('notifications/', NotifierList.as_view(), name='notifications_list'),
-    path('notifications/create/', NotifierCreate.as_view(), name='notifications_create'),
-
-    # Achat
     path('achats/', AchatList.as_view(), name='achats_list'),
     path('achats/create/', AchatCreate.as_view(), name='achats_create'),
 
-    # Reserver
+    path('commandes/', CommanderList.as_view(), name='commandes_list'),
+    path('commandes/create/', CommanderCreate.as_view(), name='commandes_create'),
+    path('commandes/update/<int:pk>/', CommanderUpdate.as_view(), name='commandes_update'),
+    path('commandes/delete/<int:pk>/', CommanderDelete.as_view(), name='commandes_delete'),
+    path('commandes/search/', CommanderSearchResult.as_view(), name='search_commandes_result'),
+    path('commandes/terminer/<int:pk>/', terminer_commande, name='terminer_commande'),
+
+
     path('reservations/', ReserverList.as_view(), name='reservations_list'),
     path('reservations/create/', ReserverCreate.as_view(), name='reservations_create'),
+    path('reservations/update/<int:pk>/', ReserverUpdate.as_view(), name='reservations_update'),
+    path('reservations/delete/<int:pk>/', ReserverDelete.as_view(), name='reservations_delete'),
+    path('reservations/search/', ReserverSearchResult.as_view(), name='reservations_search_result'),
 
     path('reservations/<int:pk>/terminer/', terminer_reservation, name='terminer_reservation'),
 
-    path('login/', loginPage, name='login'),
-    path('logout/', logoutUser, name='logout'),
-    path('', home, name='homepage')  # Route pour la page d'accueil
 
+    path('notifications/', NotificationList.as_view(), name='notifications_list')
 ]

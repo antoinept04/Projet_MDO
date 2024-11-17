@@ -63,6 +63,12 @@
 <div class="button-container">
     <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
 </div>
+
+<form method="get" action="{% url 'reservations_search_result' %}">
+    <input type="text" name="search" placeholder="Rechercher par personne, livre, date ou fournisseur..." value="{{ request.GET.search }}">
+    <button type="submit" class="btn btn-primary">Rechercher</button>
+</form>
+
 <h1>Liste des Réservations</h1>
 <a href="{% url 'reservations_create' %}" class="btn btn-primary">Créer une nouvelle réservation</a>
 
@@ -70,12 +76,12 @@
 <table class="table">
     <thead>
         <tr>
-            <th>ID</th>
-            <th>Personne</th>
-            <th>Livre</th>
-            <th>Date</th>
-            <th>Quantité</th>
-            <th>Statut</th>
+            <th><a href="?sort_by=id&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">ID</a></th>
+            <th><a href="?sort_by=personne&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Personne</a></th>
+            <th><a href="?sort_by=livre&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Livre</a></th>
+            <th><a href="?sort_by=date_reservation&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Date</a></th>
+            <th><a href="?sort_by=quantite&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Quantité</a></th>
+            <th><a href="?sort_by=statut&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Statut</a></th>
             <th>Action</th>
         </tr>
     </thead>
@@ -93,9 +99,20 @@
                     {% csrf_token %}
                     <button type="submit" class="btn btn-success">Terminer</button>
                 </form>
+                <!-- Bouton Modifier -->
+                <a href="{% url 'reservations_update' reservation.id %}" class="btn btn-warning" style="margin-left: 5px;">Modifier</a>
+
+                <!-- Bouton Supprimer -->
+                <form method="post" action="{% url 'reservations_delete' reservation.id %}" style="display:inline; margin-left: 5px;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
             </td>
         </tr>
-        
+        {% empty %}
+        <tr>
+            <td colspan="8">Aucune réservation en cours.</td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
@@ -104,12 +121,13 @@
 <table class="table">
     <thead>
         <tr>
-            <th>ID</th>
-            <th>Personne</th>
-            <th>Livre</th>
-            <th>Date</th>
-            <th>Quantité</th>
-            <th>Statut</th>
+            <th><a href="?sort_by=id&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">ID</a></th>
+            <th><a href="?sort_by=personne&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Personne</a></th>
+            <th><a href="?sort_by=livre&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Livre</a></th>
+            <th><a href="?sort_by=date_reservation&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Date</a></th>
+            <th><a href="?sort_by=quantite&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Quantité</a></th>
+            <th><a href="?sort_by=statut&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Statut</a></th>
+            <th>Action</th>
         </tr>
     </thead>
     <tbody>
@@ -121,10 +139,25 @@
             <td>{{ reservation.date_reservation }}</td>
             <td>{{ reservation.quantite }}</td>
             <td>{{ reservation.statut }}</td>
+            <td>
+                <!-- Bouton Modifier -->
+                <a href="{% url 'reservations_update' reservation.id %}" class="btn btn-warning" style="margin-left: 5px;">Modifier</a>
+
+                <!-- Bouton Supprimer -->
+                <form method="post" action="{% url 'reservations_delete' reservation.id %}" style="display:inline; margin-left: 5px;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </form>
+            </td>
         </tr>
-        
+        {% empty %}
+        <tr>
+            <td colspan="7">Aucune réservation terminée.</td>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
+
 </body>
+
 </html>
