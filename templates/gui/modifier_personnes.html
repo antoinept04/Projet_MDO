@@ -1,3 +1,5 @@
+<!-- personnes/templates/personnes/modifier_personne.html -->
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -38,7 +40,7 @@
 <body>
 
 <div class="container">
-    <h2 class="mb-4">Modifier la Personne</h2>
+    <h2 class="mb-4">Modifier la Personne : {{ personne.nom }} {{ personne.prenom }}</h2>
 
     <!-- Affichage des Messages de Django -->
     {% if messages %}
@@ -146,17 +148,19 @@
                 {% endif %}
             </div>
 
-            <div class="mb-3">
-                <label for="{{ personne_form.role.id_for_label }}" class="form-label">{{ personne_form.role.label }}</label>
-                {{ personne_form.role }}
-                {% if personne_form.role.errors %}
-                    <div class="text-danger">
-                        {% for error in personne_form.role.errors %}
-                            {{ error }}
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            </div>
+            {% if personne_form.role %}
+                <div class="mb-3">
+                    <label for="{{ personne_form.role.id_for_label }}" class="form-label">{{ personne_form.role.label }}</label>
+                    {{ personne_form.role }}
+                    {% if personne_form.role.errors %}
+                        <div class="text-danger">
+                            {% for error in personne_form.role.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
 
             <div class="form-check mb-3">
                 {{ personne_form.is_active }}

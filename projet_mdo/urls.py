@@ -21,7 +21,7 @@ from gui.views import (
     VilleList, VilleCreate,
     AdresseList, adresse_create,
     RoleList, RoleCreate,
-    PersonneList, personne_create, PersonneDelete, PersonneUpdate,
+    PersonneList, personne_create, PersonneDelete, PersonneUpdate, PersonneSelectView,
     FournisseurList, FournisseurCreate,
     EditeurList, EditeurCreate,
     AuteurList, AuteurCreate,
@@ -29,7 +29,7 @@ from gui.views import (
     EcrireList, EcrireCreate,
     CommanderList, CommanderCreate, CommanderUpdate, CommanderDelete, CommanderSearchResult, terminer_commande ,
     NotificationList,
-    AchatList, AchatCreate,
+    AchatList, AchatCreate, AchatUpdate, AchatDelete, AchatSearchResult,
     ReserverList, ReserverCreate, ReserverUpdate, ReserverDelete, ReserverSearchResult, terminer_reservation,
     loginPage, logoutUser,
     home, create_livre, EditeurUpdate, EditeurDelete, AuteurDelete, AuteurUpdate, saisir_ID_auteur,
@@ -59,7 +59,8 @@ urlpatterns = [
     path('personnes/create/', personne_create, name='personnes_create'),
     path('personnes/research/', PersonneResearch.as_view(), name='personnes_research'),
     path('personnes/delete/',PersonneDelete.as_view(), name='personnes_delete'),
-    path('personnes/update/', PersonneUpdate.as_view(), name='personnes_update'),
+    path('personnes/modifier/', PersonneSelectView.as_view(), name='personnes_select'),  # Sélection de la personne à modifier
+    path('personnes/modifier/<str:email>/', PersonneUpdate.as_view(), name='personnes_update'),  # Modification de la personne
 
 
 
@@ -110,9 +111,11 @@ urlpatterns = [
     path('traducteurs/research/', TraducteurResearch.as_view(), name='traducteurs_research'),
     path('traducteurs/saisir_traducteur_ID/', saisir_ID_traducteur, name='saisir_traducteur_ID'),
 
-
     path('achats/', AchatList.as_view(), name='achats_list'),
     path('achats/create/', AchatCreate.as_view(), name='achats_create'),
+    path('achats/update/<int:pk>/', AchatUpdate.as_view(), name='achats_update'),
+    path('achats/delete/<int:pk>/', AchatDelete.as_view(), name='achats_delete'),
+    path('achats/search/', AchatSearchResult.as_view(), name='search_achats_result'),
 
     path('commandes/', CommanderList.as_view(), name='commandes_list'),
     path('commandes/create/', CommanderCreate.as_view(), name='commandes_create'),

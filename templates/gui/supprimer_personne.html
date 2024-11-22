@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supprimer une personne</title>
+</head>
+<body>
+    <h1>Supprimer une personne</h1>
+
+    <form method="post">{% csrf_token %}
+        <label for="personne_email">Email de la personne :</label>
+        <input type="text" id="personne_email" name="personne_email" required>
+        <button type="submit">Supprimer</button>
+    </form>
+</body>
+</html>

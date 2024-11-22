@@ -1,7 +1,18 @@
 # forms.py
 from django import forms
 from .models import Personne, Livre, Auteur, Editeur, Adresse, Commander, Ville, Notifier, Illustrateur, Traducteur, \
-    Reserver, Fournisseur
+    Reserver, Fournisseur, Achat
+
+
+class EmailInputForm(forms.Form):
+    email = forms.EmailField(
+        label='Email de la personne à modifier',
+        max_length=50,
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Entrez l\'email ici'
+        })
+    )
 
 
 class VilleForm(forms.ModelForm):
@@ -235,3 +246,14 @@ class FournisseurForm(forms.ModelForm):
     def __init__(self, *args,  **kwargs):
         super(FournisseurForm, self).__init__(*args, **kwargs)
         self.fields['nom_fournisseur'].label = 'Nom du fournisseur'
+
+class AchatForm(forms.ModelForm):
+    class Meta:
+        model = Achat
+        fields = ['personne', 'livre', 'date_achat', 'quantite']
+        widgets = {
+            'date_reservation': forms.DateInput(attrs={'type': 'date'}),
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrer les personnes ayant le rôle "client"

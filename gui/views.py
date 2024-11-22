@@ -13,8 +13,8 @@ from django.views.generic import ListView, CreateView, DeleteView, UpdateView, V
 from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Auteur, Livre, Ecrire, Commander, Notifier, Illustrer, Traduire, \
     Achat, Reserver, Illustrateur, Traducteur
 from .decorators import unauthenticated_user_required, staff_required
-from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, IDEditeurForm, \
-    IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm, CommanderForm, ReserverForm
+from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, IDEditeurForm, EmailInputForm, \
+    IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm, CommanderForm, ReserverForm, AchatForm
 from django.db import transaction
 
 
@@ -402,8 +402,28 @@ class PersonneDelete(StaffRequiredMixin, View):
         # Si l'email n'est pas fourni ou invalide, afficher une erreur
         return render(request, self.template_name, {'error': 'Email invalide.'})
 
+
+class PersonneSelectView(StaffRequiredMixin, View):
+    template_name = 'gui/select_personne.html'
+
+    def get(self, request):
+        form = EmailInputForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = EmailInputForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            # Vérifier si la personne existe
+            personne = get_object_or_404(Personne, email=email)
+            # Rediriger vers la vue de modification avec l'email comme paramètre
+            return redirect(reverse('personnes_update', args=[email]))
+        else:
+            messages.error(request, 'Veuillez saisir un email valide.')
+            return render(request, self.template_name, {'form': form})
+
 class PersonneUpdate(StaffRequiredMixin, View):
-    template_name = 'gui/modifier_personne.html'
+    template_name = 'gui/modifier_personnes.html'
 
     def get(self, request, email):
         """
@@ -445,28 +465,24 @@ class PersonneUpdate(StaffRequiredMixin, View):
                 pays = cleaned_ville.get('pays')
 
                 if nom_ville and code_postal and pays:
-                    try:
-                        ville_obj = Ville.objects.get(
-                            nom_ville=nom_ville,
-                            code_postal=code_postal,
-                            pays=pays
-                        )
-                    except Ville.DoesNotExist:
-                        ville_obj = ville_form.save()
-
+                    ville_obj, created = Ville.objects.get_or_create(
+                        nom_ville=nom_ville,
+                        code_postal=code_postal,
+                        pays=pays
+                    )
                 else:
-                    ville_obj = None  # Ou gérer les cas où les champs sont manquants
+                    ville_obj = None  # Gérer les cas où les champs sont manquants
 
                 # Gérer l'Adresse
                 # Vérifier si l'adresse est partagée
                 if Adresse.objects.filter(pk=adresse.pk).exclude(personne=personne).exists():
                     # L'adresse est partagée, créer une nouvelle adresse pour cette personne
-                    adresse = Adresse.objects.create(
+                    nouvelle_adresse = Adresse.objects.create(
                         rue=adresse.rue,
                         n_rue=adresse.n_rue,
                         ville=ville_obj
                     )
-                    personne.adresse = adresse
+                    personne.adresse = nouvelle_adresse
                 else:
                     # L'adresse n'est pas partagée, la modifier directement
                     adresse_form.instance.ville = ville_obj
@@ -1151,12 +1167,63 @@ def saisir_ID_traducteur(request):
 class AchatList(StaffRequiredMixin,ListView):
     model = Achat
     template_name = 'gui/lister_achats.html'
-
+    context_object_name = 'achats'
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+        sort_by = self.request.GET.get('sort_by', 'date_achat')
+        order = self.request.GET.get('order', 'asc')
+        sort_prefix = '' if order == 'asc' else '-'
+        valid_sort_fields = ['date_achat', 'quantite']
+        if sort_by not in valid_sort_fields:
+            sort_by = 'date_achat'
+        queryset = Achat.objects.order_by(f"{sort_prefix}{sort_by}")
+        if search_query:
+            queryset = queryset.filter(
+                Q(personne__nom__icontains=search_query) |
+                Q(livre__titre__icontains=search_query) |
+                Q(date__achat__icontains=search_query)
+            )
+        return queryset
 class AchatCreate(StaffRequiredMixin,CreateView):
     model = Achat
-    fields = ['personne', 'livre', 'quantite', 'date_achat']
+    form_class = AchatForm
     template_name = 'gui/ajouter_achat.html'
     success_url = reverse_lazy('achats_list')
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.save()
+        return super().form_valid(form)
+class AchatUpdate(StaffRequiredMixin, UpdateView):
+    model = Achat
+    form_class = AchatForm
+    template_name = 'gui/modifier_achat.html'
+    sucess_url = reverse_lazy('achats_list')
+    def get_object(self):
+        return get_object_or_404(Achat, pk=self.kwargs['pk'])
+class AchatDelete(StaffRequiredMixin, View):
+    template_name = 'gui/supprimer_achat.html'
+    def get(self, request, pk):
+        achat = get_object_or_404(Achat, pk=pk)
+        return render(request, self.template_name, {'achat': achat})
+    def post(self, request, pk):
+        achat = get_object_or_404(Achat, pk=pk)
+        achat.delete()
+        return redirect(reverse_lazy('achats_list'))
+class AchatSearchResult(StaffRequiredMixin, ListView):
+    model = Achat
+    template_name = 'gui/lister_achats.html'
+    context_object_name = 'achats'
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+        if search_query:
+            query = Q()
+            keywords = search_query.split()
+            for keyword in keywords:
+                query |= Q(personne__nom__icontains=keyword) | \
+                         Q(personne__prenom__icontains=keyword) | \
+                         Q(livre__titre__icontains=keyword)
+            return Achat.objects.filter(query).distinct()
+        return Achat.objects.all()
 
 
 """------------------------------GERER-LES-COMMANDES------------------------------"""

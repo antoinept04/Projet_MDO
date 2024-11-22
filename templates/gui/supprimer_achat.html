@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="alert alert-danger text-center">
+        <h1>Supprimer un achat</h1>
+        <p>Êtes-vous sûr de vouloir supprimer cet achat ? Cette action est irréversible.</p>
+        <form method="post" class="d-inline-block">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Confirmer</button>
+        </form>
+        <a href="{% url 'achats_list' %}" class="btn btn-secondary">Annuler</a>
+    </div>
+</div>
+
+</body>
+</html>

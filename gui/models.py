@@ -214,11 +214,16 @@ class Traduire(models.Model):
 class Achat(models.Model):
     personne = models.ForeignKey(Personne, on_delete=models.CASCADE)
     livre = models.ForeignKey(Livre, on_delete=models.CASCADE)
-    quantite = models.IntegerField()
-    date_achat = models.DateField()
+    date_achat = models.DateField(default=datetime.date.today)
+    quantite = models.PositiveIntegerField()
+
 
     class Meta:
         db_table = 'Achat'
+
+    def __str__(self):
+        return f"Achat de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
+
 
     def __str__(self):
         return f"Achat de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
