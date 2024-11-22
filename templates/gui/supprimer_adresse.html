@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supprimer une adresse</title>
+</head>
+<body>
+    <h1>Supprimer une adresse</h1>
+
+    <form method="post">{% csrf_token %}
+        <label for="adresse_id">ID de l'adresse :</label>
+        <input type="text" id="adresse_id" name="adresse_id" required>
+        <button type="submit">Supprimer</button>
+    </form>
+</body>
+</html>

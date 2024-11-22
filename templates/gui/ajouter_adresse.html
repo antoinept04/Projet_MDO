@@ -2,82 +2,29 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ajouter une Adresse</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .form-container {
-            width: 400px;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 20px;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        label {
-            font-weight: bold;
-            color: #555;
-        }
-        input[type="text"],
-        input[type="number"],
-        input[type="submit"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-            color: #333;
-        }
-        textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-            color: #333;
-            height: 100px;
-        }
-        input[type="submit"] {
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        input[type="submit"]:hover {
-            background-color: #0056b3;
-        }
-    </style>
 </head>
 <body>
-<div class="button-container">
-    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
-</div>
-<div class="form-container">
-    <h2>Ajouter une Adresse</h2>
+    <h1>Ajouter une Adresse</h1>
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Ajouter">
-    </form>
-</div>
+        {{ adresse_form.as_p }}
 
+        <h2>Informations sur la Ville</h2>
+        <p>
+            <label for="nom_ville">Nom de la Ville</label><br>
+            <input type="text" id="nom_ville" name="nom_ville" required>
+        </p>
+        <p>
+            <label for="code_postal">Code Postal</label><br>
+            <input type="text" id="code_postal" name="code_postal" required>
+        </p>
+        <p>
+            <label for="pays">Pays</label><br>
+            <input type="text" id="pays" name="pays" required>
+        </p>
+
+        <button type="submit">Enregistrer</button>
+    </form>
 </body>
 </html>

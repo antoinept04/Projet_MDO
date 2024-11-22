@@ -124,7 +124,7 @@ class AdresseList(StaffRequiredMixin,ListView):
 
     def get_queryset(self):
         # Récupérer les paramètres GET
-        sort_by = self.request.GET.get('sort_by', 'rue')  # Par défaut : titre
+        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : titre
         order = self.request.GET.get('order', 'asc')  # Par défaut : asc
 
         # Définir le préfixe pour la direction du tri
@@ -132,11 +132,12 @@ class AdresseList(StaffRequiredMixin,ListView):
 
         # Options de tri supportées
         sorting_options = {
+            'id':'id',
             'rue':'rue',
             'n_rue':'n_rue',
-            'ville__nom_ville':'ville__nom_ville',
-            'ville__code_postal':'ville__code_postal',
-            'ville__pays':'ville__pays',
+            'ville':'ville',
+            'ville_code_postal':'ville__code_postal',
+            'ville_pays':'ville__pays',
         }
         queryset = super().get_queryset()
 
@@ -148,59 +149,97 @@ class AdresseList(StaffRequiredMixin,ListView):
 
 
 @login_required(login_url='login')
-def adresse_create(request):
-    form_adresse = AdresseForm()
-    form_ville = VilleForm()
-
+def create_adresse(request):
     if request.method == 'POST':
-        form_ville = VilleForm(request.POST)
-        form_adresse = AdresseForm(request.POST)
+        adresse_form = AdresseForm(request.POST)
 
-        if form_adresse.is_valid()and form_ville.is_valid():
-            # Récupérer les champs de la ville depuis le formulaire VilleForm
-            nom_ville = form_ville.cleaned_data['nom_ville']
-            code_postal = form_ville.cleaned_data['code_postal']
-            pays = form_ville.cleaned_data['pays']
+        if adresse_form.is_valid():
+            # Récupérer les informations de l'adresse
+            rue = adresse_form.cleaned_data['rue']
+            n_rue = adresse_form.cleaned_data['n_rue']
 
-            # Vérifier si la ville existe déjà
-            ville_existante = Ville.objects.filter(nom_ville=nom_ville, code_postal=code_postal).first()
+            # Récupérer les informations de la ville depuis le formulaire
+            nom_ville = request.POST.get('nom_ville')
+            code_postal = request.POST.get('code_postal')
+            pays = request.POST.get('pays')
 
-            if not ville_existante:
-                # Si la ville n'existe pas, créer une nouvelle ville
-                ville = form_ville.save()
+            if nom_ville and code_postal and pays:
+                # Créer ou récupérer la ville correspondante
+                ville, created = Ville.objects.get_or_create(
+                    nom_ville=nom_ville,
+                    defaults={
+                        'code_postal': code_postal,
+                        'pays': pays
+                    }
+                )
+
+                # Vérifier si une adresse identique existe déjà
+                if Adresse.objects.filter(rue=rue, n_rue=n_rue, ville=ville).exists():
+                    adresse_form.add_error(None, "Cette adresse existe déjà.")
+                else:
+                    # Créer et enregistrer l'adresse
+                    adresse = adresse_form.save(commit=False)
+                    adresse.ville = ville
+                    adresse.save()
+
+                    return redirect('adresses_list')  # Rediriger après la création
             else:
-                # Utiliser la ville existante
-                ville = ville_existante
-
-            # Utiliser commit=False pour différer l'enregistrement de l'adresse
-            adresse = form_adresse.save(commit=False)
-
-            # Récupérer les champs de l'adresse depuis le formulaire AdresseForm
-            rue = form_adresse.cleaned_data['rue']
-            n_rue = form_adresse.cleaned_data['n_rue']
-
-            # Vérifier si l'adresse existe déjà
-            adresse_existante = Adresse.objects.filter(rue=rue, n_rue=n_rue, ville=ville).first()
-
-            if adresse_existante:
-                # Si l'adresse existe déjà, l'utiliser
-                adresse = adresse_existante
-            else:
-                # Sinon, créer une nouvelle adresse
-                adresse = form_adresse.save(commit=False)
-                adresse.ville = ville  # Lier la ville à l'adresse
-                adresse.save()
-            # Une fois l'utilisateur créé, rediriger vers la liste des personnes
-            return redirect('adresse_list')  # Redirection vers une autre vue
-
+                # Gérer le cas où les informations de la ville sont incomplètes
+                adresse_form.add_error(None, "Veuillez remplir les informations de la ville.")
     else:
-        form_adresse = AdresseForm()
-        form_ville = VilleForm()
+        adresse_form = AdresseForm()
 
     return render(request, 'gui/ajouter_adresse.html', {
-        'form_adresse': form_adresse,
-        'form_ville': form_ville
+        'adresse_form': adresse_form,
     })
+
+class AdresseResearch(StaffRequiredMixin,ListView):
+    model = Adresse
+    template_name = 'gui/lister_adresses.html'
+
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+
+        if search_query:
+            # Diviser la chaîne de recherche en mots-clés
+            keywords = search_query.split()
+            query = Q()
+
+            for keyword in keywords:
+                # Ajouter chaque mot aux différents champs de recherche
+                query |= Q(rue__icontains=keyword) | \
+                         Q(n_rue__icontains=keyword)|\
+                        Q(ville__nom_ville__icontains=keyword) |\
+                        Q(ville__code_postal__icontains=keyword)|\
+                        Q(ville__pays__icontains=keyword)
+
+            # Retourner les livres correspondant aux critères
+            return Adresse.objects.filter(query).distinct()
+
+        # Si aucun terme de recherche, retourner tous les livres
+        return Adresse.objects.all()
+
+class AdresseDelete(StaffRequiredMixin, View):
+    template_name = 'gui/supprimer_adresse.html'
+
+    def get(self, request):
+        # Afficher le formulaire où l'utilisateur entre l'email de la personne
+        return render(request, self.template_name)
+
+    def post(self, request):
+        # Récupérer l'email de la personne soumis dans le formulaire
+        adresse_id = request.POST.get('adresse_id')
+        if adresse_id:
+            # Obtenir l'objet Personne avec l'email fourni
+            # Assurez-vous que le champ 'email' existe et est unique dans le modèle Personne
+            adresse = get_object_or_404(Adresse, id=adresse_id)
+            # Supprimer la personne
+            adresse.delete()
+            # Rediriger vers la liste des personnes après la suppression
+            return redirect(reverse_lazy('adresses_list'))
+        # Si l'email n'est pas fourni ou invalide, afficher une erreur
+        return render(request, self.template_name, {'error': 'Adresse invalide.'})
+
 
 
 """------------------------------GERER-LES-PERSONNES------------------------------"""

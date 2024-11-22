@@ -3,94 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liste des Adresses</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-        .container {
-            width: 80%;
-            margin: 20px auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 16px;
-        }
-        table th, table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        table th {
-            background-color: #007BFF;
-            color: white;
-        }
-        table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .add-button {
-            display: block;
-            width: fit-content;
-            margin: 20px auto;
-            padding: 10px 20px;
-            text-align: center;
-            background-color: #007BFF;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .add-button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+    <title>Catalogue des livres</title>
 </head>
 <body>
 <div class="button-container">
     <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
 </div>
-<div class="container">
-    <h2>Liste des Adresses</h2>
-    
-    <a href="/adresses/create/" class="add-button">Ajouter une Adresse</a>
-    
-    <table>
+    <h1>Liste des adresses</h1>
+
+    <a href="/adresses/create/"><button>Ajouter une adresse</button></a>
+    <a href="/adresses/delete/"><button>Supprimer une adresse</button></a>
+
+    <form method="GET" action="{% url 'adresses_research' %}">
+        <label for="search">Rechercher :</label>
+        <input type="text" id="search" name="search"  value="{{ request.GET.search }}">
+        <button type="submit">Rechercher</button>
+    </form>    
+
+    <table border="1">
         <thead>
             <tr>
-                <th>Rue</th>
-                <th>Numéro de Rue</th>
-                <th>Ville</th>
+                <th>
+                    <a href="?sort_by=id&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
+                        ID
+                    </a>
+                </th>
+                 <th>
+                    <a href="?sort_by=rue&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
+                        Rue
+                    </a>
+                </th>
+                <th>
+                    <a href="?sort_by=n_rue&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
+                        Numéro de Rue
+                    </a>
+                </th>
+                <th>
+                    <a href="?sort_by=ville&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
+                        Ville
+                    </a>
+                </th>
+                <th>
+                    <a href="?sort_by=ville_code_postal&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
+                        Code Postal
+                    </a>
+                </th>
+                <th>
+                    <a href="?sort_by=ville_pays&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
+                        Pays
+                    </a>
+                </th>
             </tr>
         </thead>
         <tbody>
             {% for adresse in object_list %}
-            <tr>
-                <td>{{ adresse.rue }}</td>
-                <td>{{ adresse.n_rue }}</td>
-                <td>{{ adresse.ville.nom }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="3" style="text-align: center;">Aucune adresse trouvée.</td>
-            </tr>
+                <tr>
+                    <td>{{ adresse.id }}</td>
+                    <td>{{ adresse.rue }}</td>
+                    <td>{{ adresse.n_rue }}</td>
+                    <td>{{ adresse.ville }}</td>
+                    <td>{{ adresse.ville.code_postal }}</td>
+                    <td>{{ adresse.ville.pays }}</td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>
-</div>
-
 </body>
 </html>
