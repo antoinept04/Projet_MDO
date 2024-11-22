@@ -16,8 +16,24 @@ class AdresseForm(forms.ModelForm):
 class PersonneForm(forms.ModelForm):
     class Meta:
         model = Personne
-
         fields = ['nom', 'prenom', 'date_naissance', 'telephone', 'email', 'password', 'solde', 'role']
+        labels = {
+            'nom': 'Nom',
+            'prenom': 'Prénom',
+            'date_naissance': 'Date de naissance',
+            'telephone': 'Téléphone',
+            'email': 'Email',
+            'password': 'Mot de passe',
+            'solde': 'Solde',
+            'role': 'Rôle'
+        }
+        widgets = {
+            'date_naissance': forms.DateInput(
+                attrs={
+                    'placeholder': 'JJ/MM/AAAA',
+                    'type': 'date'
+                }),
+        }
 
     def __init__(self, *args, **kwargs):
         # Extraire l'utilisateur passé via les kwargs

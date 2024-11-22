@@ -4,60 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des Personnes</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-        .container {
-            width: 80%;
-            margin: 20px auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 16px;
-        }
-        table th, table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        table th {
-            background-color: #007BFF;
-            color: white;
-        }
-        table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .add-button {
-            display: block;
-            width: fit-content;
-            margin: 20px auto;
-            padding: 10px 20px;
-            text-align: center;
-            background-color: #007BFF;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .add-button:hover {
-            background-color: #0056b3;
-        }
-    </style>
 </head>
 <body>
 
@@ -65,52 +11,44 @@
     <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
 </div>
 
-<div class="container">
-    <h2>Liste des Personnes</h2>
-    
-    <a href="/personnes/create/" class="add-button">Ajouter une Personne</a>
-    
-    <table>
+ <h1>Liste des personnes</h1>
+    <a href="/personnes/create/"><button>Ajouter une personne</button></a>
+
+    <table border="1">
         <thead>
             <tr>
-                <th>Nom</th>
-                <th>Prénom</th>
-                <th>Date de Naissance</th>
+               <th><a href="?sort_by=nom&order={% if request.GET.sort_by == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Nom</a></th>   
+                <th><a href="?sort_by=prenom&order={% if request.GET.sort_by == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Prénom</a></th>
+                <th><a href="?sort_by=date_naissance&order={% if request.GET.sort_by == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Date de naissance</a></th>
                 <th>Téléphone</th>
-                <th>Email</th>
-                <th>Adresse</th>
-                <th>Ville</th>
-                <th>Code Postal</th>
-                <th>Pays</th>
-                <th>Rôle</th>
-                <th>Solde</th>
-                
+                <th><a href="?sort_by=email&order={% if request.GET.sort_by == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Email</a></th>
+                <th><a href="?sort_by=date_creation&order={% if request.GET.sort_by == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Date d'inscription</a></th>
+                <th><a href="?sort_by=solde&order={% if request.GET.sort_by == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Solde</a></th>
+                <th><a href="?sort_by=role&order={% if request.GET.sort_by == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Role</a></th>
+                <th><a href="?sort_by=adresse__ville__om_ville&order={% if request.GET.sort_by == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Adresse</a></th>
             </tr>
         </thead>
         <tbody>
             {% for personne in object_list %}
-            <tr>
-                <td>{{ personne.nom }}</td>
-                <td>{{ personne.prenom }}</td>
-                <td>{{ personne.date_naissance|date:"d/m/Y" }}</td>
-                <td>{{ personne.telephone }}</td>
-                <td>{{ personne.email }}</td>
-                <td>{{ personne.adresse.rue }} {{ personne.adresse.n_rue }}</td>
-                <td>{{ personne.adresse.ville.nom_ville }}</td>
-                <td>{{ personne.adresse.ville.code_postal }}</td>
-                <td>{{ personne.adresse.ville.pays }}</td>
-                <td>{{ personne.role }}</td>
-                <td>{{ personne.solde }}</td>
-                
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="8" style="text-align: center;">Aucune personne trouvée.</td>
-            </tr>
+                <tr>
+                    <td>{{ personne.nom }}</td>
+                    <td>{{ personne.prenom }}</td>
+                    <td>{{ personne.date_naissance }}</td>
+                    <td>{{ personne.telephone }}</td>
+                    <td>{{ personne.email }}</td>
+                    <td>{{ personne.date_creation }}</td>
+                    <td>{{ personne.solde }}</td>
+                    <td>{{ personne.role }}</td>
+                    <td>
+                        {{ personne.adresse.n_rue }} {{ personne.adresse.rue }}, 
+                        {{ personne.adresse.ville.nom_ville }}, 
+                        {{ personne.adresse.ville.code_postal }}, 
+                        {{ personne.adresse.ville.pays }}
+                    </td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>
-</div>
 
 </body>
 </html>

@@ -185,9 +185,38 @@ def adresse_create(request):
 
 """------------------------------GERER-LES-PERSONNES------------------------------"""
 
-class PersonneList(StaffRequiredMixin, ListView):
+class PersonneList(StaffRequiredMixin,ListView):
     model = Personne
     template_name = 'gui/lister_personnes.html'
+
+    def get_queryset(self):
+        # Récupérer les paramètres GET
+        sort_by = self.request.GET.get('sort_by', 'nom')  # Par défaut : tri par 'nom'
+        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+
+        # Définir le préfixe pour la direction du tri
+        sort_prefix = '' if order == 'asc' else '-'
+
+        # Options de tri supportées
+        sorting_options = {
+            'nom': 'nom',
+            'prenom': 'prenom',
+            'date_naissance': 'date_naissance',
+            'email': 'email',
+            'date_creation': 'date_creation',
+            'solde': 'solde',
+            'role': 'role',
+            'nom_ville': 'adresse__ville__nom_ville',
+        }
+
+        # Récupérer le queryset initial
+        queryset = super().get_queryset()
+
+        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
+        if sort_by in sorting_options:
+            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
+
+        return queryset
 
 def personne_create(request):
     # Initialiser les formulaires
