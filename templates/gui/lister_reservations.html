@@ -64,10 +64,8 @@
     <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
 </div>
 
-<form method="get" action="{% url 'reservations_search_result' %}">
-    <input type="text" name="search" placeholder="Rechercher par personne, livre, date ou fournisseur..." value="{{ request.GET.search }}">
-    <button type="submit" class="btn btn-primary">Rechercher</button>
-</form>
+
+
 
 <h1>Liste des Réservations</h1>
 <a href="{% url 'reservations_create' %}" class="btn btn-primary">Créer une nouvelle réservation</a>
@@ -100,7 +98,7 @@
                     <button type="submit" class="btn btn-success">Terminer</button>
                 </form>
                 <!-- Bouton Modifier -->
-                <a href="{% url 'reservations_update' reservation.id %}" class="btn btn-warning" style="margin-left: 5px;">Modifier</a>
+                <a href="{% url 'reservations_update' reservation.id %}" class="btn btn-warning" style="display:inline; margin-left: 5px;">Modifier</a>
 
                 <!-- Bouton Supprimer -->
                 <form method="post" action="{% url 'reservations_delete' reservation.id %}" style="display:inline; margin-left: 5px;">
@@ -141,7 +139,7 @@
             <td>{{ reservation.statut }}</td>
             <td>
                 <!-- Bouton Modifier -->
-                <a href="{% url 'reservations_update' reservation.id %}" class="btn btn-warning" style="margin-left: 5px;">Modifier</a>
+                <a href="{% url 'reservations_update' reservation.id %}" class="btn btn-warning" style="display:inline; margin-left: 5px;">Modifier</a>
 
                 <!-- Bouton Supprimer -->
                 <form method="post" action="{% url 'reservations_delete' reservation.id %}" style="display:inline; margin-left: 5px;">

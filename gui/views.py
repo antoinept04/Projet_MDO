@@ -12,9 +12,10 @@ from django.utils.timezone import now
 from django.views.generic import ListView, CreateView, DeleteView, UpdateView, View, TemplateView
 from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Auteur, Livre, Ecrire, Commander, Notifier, Illustrer, Traduire, \
     Achat, Reserver, Illustrateur, Traducteur
-from .decorators import unauthenticated_user_required
+from .decorators import unauthenticated_user_required, staff_required
 from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, IDEditeurForm, \
     IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm, CommanderForm, ReserverForm
+from django.db import transaction
 
 
 """------------------------------LOGIN/LOGOUT------------------------------"""
@@ -121,11 +122,30 @@ class AdresseList(StaffRequiredMixin,ListView):
     model = Adresse
     template_name = 'gui/lister_adresses.html'
 
-class AdresseCreate(StaffRequiredMixin,CreateView):
-    model = Adresse
-    fields = ['rue', 'n_rue', 'ville']
-    template_name = 'gui/ajouter_adresse.html'
-    success_url = reverse_lazy('adresses_list')
+    def get_queryset(self):
+        # Récupérer les paramètres GET
+        sort_by = self.request.GET.get('sort_by', 'rue')  # Par défaut : titre
+        order = self.request.GET.get('order', 'asc')  # Par défaut : asc
+
+        # Définir le préfixe pour la direction du tri
+        sort_prefix = '' if order == 'asc' else '-'
+
+        # Options de tri supportées
+        sorting_options = {
+            'rue':'rue',
+            'n_rue':'n_rue',
+            'ville__nom_ville':'ville__nom_ville',
+            'ville__code_postal':'ville__code_postal',
+            'ville__pays':'ville__pays',
+        }
+        queryset = super().get_queryset()
+
+        # Appliquer le tri si valide, sinon fallback au tri par titre
+        if sort_by in sorting_options:
+            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
+
+        return queryset
+
 
 @login_required(login_url='login')
 def adresse_create(request):
@@ -206,7 +226,7 @@ class PersonneList(StaffRequiredMixin,ListView):
             'date_creation': 'date_creation',
             'solde': 'solde',
             'role': 'role',
-            'nom_ville': 'adresse__ville__nom_ville',
+            'adresse__ville__nom_ville': 'adresse__ville__nom_ville',
         }
 
         # Récupérer le queryset initial
@@ -218,60 +238,42 @@ class PersonneList(StaffRequiredMixin,ListView):
 
         return queryset
 
+@staff_required
 def personne_create(request):
-    # Initialiser les formulaires
-    #form_personne = PersonneForm(user = request.user)
-    #form_adresse = AdresseForm()
-    #form_ville = VilleForm()
-
     if request.method == 'POST':
-        form_personne = PersonneForm(request.POST, user = request.user)
+        form_personne = PersonneForm(request.POST, user=request.user)
         form_adresse = AdresseForm(request.POST)
         form_ville = VilleForm(request.POST)
 
         if form_personne.is_valid() and form_adresse.is_valid() and form_ville.is_valid():
-            # Récupérer les champs de la ville depuis le formulaire VilleForm
+            # Récupérer ou créer la ville
             nom_ville = form_ville.cleaned_data['nom_ville']
             code_postal = form_ville.cleaned_data['code_postal']
             pays = form_ville.cleaned_data['pays']
 
-            # Vérifier si la ville existe déjà
-            ville_existante = Ville.objects.filter(nom_ville=nom_ville, code_postal=code_postal).first()
+            ville, created = Ville.objects.get_or_create(
+                nom_ville=nom_ville,
+                code_postal=code_postal,
+                pays=pays
+            )
 
-            if not ville_existante:
-                # Si la ville n'existe pas, créer une nouvelle ville
-                ville = form_ville.save()
-            else:
-                # Utiliser la ville existante
-                ville = ville_existante
-
-            # Utiliser commit=False pour différer l'enregistrement de l'adresse
-            adresse = form_adresse.save(commit=False)
-
-            # Récupérer les champs de l'adresse depuis le formulaire AdresseForm
+            # Récupérer ou créer l'adresse
             rue = form_adresse.cleaned_data['rue']
             n_rue = form_adresse.cleaned_data['n_rue']
 
+            adresse, created = Adresse.objects.get_or_create(
+                rue=rue,
+                n_rue=n_rue,
+                ville=ville
+            )
 
-            # Vérifier si l'adresse existe déjà
-            adresse_existante = Adresse.objects.filter(rue=rue, n_rue=n_rue, ville=ville).first()
-
-            if adresse_existante:
-                # Si l'adresse existe déjà, l'utiliser
-                adresse = adresse_existante
-            else:
-                # Sinon, créer une nouvelle adresse
-                adresse = form_adresse.save(commit=False)
-                adresse.ville = ville  # Lier la ville à l'adresse
-                adresse.save()
-
-            if request.user.is_superuser :
+            # Gestion du rôle
+            if request.user.is_superuser:
                 role = form_personne.cleaned_data.get('role')
             else:
                 try:
-                    role = Role.objects.get(type='Client')  # Récupérer l'instance Role avec le nom 'client'
+                    role = Role.objects.get(type='Client')
                 except Role.DoesNotExist:
-                    # Gérer le cas où le rôle 'client' n'existe pas
                     form_personne.add_error('role', 'Le rôle "client" n\'existe pas.')
                     return render(request, 'gui/ajouter_personne.html', {
                         'form_personne': form_personne,
@@ -279,28 +281,26 @@ def personne_create(request):
                         'form_ville': form_ville
                     })
 
+            # Vérifier si l'email existe déjà
             email = form_personne.cleaned_data['email']
             password = form_personne.cleaned_data['password']
 
-            # Vérifier si l'email existe déjà
             if Personne.objects.filter(email=email).exists():
                 form_personne.add_error('email', 'Cet email est déjà utilisé.')
                 return render(request, 'gui/ajouter_personne.html', {
-                    'form': form_personne,
+                    'form_personne': form_personne,
                     'form_adresse': form_adresse,
                     'form_ville': form_ville
                 })
 
-            # Créer l'utilisateur en fonction du rôle
+            # Récupérer les autres champs
             nom = form_personne.cleaned_data['nom']
             prenom = form_personne.cleaned_data['prenom']
             date_naissance = form_personne.cleaned_data['date_naissance']
             telephone = form_personne.cleaned_data['telephone']
             solde = form_personne.cleaned_data['solde']
 
-
-            
-            # Créer l'utilisateur
+            # Créer l'utilisateur en fonction du rôle
             if str(role) == 'admin':
                 personne = Personne.objects.create_superuser(
                     email=email,
@@ -329,7 +329,7 @@ def personne_create(request):
             else:
                 personne = Personne.objects.create_user(
                     email=email,
-                    password="client",
+                    password=password,
                     nom=nom,
                     prenom=prenom,
                     date_naissance=date_naissance,
@@ -339,9 +339,8 @@ def personne_create(request):
                     role=role
                 )
 
-            # Une fois l'utilisateur créé, rediriger vers la liste des personnes
-            return redirect('personnes_list')  # Redirection vers une autre vue
-
+            # Redirection après succès
+            return redirect('personnes_list')
     else:
         form_personne = PersonneForm(user=request.user)
         form_adresse = AdresseForm()
@@ -353,6 +352,140 @@ def personne_create(request):
         'form_ville': form_ville
     })
 
+
+
+class PersonneResearch(StaffRequiredMixin,ListView):
+    model = Personne
+    template_name = 'gui/lister_personnes.html'
+
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+
+        if search_query:
+            # Diviser la chaîne de recherche en mots-clés
+            keywords = search_query.split()
+            query = Q()
+
+            for keyword in keywords:
+                # Ajouter chaque mot aux différents champs de recherche
+                query |= Q(nom__icontains=keyword) | \
+                         Q(prenom__icontains=keyword) | \
+                         Q(date_naissance__icontains=keyword) | \
+                         Q(email__icontains=keyword) | \
+                         Q(date_creation__icontains=keyword) | \
+                         Q(adresse__ville__nom_ville__icontains=keyword)
+
+            # Retourner les livres correspondant aux critères
+            return Personne.objects.filter(query).distinct()
+
+        # Si aucun terme de recherche, retourner tous les livres
+        return Personne.objects.all()
+
+class PersonneDelete(StaffRequiredMixin, View):
+    template_name = 'gui/supprimer_personne.html'
+
+    def get(self, request):
+        # Afficher le formulaire où l'utilisateur entre l'email de la personne
+        return render(request, self.template_name)
+
+    def post(self, request):
+        # Récupérer l'email de la personne soumis dans le formulaire
+        personne_email = request.POST.get('personne_email')
+        if personne_email:
+            # Obtenir l'objet Personne avec l'email fourni
+            # Assurez-vous que le champ 'email' existe et est unique dans le modèle Personne
+            personne = get_object_or_404(Personne, email=personne_email)
+            # Supprimer la personne
+            personne.delete()
+            # Rediriger vers la liste des personnes après la suppression
+            return redirect(reverse_lazy('personnes_list'))
+        # Si l'email n'est pas fourni ou invalide, afficher une erreur
+        return render(request, self.template_name, {'error': 'Email invalide.'})
+
+class PersonneUpdate(StaffRequiredMixin, View):
+    template_name = 'gui/modifier_personne.html'
+
+    def get(self, request, email):
+        """
+        Affiche les formulaires pré-remplis avec les données de la personne, de son adresse et de sa ville.
+        """
+        personne = get_object_or_404(Personne, email=email)
+        adresse = personne.adresse
+        ville = adresse.ville if adresse.ville else None
+
+        personne_form = PersonneForm(instance=personne, user=request.user)
+        adresse_form = AdresseForm(instance=adresse)
+        ville_form = VilleForm(instance=ville)
+
+        return render(request, self.template_name, {
+            'personne_form': personne_form,
+            'adresse_form': adresse_form,
+            'ville_form': ville_form,
+            'personne': personne
+        })
+
+    def post(self, request, email):
+        """
+        Traite les données soumises et met à jour la personne, son adresse et sa ville si les données sont valides.
+        """
+        personne = get_object_or_404(Personne, email=email)
+        adresse = personne.adresse
+        ville = adresse.ville if adresse.ville else None
+
+        personne_form = PersonneForm(request.POST, instance=personne, user=request.user)
+        adresse_form = AdresseForm(request.POST, instance=adresse)
+        ville_form = VilleForm(request.POST, instance=ville)
+
+        if personne_form.is_valid() and adresse_form.is_valid() and ville_form.is_valid():
+            with transaction.atomic():
+                # Gérer la Ville
+                cleaned_ville = ville_form.cleaned_data
+                nom_ville = cleaned_ville.get('nom_ville')
+                code_postal = cleaned_ville.get('code_postal')
+                pays = cleaned_ville.get('pays')
+
+                if nom_ville and code_postal and pays:
+                    try:
+                        ville_obj = Ville.objects.get(
+                            nom_ville=nom_ville,
+                            code_postal=code_postal,
+                            pays=pays
+                        )
+                    except Ville.DoesNotExist:
+                        ville_obj = ville_form.save()
+
+                else:
+                    ville_obj = None  # Ou gérer les cas où les champs sont manquants
+
+                # Gérer l'Adresse
+                # Vérifier si l'adresse est partagée
+                if Adresse.objects.filter(pk=adresse.pk).exclude(personne=personne).exists():
+                    # L'adresse est partagée, créer une nouvelle adresse pour cette personne
+                    adresse = Adresse.objects.create(
+                        rue=adresse.rue,
+                        n_rue=adresse.n_rue,
+                        ville=ville_obj
+                    )
+                    personne.adresse = adresse
+                else:
+                    # L'adresse n'est pas partagée, la modifier directement
+                    adresse_form.instance.ville = ville_obj
+                    adresse_form.save()
+
+                # Gérer la Personne
+                personne_form.save()
+
+            messages.success(request, 'La personne, son adresse et sa ville ont été mises à jour avec succès.')
+            return redirect(reverse_lazy('personnes_list'))
+
+        # Si l'un des formulaires n'est pas valide, réafficher les formulaires avec les erreurs
+        messages.error(request, 'Certaines données sont invalides. Veuillez corriger les erreurs ci-dessous.')
+        return render(request, self.template_name, {
+            'personne_form': personne_form,
+            'adresse_form': adresse_form,
+            'ville_form': ville_form,
+            'personne': personne
+        })
 
 """------------------------------GERER-LES-FOURNISSEURS------------------------------"""
 
@@ -1124,8 +1257,8 @@ class CommanderSearchResult(StaffRequiredMixin, ListView):
             for keyword in keywords:
                 query |= Q(personne__nom__icontains=keyword) | \
                          Q(personne__prenom__icontains=keyword) | \
-                         Q(livre__titre__icontains=keyword) | \
-                         Q(statut__icontains=keyword)
+                         Q(livre__titre__icontains=keyword)
+
 
             return Commander.objects.filter(query).distinct()
 
@@ -1139,7 +1272,7 @@ def terminer_commande(request, pk):
         commande.statut = 'terminé'
         commande.save()
 
-        livre = commande.livre
+        '''livre = commande.livre
         if livre.quantite_disponible < 0:
             livre.quantite_disponible = 0
             livre.save()
@@ -1151,7 +1284,7 @@ def terminer_commande(request, pk):
                 quantite=livre.quantite_disponible,
                 type='commande',
                 commentaire=f"Stock du livre '{livre.titre}' mis à jour suite à la commande terminée.",
-            )
+            )'''
 
     return redirect('commandes_list')
 
@@ -1184,28 +1317,28 @@ class ReserverList(StaffRequiredMixin, ListView):
             queryset = queryset.filter(
                 Q(personne__nom__icontains=search_query) |
                 Q(livre__titre__icontains=search_query) |
-                Q(date_reservation__icontains=search_query) |
-                Q(statut__icontains=search_query)
+                Q(date_reservation__icontains=search_query)
             )
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
         # Récupérer les commandes en cours et terminées
-        réservations_en_cours = Reserver.objects.filter(statut='en cours')
-        réservations_terminees = Reserver.objects.filter(statut='terminé')
+        reservations_en_cours = Reserver.objects.filter(statut='en cours')
+        reservations_terminees = Reserver.objects.filter(statut='terminé')
 
         # Appliquer le tri si un paramètre de tri est défini
         sort_by = self.request.GET.get('sort_by', 'date_reservation')
         order = self.request.GET.get('order', 'asc')
         sort_prefix = '' if order == 'asc' else '-'
 
-        réservations_en_cours = réservations_en_cours.order_by(f"{sort_prefix}{sort_by}")
-        réservations_terminees = réservations_terminees.order_by(f"{sort_prefix}{sort_by}")
+        reservations_en_cours = reservations_en_cours.order_by(f"{sort_prefix}{sort_by}")
+        reservations_terminees = reservations_terminees.order_by(f"{sort_prefix}{sort_by}")
 
-        context['réservations_en_cours'] = réservations_en_cours
-        context['réservations_terminees'] = réservations_terminees
+        context['reservations_en_cours'] = reservations_en_cours
+        context['reservations_terminees'] = reservations_terminees
         return context
 
 class ReserverCreate(StaffRequiredMixin, CreateView):
@@ -1222,7 +1355,7 @@ class ReserverCreate(StaffRequiredMixin, CreateView):
 class ReserverUpdate(StaffRequiredMixin, UpdateView):
     model = Reserver
     form_class = ReserverForm  # Formulaire à créer pour Reserver
-    template_name = 'gui/modifier_reservation.html'
+    template_name = 'gui/modifier_reservations.html'
     success_url = reverse_lazy('reservations_list')
 
     def get_object(self):
@@ -1253,8 +1386,8 @@ class ReserverSearchResult(StaffRequiredMixin, ListView):
             for keyword in keywords:
                 query |= Q(personne__nom__icontains=keyword) | \
                          Q(personne__prenom__icontains=keyword) | \
-                         Q(livre__titre__icontains=keyword) | \
-                         Q(statut__icontains=keyword)
+                         Q(livre__titre__icontains=keyword)
+
 
             return Reserver.objects.filter(query).distinct()
 
@@ -1267,6 +1400,7 @@ def terminer_reservation(request, pk):
     if reservation.statut == 'en cours':
         reservation.statut = 'terminé'
         reservation.save()
+
     return redirect('reservations_list')
 
 """def verifier_reservations():
@@ -1300,6 +1434,35 @@ class NotificationList(StaffRequiredMixin, TemplateView):
         return context
 
 
+
+
+class FournisseurList(StaffRequiredMixin, ListView):
+    model = Fournisseur
+    template_name = 'gui/lister_fournisseurs.html'
+
+    def get_queryset(self):
+        # Récupérer les paramètres GET
+        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : tri par 'id'
+        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+
+        # Définir le préfixe pour la direction du tri
+        sort_prefix = '' if order == 'asc' else '-'
+
+        # Options de tri supportées
+        sorting_options = {
+
+            'nom_fournisseur': 'nom_fournisseur',
+            'adresse': 'adresse__ville',  # Exemple si l'adresse a une relation avec Ville
+        }
+
+        # Récupérer le queryset initial
+        queryset = super().get_queryset()
+
+        # Appliquer le tri si valide, sinon fallback au tri par 'id'
+        if sort_by in sorting_options:
+            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
+
+        return queryset
 
 
 

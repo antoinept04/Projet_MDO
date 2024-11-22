@@ -19,13 +19,13 @@ from django.urls import path
 from gui.models import Editeur, Illustrateur, Commander
 from gui.views import (
     VilleList, VilleCreate,
-    AdresseList, AdresseCreate,
+    AdresseList, adresse_create,
     RoleList, RoleCreate,
-    PersonneList, personne_create,
+    PersonneList, personne_create, PersonneDelete, PersonneUpdate,
     FournisseurList, FournisseurCreate,
     EditeurList, EditeurCreate,
     AuteurList, AuteurCreate,
-    LivreList, create_livre, LivreDelete, LivreUpdate, LivreResearch, saisir_isbn,
+    LivreList, create_livre, LivreDelete, LivreUpdate, LivreResearch, saisir_isbn, PersonneResearch,
     EcrireList, EcrireCreate,
     CommanderList, CommanderCreate, CommanderUpdate, CommanderDelete, CommanderSearchResult, terminer_commande ,
     NotificationList,
@@ -48,7 +48,7 @@ urlpatterns = [
 
 
     path('adresses/', AdresseList.as_view(), name='adresses_list'),
-    path('adresses/create/', AdresseCreate.as_view(), name='adresses_create'),
+    path('adresses/create/', adresse_create, name='adresses_create'),
 
 
     path('roles/', RoleList.as_view(), name='roles_list'),
@@ -57,6 +57,10 @@ urlpatterns = [
 
     path('personnes/', PersonneList.as_view(), name='personnes_list'),
     path('personnes/create/', personne_create, name='personnes_create'),
+    path('personnes/research/', PersonneResearch.as_view(), name='personnes_research'),
+    path('personnes/delete/',PersonneDelete.as_view(), name='personnes_delete'),
+    path('personnes/update/', PersonneUpdate.as_view(), name='personnes_update'),
+
 
 
     path('fournisseurs/', FournisseurList.as_view(), name='fournisseurs_list'),

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modifier la Personne</title>
+    <!-- Bootstrap CSS via CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Styles personnalisés (optionnel) */
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        fieldset {
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        legend {
+            width: auto;
+            padding: 0 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .btn-group {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 class="mb-4">Modifier la Personne</h2>
+
+    <!-- Affichage des Messages de Django -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Formulaire de Modification -->
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Formulaire de Personne -->
+        <fieldset>
+            <legend>Informations Personnelles</legend>
+
+            <!-- Erreurs non liées aux champs -->
+            {{ personne_form.non_field_errors }}
+
+            <!-- Champs du Formulaire -->
+            <div class="mb-3">
+                <label for="{{ personne_form.nom.id_for_label }}" class="form-label">{{ personne_form.nom.label }}</label>
+                {{ personne_form.nom }}
+                {% if personne_form.nom.errors %}
+                    <div class="text-danger">
+                        {% for error in personne_form.nom.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ personne_form.prenom.id_for_label }}" class="form-label">{{ personne_form.prenom.label }}</label>
+                {{ personne_form.prenom }}
+                {% if personne_form.prenom.errors %}
+                    <div class="text-danger">
+                        {% for error in personne_form.prenom.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ personne_form.date_naissance.id_for_label }}" class="form-label">{{ personne_form.date_naissance.label }}</label>
+                {{ personne_form.date_naissance }}
+                {% if personne_form.date_naissance.errors %}
+                    <div class="text-danger">
+                        {% for error in personne_form.date_naissance.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ personne_form.telephone.id_for_label }}" class="form-label">{{ personne_form.telephone.label }}</label>
+                {{ personne_form.telephone }}
+                {% if personne_form.telephone.errors %}
+                    <div class="text-danger">
+                        {% for error in personne_form.telephone.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ personne_form.email.id_for_label }}" class="form-label">{{ personne_form.email.label }}</label>
+                {{ personne_form.email }}
+                {% if personne_form.email.errors %}
+                    <div class="text-danger">
+                        {% for error in personne_form.email.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ personne_form.password.id_for_label }}" class="form-label">{{ personne_form.password.label }}</label>
+                {{ personne_form.password }}
+                {% if personne_form.password.errors %}
+                    <div class="text-danger">
+                        {% for error in personne_form.password.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ personne_form.solde.id_for_label }}" class="form-label">{{ personne_form.solde.label }}</label>
+                {{ personne_form.solde }}
+                {% if personne_form.solde.errors %}
+                    <div class="text-danger">
+                        {% for error in personne_form.solde.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ personne_form.role.id_for_label }}" class="form-label">{{ personne_form.role.label }}</label>
+                {{ personne_form.role }}
+                {% if personne_form.role.errors %}
+                    <div class="text-danger">
+                        {% for error in personne_form.role.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-check mb-3">
+                {{ personne_form.is_active }}
+                <label class="form-check-label" for="{{ personne_form.is_active.id_for_label }}">{{ personne_form.is_active.label }}</label>
+                {% if personne_form.is_active.errors %}
+                    <div class="text-danger">
+                        {% for error in personne_form.is_active.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-check mb-3">
+                {{ personne_form.is_staff }}
+                <label class="form-check-label" for="{{ personne_form.is_staff.id_for_label }}">{{ personne_form.is_staff.label }}</label>
+                {% if personne_form.is_staff.errors %}
+                    <div class="text-danger">
+                        {% for error in personne_form.is_staff.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-check mb-3">
+                {{ personne_form.is_superuser }}
+                <label class="form-check-label" for="{{ personne_form.is_superuser.id_for_label }}">{{ personne_form.is_superuser.label }}</label>
+                {% if personne_form.is_superuser.errors %}
+                    <div class="text-danger">
+                        {% for error in personne_form.is_superuser.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </fieldset>
+
+        <!-- Formulaire d'Adresse -->
+        <fieldset class="mt-4">
+            <legend>Adresse</legend>
+
+            <!-- Erreurs non liées aux champs -->
+            {{ adresse_form.non_field_errors }}
+
+            <div class="mb-3">
+                <label for="{{ adresse_form.rue.id_for_label }}" class="form-label">{{ adresse_form.rue.label }}</label>
+                {{ adresse_form.rue }}
+                {% if adresse_form.rue.errors %}
+                    <div class="text-danger">
+                        {% for error in adresse_form.rue.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ adresse_form.n_rue.id_for_label }}" class="form-label">{{ adresse_form.n_rue.label }}</label>
+                {{ adresse_form.n_rue }}
+                {% if adresse_form.n_rue.errors %}
+                    <div class="text-danger">
+                        {% for error in adresse_form.n_rue.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </fieldset>
+
+        <!-- Formulaire de Ville -->
+        <fieldset class="mt-4">
+            <legend>Ville</legend>
+
+            <!-- Erreurs non liées aux champs -->
+            {{ ville_form.non_field_errors }}
+
+            <div class="mb-3">
+                <label for="{{ ville_form.nom_ville.id_for_label }}" class="form-label">{{ ville_form.nom_ville.label }}</label>
+                {{ ville_form.nom_ville }}
+                {% if ville_form.nom_ville.errors %}
+                    <div class="text-danger">
+                        {% for error in ville_form.nom_ville.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ ville_form.code_postal.id_for_label }}" class="form-label">{{ ville_form.code_postal.label }}</label>
+                {{ ville_form.code_postal }}
+                {% if ville_form.code_postal.errors %}
+                    <div class="text-danger">
+                        {% for error in ville_form.code_postal.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ ville_form.pays.id_for_label }}" class="form-label">{{ ville_form.pays.label }}</label>
+                {{ ville_form.pays }}
+                {% if ville_form.pays.errors %}
+                    <div class="text-danger">
+                        {% for error in ville_form.pays.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </fieldset>
+
+        <!-- Boutons de Soumission et d'Annulation -->
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+            <a href="{% url 'personnes_list' %}" class="btn btn-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+
+<!-- Bootstrap JS via CDN (pour les composants interactifs comme les alertes) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

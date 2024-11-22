@@ -62,7 +62,7 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     prenom = models.CharField(max_length=100)
     date_naissance = models.DateField()
     telephone = models.CharField(max_length=15)
-    email = models.EmailField(unique=True)  # Champ unique pour l'identification
+    email = models.EmailField(max_length=50, primary_key=True)  # Champ unique pour l'identification
     date_creation = models.DateField(auto_now_add=True)
     solde = models.DecimalField(max_digits=10, decimal_places=2)
     adresse = models.ForeignKey('Adresse', on_delete=models.CASCADE)
@@ -85,6 +85,7 @@ class Personne(AbstractBaseUser, PermissionsMixin):
 
 class Fournisseur(models.Model):
     nom_fournisseur = models.CharField(max_length=100)
+    adresse = models.ForeignKey('Adresse', on_delete=models.CASCADE, null = True)
 
     class Meta:
         db_table = 'Fournisseur'

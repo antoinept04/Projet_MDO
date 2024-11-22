@@ -1,17 +1,43 @@
 # forms.py
 from django import forms
-from .models import Personne, Livre, Auteur, Editeur, Adresse, Commander, Ville, Notifier, Illustrateur, Traducteur, Reserver
+from .models import Personne, Livre, Auteur, Editeur, Adresse, Commander, Ville, Notifier, Illustrateur, Traducteur, \
+    Reserver, Fournisseur
 
 
 class VilleForm(forms.ModelForm):
     class Meta:
         model = Ville
         fields = ['nom_ville', 'code_postal', 'pays']
+        labels = {
+            'nom_ville': 'Ville',
+            'code_postal': 'Code Postal',
+            'pays': 'Pays'
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        nom_ville = cleaned_data.get('nom_ville')
+        code_postal = cleaned_data.get('code_postal')
+        pays = cleaned_data.get('pays')
+
+        try:
+            ville = Ville.objects.get(nom_ville=nom_ville, code_postal=code_postal, pays=pays)
+            self.instance = ville  # Utiliser l'instance existante
+        except Ville.DoesNotExist:
+            pass  # La ville n'existe pas, le formulaire créera une nouvelle ville
+
+        return cleaned_data
+
+
 
 class AdresseForm(forms.ModelForm):
     class Meta:
         model = Adresse
         fields = ['rue', 'n_rue']
+        labels = {
+            'rue': 'Rue',
+            'n_rue': 'Numéro',
+        }
 
 class PersonneForm(forms.ModelForm):
     class Meta:
@@ -23,7 +49,7 @@ class PersonneForm(forms.ModelForm):
             'date_naissance': 'Date de naissance',
             'telephone': 'Téléphone',
             'email': 'Email',
-            'password': 'Mot de passe',
+            'password': 'Mot de passe (sauf pour un client)',
             'solde': 'Solde',
             'role': 'Rôle'
         }
@@ -199,3 +225,13 @@ class ReserverForm(forms.ModelForm):
         self.fields['quantite'].label = "Quantité"
         self.fields['statut'].label = "Statut"
         self.fields['date_reservation'].label = "Date de réservation"
+
+
+class FournisseurForm(forms.ModelForm):
+    class Meta:
+        model = Fournisseur
+        fields = ['nom_fournisseur']
+
+    def __init__(self, *args,  **kwargs):
+        super(FournisseurForm, self).__init__(*args, **kwargs)
+        self.fields['nom_fournisseur'].label = 'Nom du fournisseur'

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div class="container">
+    <h1>Résultats de la Recherche</h1>
+    <a href="{% url 'reservations_list' %}" class="btn btn-primary">Retour à la liste des reservations</a>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Personne</th>
+                <th>Livre</th>
+                <th>Date</th>
+                <th>Quantité</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for commande in commandes %}
+                <tr>
+                    <td>{{ reservation.id }}</td>
+                    <td>{{ reservation.personne.nom }}</td>
+                    <td>{{ reservation.livre.titre }}</td>
+                    <td>{{ reservation.date_reservation }}</td>
+                    <td>{{ reservation.quantite }}</td>
+                    <td>{{ reservation.statut }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="7">Aucun résultat trouvé.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

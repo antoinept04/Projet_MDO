@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Modifier une reservation</h1>
+        <a href="{% url 'homepage' %}" class="btn btn-secondary">Retour à l'Accueil</a>
+    </div>
+
+    <form method="post" class="card p-4 shadow-sm">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="d-flex justify-content-between mt-3">
+            <button type="submit" class="btn btn-success">Enregistrer</button>
+            <a href="{% url 'reservations_list' %}" class="btn btn-secondary">Annuler</a>
+
+        </div>
+    </form>
+</div>
+</body>
+</html>

@@ -13,7 +13,13 @@
 
  <h1>Liste des personnes</h1>
     <a href="/personnes/create/"><button>Ajouter une personne</button></a>
-
+    <a href="{% url 'personnes_delete' %}"><button>Supprimer une personne</button></a>
+    <a href="{% url 'personnes_update' %}"><button>Modifier une personne</button></a>
+    <form method="GET" action="{% url 'personnes_research' %}">
+            <label for="search">Rechercher :</label>
+            <input type="text" id="search" name="search"  value="{{ request.GET.search }}">
+            <button type="submit">Rechercher</button>
+    </form>
     <table border="1">
         <thead>
             <tr>
