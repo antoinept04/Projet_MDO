@@ -1,85 +1,188 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ajout d'un livre</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fff5f5;
+            color: #990000;
+            margin: 0;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: center;
+            background-color: #cc0000;
+            padding: 10px 0;
+        }
+
+        .nav-buttons a {
+            background-color: #990000;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 1.1em;
+            margin: 0 10px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .nav-buttons a:hover {
+            background-color: #cc0000;
+            transform: translateY(-3px);
+        }
+
+        h1 {
+            color: #990000;
+            text-align: center;
+            font-size: 2.5em;
+            margin-top: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            width: 80%;
+            text-align: left;
+        }
+
+        .form-group input {
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        button {
+            background-color: #990000;
+            color: white;
+            padding: 12px 20px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+            width: 200px;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #cc0000;
+        }
+
+        #add-author-btn, #add-traducteur-btn, #add-illustrateur-btn {
+            background-color: #cc0000;
+            color: white;
+            margin-top: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            padding: 8px 16px;
+            font-size: 1.1em;
+            text-align: center;
+            border: none;
+        }
+
+        #add-author-btn:hover, #add-traducteur-btn:hover, #add-illustrateur-btn:hover {
+            background-color: #990000;
+        }
+
+        .auteur-container, .traducteur-container, .illustrateur-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
-<div class="button-container">
-    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
-</div>
-<h1>Ajout d'un livre</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ livre_form.as_p }}
-    
-    <!-- Conteneur des auteurs -->
-    <div id="auteurs-container">
-        <h2>Auteurs</h2>
-        <div class="auteur-container">
-            <input type="text" name="nom_auteur" placeholder="Nom de l'auteur" />
-            <input type="text" name="prenom_auteur" placeholder="Prénom de l'auteur" />
-            <input type="date" name="date_naissance_auteur" placeholder="Date de naissance" />
+    <!-- Navbar -->
+    {% include 'gui/navbar.html' %}
+
+    <h1>Ajout d'un livre</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ livre_form.as_p }}
+        
+        <!-- Conteneur des auteurs -->
+        <div id="auteurs-container" class="form-group">
+            <h2>Auteurs</h2>
+            <div class="auteur-container">
+                <input type="text" name="nom_auteur" placeholder="Nom de l'auteur" />
+                <input type="text" name="prenom_auteur" placeholder="Prénom de l'auteur" />
+                <input type="date" name="date_naissance_auteur" placeholder="Date de naissance" />
+            </div>
         </div>
-    </div>
-    <button type="button" id="add-author-btn">Ajouter un auteur +</button>
+        <button type="button" id="add-author-btn">Ajouter un auteur +</button>
 
-    <!-- Conteneur des traducteurs -->
-    <div id="traducteurs-container">
-        <h2>Traducteurs</h2>
-        <div class="traducteur-container">
-            <input type="text" name="nom_traducteur" placeholder="Nom du traducteur" />
-            <input type="text" name="prenom_traducteur" placeholder="Prénom du traducteur" />
-            <input type="date" name="date_naissance_traducteur" placeholder="Date de naissance" />
+        <!-- Conteneur des traducteurs -->
+        <div id="traducteurs-container" class="form-group">
+            <h2>Traducteurs</h2>
+            <div class="traducteur-container">
+                <input type="text" name="nom_traducteur" placeholder="Nom du traducteur" />
+                <input type="text" name="prenom_traducteur" placeholder="Prénom du traducteur" />
+                <input type="date" name="date_naissance_traducteur" placeholder="Date de naissance" />
+            </div>
         </div>
-    </div>
-    <button type="button" id="add-traducteur-btn">Ajouter un traducteur +</button>
+        <button type="button" id="add-traducteur-btn">Ajouter un traducteur +</button>
 
-    <!-- Conteneur des illustrateurs -->
-    <div id="illustrateurs-container">
-        <h2>Illustrateurs</h2>
-        <div class="illustrateur-container">
-            <input type="text" name="nom_illustrateur" placeholder="Nom de l'illustrateur" />
-            <input type="text" name="prenom_illustrateur" placeholder="Prénom de l'illustrateur" />
-            <input type="date" name="date_naissance_illustrateur" placeholder="Date de naissance" />
+        <!-- Conteneur des illustrateurs -->
+        <div id="illustrateurs-container" class="form-group">
+            <h2>Illustrateurs</h2>
+            <div class="illustrateur-container">
+                <input type="text" name="nom_illustrateur" placeholder="Nom de l'illustrateur" />
+                <input type="text" name="prenom_illustrateur" placeholder="Prénom de l'illustrateur" />
+                <input type="date" name="date_naissance_illustrateur" placeholder="Date de naissance" />
+            </div>
         </div>
-    </div>
-    <button type="button" id="add-illustrateur-btn">Ajouter un illustrateur +</button>
-    <br>
-    <button type="submit">Ajouter</button>
-</form>
+        <button type="button" id="add-illustrateur-btn">Ajouter un illustrateur +</button>
 
-<script>
-    // Ajouter un nouvel auteur
-    document.getElementById('add-author-btn').addEventListener('click', function() {
-        var newAuteurField = document.createElement('div');
-        newAuteurField.classList.add('auteur-container');
-        newAuteurField.innerHTML = '<input type="text" name="nom_auteur" placeholder="Nom de l\'auteur" />' +
-                                  '<input type="text" name="prenom_auteur" placeholder="Prénom de l\'auteur" />' +
-                                  '<input type="date" name="date_naissance_auteur" placeholder="Date de naissance" />';
-        document.getElementById('auteurs-container').appendChild(newAuteurField);
-    });
+        <br>
+        <button type="submit">Ajouter</button>
+    </form>
 
-    // Ajouter un nouveau traducteur
-    document.getElementById('add-traducteur-btn').addEventListener('click', function() {
-        var newTraducteurField = document.createElement('div');
-        newTraducteurField.classList.add('traducteur-container');
-        newTraducteurField.innerHTML = '<input type="text" name="nom_traducteur" placeholder="Nom du traducteur" />' +
-                                      '<input type="text" name="prenom_traducteur" placeholder="Prénom du traducteur" />' +
-                                      '<input type="date" name="date_naissance_traducteur" placeholder="Date de naissance" />';
-        document.getElementById('traducteurs-container').appendChild(newTraducteurField);
-    });
+    <script>
+        // Ajouter un nouvel auteur
+        document.getElementById('add-author-btn').addEventListener('click', function() {
+            var newAuteurField = document.createElement('div');
+            newAuteurField.classList.add('auteur-container');
+            newAuteurField.innerHTML = '<input type="text" name="nom_auteur" placeholder="Nom de l\'auteur" />' +
+                                      '<input type="text" name="prenom_auteur" placeholder="Prénom de l\'auteur" />' +
+                                      '<input type="date" name="date_naissance_auteur" placeholder="Date de naissance" />';
+            document.getElementById('auteurs-container').appendChild(newAuteurField);
+        });
 
-    // Ajouter un nouvel illustrateur
-    document.getElementById('add-illustrateur-btn').addEventListener('click', function() {
-        var newIllustrateurField = document.createElement('div');
-        newIllustrateurField.classList.add('illustrateur-container');
-        newIllustrateurField.innerHTML = '<input type="text" name="nom_illustrateur" placeholder="Nom de l\'illustrateur" />' +
-                                        '<input type="text" name="prenom_illustrateur" placeholder="Prénom de l\'illustrateur" />' +
-                                        '<input type="date" name="date_naissance_illustrateur" placeholder="Date de naissance" />';
-        document.getElementById('illustrateurs-container').appendChild(newIllustrateurField);
-    });
-</script>
+        // Ajouter un nouveau traducteur
+        document.getElementById('add-traducteur-btn').addEventListener('click', function() {
+            var newTraducteurField = document.createElement('div');
+            newTraducteurField.classList.add('traducteur-container');
+            newTraducteurField.innerHTML = '<input type="text" name="nom_traducteur" placeholder="Nom du traducteur" />' +
+                                          '<input type="text" name="prenom_traducteur" placeholder="Prénom du traducteur" />' +
+                                          '<input type="date" name="date_naissance_traducteur" placeholder="Date de naissance" />';
+            document.getElementById('traducteurs-container').appendChild(newTraducteurField);
+        });
+
+        // Ajouter un nouvel illustrateur
+        document.getElementById('add-illustrateur-btn').addEventListener('click', function() {
+            var newIllustrateurField = document.createElement('div');
+            newIllustrateurField.classList.add('illustrateur-container');
+            newIllustrateurField.innerHTML = '<input type="text" name="nom_illustrateur" placeholder="Nom de l\'illustrateur" />' +
+                                            '<input type="text" name="prenom_illustrateur" placeholder="Prénom de l\'illustrateur" />' +
+                                            '<input type="date" name="date_naissance_illustrateur" placeholder="Date de naissance" />';
+            document.getElementById('illustrateurs-container').appendChild(newIllustrateurField);
+        });
+    </script>
 </body>
 </html>

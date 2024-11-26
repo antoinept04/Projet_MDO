@@ -131,7 +131,7 @@ urlpatterns = [
     path('reservations/create/', ReserverCreate.as_view(), name='reservations_create'),
     path('reservations/update/<int:pk>/', ReserverUpdate.as_view(), name='reservations_update'),
     path('reservations/delete/<int:pk>/', ReserverDelete.as_view(), name='reservations_delete'),
-    path('reservations/search/', ReserverSearchResult.as_view(), name='reservations_search_result'),
+    path('reservations/search/', ReserverSearchResult.as_view(), name='reservations_search'),
 
     path('reservations/<int:pk>/terminer/', terminer_reservation, name='terminer_reservation'),
 

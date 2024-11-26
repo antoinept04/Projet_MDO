@@ -1,0 +1,44 @@
+{% load static %}
+<header>
+    <a href="{% url 'homepage' %}">
+        <img src="{% static 'images/logo_mdd.webp' %}" alt="Logo" class="logo">
+    </a>
+    <div class="user-info">
+        {% if user.is_authenticated %}
+            Bonjour, {{ user.prenom }} | <a href="{% url 'logout' %}">Logout</a>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a>
+        {% endif %}
+    </div>
+</header>
+<style>
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 30px; /* Augmente la taille du header */
+        background-color: #990000;
+        color: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    header .logo {
+        height: 60px; /* Augmente la taille du logo */
+        transition: transform 0.3s;
+    }
+    header .logo:hover {
+        transform: scale(1.1); /* Effet au survol */
+    }
+    header .user-info {
+        font-size: 1.1em; /* Texte légèrement plus grand */
+    }
+    header .user-info a {
+        color: white;
+        text-decoration: none;
+        margin-left: 15px;
+        font-weight: bold; /* Met en valeur les liens */
+        transition: color 0.3s;
+    }
+    header .user-info a:hover {
+        color: #ffe6e6; /* Couleur plus claire au survol */
+    }
+</style>

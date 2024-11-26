@@ -1,22 +1,107 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supprimer un achat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fff5f5;
+            color: #990000;
+            margin: 0;
+            padding: 20px;
+        }
 
+        .navbar {
+            display: flex;
+            justify-content: center;
+            background-color: #cc0000;
+            padding: 10px 0;
+        }
+
+        .nav-buttons a {
+            background-color: #990000;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 1.1em;
+            margin: 0 10px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .nav-buttons a:hover {
+            background-color: #cc0000;
+            transform: translateY(-3px);
+        }
+
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #990000;
+            text-align: center;
+            font-size: 2.5em;
+            margin-top: 20px;
+        }
+
+        .alert {
+            background-color: #f8d7da;
+            color: #721c24;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .alert p {
+            font-size: 1.2em;
+        }
+
+        .btn-group {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        button, .btn-secondary {
+            background-color: #990000;
+            color: white;
+            padding: 12px 20px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover, .btn-secondary:hover {
+            background-color: #cc0000;
+        }
+
+    </style>
 </head>
 <body>
-
-<div class="container mt-5">
-    <div class="alert alert-danger text-center">
+    {% include 'gui/navbar.html' %}
+    <div class="container">
         <h1>Supprimer un achat</h1>
-        <p>Êtes-vous sûr de vouloir supprimer cet achat ? Cette action est irréversible.</p>
-        <form method="post" class="d-inline-block">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Confirmer</button>
-        </form>
-        <a href="{% url 'achats_list' %}" class="btn btn-secondary">Annuler</a>
-    </div>
-</div>
 
+        <div class="alert">
+            <p>Êtes-vous sûr de vouloir supprimer cet achat ? Cette action est irréversible.</p>
+            <form method="post" class="d-inline-block">
+                {% csrf_token %}
+                <button type="submit">Confirmer</button>
+            </form>
+            <a href="{% url 'achats_list' %}" class="btn-secondary">Annuler</a>
+        </div>
+    </div>
 </body>
 </html>

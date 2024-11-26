@@ -1,28 +1,113 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des auteurs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fff5f5;
+            color: #990000;
+            margin: 0;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: center;
+            background-color: #cc0000;
+            padding: 10px 0;
+        }
+
+        .nav-buttons a {
+            background-color: #990000;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 1.1em;
+            margin: 0 10px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .nav-buttons a:hover {
+            background-color: #cc0000;
+            transform: translateY(-3px);
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .action-bar a, .action-bar button {
+            background-color: #990000;
+            color: white;
+            padding: 12px 20px;
+            font-size: 1em;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+
+        .action-bar a:hover, .action-bar button:hover {
+            background-color: #cc0000;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 300px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ccc;
+        }
+
+        th a {
+            color: #990000;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-<div class="button-container">
-    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
-</div>
-    <h1>Liste des auteurs</h1>
-    <a href="/auteurs/create/"><button>Ajouter un auteur</button></a>
-    <a href="/auteurs/saisir_auteur_ID/"><button>Modifier un auteur</button></a>
-    <a href="/auteurs/delete/"><button>Supprimer un auteur</button></a>
+    <!-- Navbar -->
+    {% include 'gui/navbar.html' %}
 
-    <form method="GET" action="{% url 'auteurs_research' %}">
-        <label for="search">Rechercher :</label>
-        <input type="text" id="search" name="search" value="{{ request.GET.search }}">
-        <button type="submit">Rechercher</button>
-    </form>
-    <table border="1">
+    <h1 style="color: #990000; text-align: center; font-size: 3em; margin-top: 20px;">Liste des auteurs</h1>
+
+    <div class="action-bar">
+        <a href="/auteurs/create/" class="button">Ajouter un auteur</a>
+        <a href="/auteurs/saisir_auteur_ID/" class="button">Modifier un auteur</a>
+        <a href="/auteurs/delete/" class="button">Supprimer un auteur</a>
+        <form method="GET" action="{% url 'auteurs_research' %}" style="display: inline-flex; align-items: center; gap: 10px;">
+            <input type="text" id="search" name="search" placeholder="Nom, Prénom..." value="{{ request.GET.search }}">
+            <button type="submit" class="button">Rechercher</button>
+        </form>
+    </div>
+
+    <table>
         <thead>
             <tr>
-                <th><a href="?sort_by=id&order={% if request.GET.sort_by == 'id' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">ID</a></th>
+                <th><a href="?sort_by=id&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">ID de l'Auteur</a></th>
                 <th><a href="?sort_by=nom&order={% if request.GET.sort_by == 'nom' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Nom</a></th>
                 <th><a href="?sort_by=prenom&order={% if request.GET.sort_by == 'prenom' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Prénom</a></th>
                 <th><a href="?sort_by=date_naissance&order={% if request.GET.sort_by == 'date_naissance' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Date de Naissance</a></th>
@@ -39,6 +124,5 @@
             {% endfor %}
         </tbody>
     </table>
-
 </body>
 </html>

@@ -1,58 +1,117 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catalogue des livres</title>
+    <title>Liste des adresses</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #fff5f5;
+            color: #990000;
+            margin: 0;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: center;
+            background-color: #cc0000;
+            padding: 10px 0;
+        }
+
+        .nav-buttons a {
+            background-color: #990000;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 1.1em;
+            margin: 0 10px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .nav-buttons a:hover {
+            background-color: #cc0000;
+            transform: translateY(-3px);
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .action-bar a, .action-bar button {
+            background-color: #990000;
+            color: white;
+            padding: 12px 20px;
+            font-size: 1em;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+
+        .action-bar a:hover, .action-bar button:hover {
+            background-color: #cc0000;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 300px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ccc;
+        }
+
+        th a {
+            color: #990000;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-<div class="button-container">
-    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
-</div>
-    <h1>Liste des adresses</h1>
+    <!-- Navbar -->
+    {% include 'gui/navbar.html' %}
 
-    <a href="/adresses/create/"><button>Ajouter une adresse</button></a>
-    <a href="/adresses/delete/"><button>Supprimer une adresse</button></a>
+    <h1 style="color: #990000; text-align: center; font-size: 3em; margin-top: 20px;">Liste des adresses</h1>
 
-    <form method="GET" action="{% url 'adresses_research' %}">
-        <label for="search">Rechercher :</label>
-        <input type="text" id="search" name="search"  value="{{ request.GET.search }}">
-        <button type="submit">Rechercher</button>
-    </form>    
+    <div class="action-bar">
+        <a href="/adresses/create/" class="button">Ajouter une adresse</a>
+        <a href="/adresses/delete/" class="button">Supprimer une adresse</a>
+        <form method="GET" action="{% url 'adresses_research' %}" style="display: inline-flex; align-items: center; gap: 10px;">
+            <input type="text" id="search" name="search" placeholder="Rue, Ville..." value="{{ request.GET.search }}">
+            <button type="submit" class="button">Rechercher</button>
+        </form>
+    </div>
 
-    <table border="1">
+    <table>
         <thead>
             <tr>
-                <th>
-                    <a href="?sort_by=id&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
-                        ID
-                    </a>
-                </th>
-                 <th>
-                    <a href="?sort_by=rue&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
-                        Rue
-                    </a>
-                </th>
-                <th>
-                    <a href="?sort_by=n_rue&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
-                        Numéro de Rue
-                    </a>
-                </th>
-                <th>
-                    <a href="?sort_by=ville&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
-                        Ville
-                    </a>
-                </th>
-                <th>
-                    <a href="?sort_by=ville_code_postal&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
-                        Code Postal
-                    </a>
-                </th>
-                <th>
-                    <a href="?sort_by=ville_pays&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
-                        Pays
-                    </a>
-                </th>
+                <th><a href="?sort_by=id&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">ID</a></th>
+                <th><a href="?sort_by=rue&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Rue</a></th>
+                <th><a href="?sort_by=n_rue&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Numéro de Rue</a></th>
+                <th><a href="?sort_by=ville&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Ville</a></th>
+                <th><a href="?sort_by=ville_code_postal&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Code Postal</a></th>
+                <th><a href="?sort_by=ville_pays&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Pays</a></th>
             </tr>
         </thead>
         <tbody>

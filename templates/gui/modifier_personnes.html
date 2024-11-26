@@ -1,5 +1,3 @@
-<!-- personnes/templates/personnes/modifier_personne.html -->
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -12,35 +10,74 @@
         /* Styles personnalisés (optionnel) */
         body {
             background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
         }
+
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin-top: 50px;
             padding: 20px;
             background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        fieldset {
-            border: 1px solid #dee2e6;
-            padding: 20px;
-            border-radius: 5px;
+
+        .form-title {
+            color: #990000;
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
         }
-        legend {
-            width: auto;
-            padding: 0 10px;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-        .btn-group {
+
+        .form-section {
             margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-section legend {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #990000;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .text-danger {
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background-color: #990000;
+            border-color: #990000;
+        }
+
+        .btn-primary:hover {
+            background-color: #cc0000;
+            border-color: #cc0000;
+        }
+
+        .btn-group {
+            margin-top: 30px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 class="mb-4">Modifier la Personne : {{ personne.nom }} {{ personne.prenom }}</h2>
+    <h2 class="form-title">Modifier la Personne : {{ personne.nom }} {{ personne.prenom }}</h2>
 
     <!-- Affichage des Messages de Django -->
     {% if messages %}
@@ -57,14 +94,14 @@
         {% csrf_token %}
 
         <!-- Formulaire de Personne -->
-        <fieldset>
+        <div class="form-section">
             <legend>Informations Personnelles</legend>
 
             <!-- Erreurs non liées aux champs -->
             {{ personne_form.non_field_errors }}
 
             <!-- Champs du Formulaire -->
-            <div class="mb-3">
+            <div class="form-group">
                 <label for="{{ personne_form.nom.id_for_label }}" class="form-label">{{ personne_form.nom.label }}</label>
                 {{ personne_form.nom }}
                 {% if personne_form.nom.errors %}
@@ -76,7 +113,7 @@
                 {% endif %}
             </div>
 
-            <div class="mb-3">
+            <div class="form-group">
                 <label for="{{ personne_form.prenom.id_for_label }}" class="form-label">{{ personne_form.prenom.label }}</label>
                 {{ personne_form.prenom }}
                 {% if personne_form.prenom.errors %}
@@ -88,7 +125,7 @@
                 {% endif %}
             </div>
 
-            <div class="mb-3">
+            <div class="form-group">
                 <label for="{{ personne_form.date_naissance.id_for_label }}" class="form-label">{{ personne_form.date_naissance.label }}</label>
                 {{ personne_form.date_naissance }}
                 {% if personne_form.date_naissance.errors %}
@@ -100,7 +137,7 @@
                 {% endif %}
             </div>
 
-            <div class="mb-3">
+            <div class="form-group">
                 <label for="{{ personne_form.telephone.id_for_label }}" class="form-label">{{ personne_form.telephone.label }}</label>
                 {{ personne_form.telephone }}
                 {% if personne_form.telephone.errors %}
@@ -112,7 +149,7 @@
                 {% endif %}
             </div>
 
-            <div class="mb-3">
+            <div class="form-group">
                 <label for="{{ personne_form.email.id_for_label }}" class="form-label">{{ personne_form.email.label }}</label>
                 {{ personne_form.email }}
                 {% if personne_form.email.errors %}
@@ -124,7 +161,7 @@
                 {% endif %}
             </div>
 
-            <div class="mb-3">
+            <div class="form-group">
                 <label for="{{ personne_form.password.id_for_label }}" class="form-label">{{ personne_form.password.label }}</label>
                 {{ personne_form.password }}
                 {% if personne_form.password.errors %}
@@ -136,7 +173,7 @@
                 {% endif %}
             </div>
 
-            <div class="mb-3">
+            <div class="form-group">
                 <label for="{{ personne_form.solde.id_for_label }}" class="form-label">{{ personne_form.solde.label }}</label>
                 {{ personne_form.solde }}
                 {% if personne_form.solde.errors %}
@@ -149,7 +186,7 @@
             </div>
 
             {% if personne_form.role %}
-                <div class="mb-3">
+                <div class="form-group">
                     <label for="{{ personne_form.role.id_for_label }}" class="form-label">{{ personne_form.role.label }}</label>
                     {{ personne_form.role }}
                     {% if personne_form.role.errors %}
@@ -197,16 +234,13 @@
                     </div>
                 {% endif %}
             </div>
-        </fieldset>
+        </div>
 
         <!-- Formulaire d'Adresse -->
-        <fieldset class="mt-4">
+        <div class="form-section">
             <legend>Adresse</legend>
 
-            <!-- Erreurs non liées aux champs -->
-            {{ adresse_form.non_field_errors }}
-
-            <div class="mb-3">
+            <div class="form-group">
                 <label for="{{ adresse_form.rue.id_for_label }}" class="form-label">{{ adresse_form.rue.label }}</label>
                 {{ adresse_form.rue }}
                 {% if adresse_form.rue.errors %}
@@ -218,7 +252,7 @@
                 {% endif %}
             </div>
 
-            <div class="mb-3">
+            <div class="form-group">
                 <label for="{{ adresse_form.n_rue.id_for_label }}" class="form-label">{{ adresse_form.n_rue.label }}</label>
                 {{ adresse_form.n_rue }}
                 {% if adresse_form.n_rue.errors %}
@@ -229,16 +263,13 @@
                     </div>
                 {% endif %}
             </div>
-        </fieldset>
+        </div>
 
         <!-- Formulaire de Ville -->
-        <fieldset class="mt-4">
+        <div class="form-section">
             <legend>Ville</legend>
 
-            <!-- Erreurs non liées aux champs -->
-            {{ ville_form.non_field_errors }}
-
-            <div class="mb-3">
+            <div class="form-group">
                 <label for="{{ ville_form.nom_ville.id_for_label }}" class="form-label">{{ ville_form.nom_ville.label }}</label>
                 {{ ville_form.nom_ville }}
                 {% if ville_form.nom_ville.errors %}
@@ -250,7 +281,7 @@
                 {% endif %}
             </div>
 
-            <div class="mb-3">
+            <div class="form-group">
                 <label for="{{ ville_form.code_postal.id_for_label }}" class="form-label">{{ ville_form.code_postal.label }}</label>
                 {{ ville_form.code_postal }}
                 {% if ville_form.code_postal.errors %}
@@ -262,7 +293,7 @@
                 {% endif %}
             </div>
 
-            <div class="mb-3">
+            <div class="form-group">
                 <label for="{{ ville_form.pays.id_for_label }}" class="form-label">{{ ville_form.pays.label }}</label>
                 {{ ville_form.pays }}
                 {% if ville_form.pays.errors %}
@@ -273,7 +304,7 @@
                     </div>
                 {% endif %}
             </div>
-        </fieldset>
+        </div>
 
         <!-- Boutons de Soumission et d'Annulation -->
         <div class="btn-group">

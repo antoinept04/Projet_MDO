@@ -1,4 +1,4 @@
-{% include 'gui/navbar.html' %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -8,59 +8,49 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #333;
+            background-color: #fff5f5;
+            color: #990000;
             margin: 0;
         }
         h1 {
-            margin-top: 20px;
-            font-size: 2.5em;
-            color: #005f99;
+            text-align: center;
+            color: #990000;
+            margin: 20px 0;
         }
         .button-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 20px;
-            gap: 15px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px; /* Augmente l'espace entre les boutons */
+            width: 80%;
+            margin: 0 auto;
         }
         .button {
-            background-color: #005f99;
+            background-color: #990000;
             color: white;
-            padding: 15px 20px;
-            font-size: 1em;
-            border-radius: 8px;
+            padding: 30px; /* Augmente la taille des boutons */
+            font-size: 1.5em; /* Texte plus grand */
+            border-radius: 12px; /* Coins légèrement plus arrondis */
             text-decoration: none;
             text-align: center;
-            width: 200px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée */
+            transition: background-color 0.3s, transform 0.2s; /* Ajout d'effet de transition */
         }
         .button:hover {
-            background-color: #0084cc;
+            background-color: #cc0000;
+            transform: translateY(-5px); /* Légère élévation au survol */
         }
     </style>
 </head>
 <body>
-    <h1>Bienvenue dans l'application de gestion</h1>
+    {% include 'gui/header.html' %}
+    <h1>Bienvenue dans votre librairie</h1>
     <div class="button-container">
-        <a href="{% url 'villes_list' %}" class="button">Gérer les Villes</a>
-        <a href="{% url 'adresses_list' %}" class="button">Gérer les Adresses</a>
-        <a href="{% url 'roles_list' %}" class="button">Gérer les Rôles</a>
-        <a href="{% url 'personnes_list' %}" class="button">Gérer les Personnes</a>
-        <a href="{% url 'fournisseurs_list' %}" class="button">Gérer les Fournisseurs</a>
-        <a href="{% url 'editeurs_list' %}" class="button">Gérer les Éditeurs</a>
-        <a href="{% url 'auteurs_list' %}" class="button">Gérer les Auteurs</a>
-        <a href="{% url 'livres_list' %}" class="button">Gérer les Livres</a>
-        <a href="{% url 'commandes_list' %}" class="button">Gérer les Commandes</a>
-        <a href="{% url 'notifications_list' %}" class="button">Gérer les Notifications</a>
-        <a href="{% url 'achats_list' %}" class="button">Gérer les Achats</a>
-        <a href="{% url 'reservations_list' %}" class="button">Gérer les Réservations</a>
-        <a href="{% url 'illustrateurs_list' %}" class="button">Gérer les Illustrateurs</a>
-        <a href="{% url 'traducteurs_list' %}" class="button">Gérer les Traducteurs</a>
+        <a href="{% url 'personnes_list' %}" class="button">Clients</a>
+        <a href="{% url 'livres_list' %}" class="button">Livres</a>
+        <a href="{% url 'commandes_list' %}" class="button">Commandes</a>
+        <a href="{% url 'reservations_list' %}" class="button">Réservations</a>
+        <a href="{% url 'achats_list' %}" class="button">Achats</a>
+        <a href="{% url 'notifications_list' %}" class="button">Notifications</a>
     </div>
 </body>
 </html>
