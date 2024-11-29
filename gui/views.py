@@ -14,7 +14,7 @@ from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Aut
     Achat, Reserver, Illustrateur, Traducteur
 from .decorators import unauthenticated_user_required, staff_required
 from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, IDEditeurForm, EmailInputForm, \
-    IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm, CommanderForm, ReserverForm, AchatForm
+    IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm, CommanderForm, ReserverForm, AchatForm, FournisseurForm, IDFournisseurForm
 from django.db import transaction
 
 
@@ -544,15 +544,7 @@ class PersonneUpdate(StaffRequiredMixin, View):
 
 """------------------------------GERER-LES-FOURNISSEURS------------------------------"""
 
-class FournisseurList(StaffRequiredMixin,ListView):
-    model = Fournisseur
-    template_name = 'gui/lister_fournisseurs.html'
 
-class FournisseurCreate(StaffRequiredMixin,CreateView):
-    model = Fournisseur
-    fields = ['nom']
-    template_name = 'gui/ajouter_fournisseur.html'
-    success_url = reverse_lazy('fournisseurs_list')
 
 
 """------------------------------GERER-LES-EDITEURS------------------------------"""
@@ -1545,31 +1537,108 @@ class NotificationList(StaffRequiredMixin, TemplateView):
 class FournisseurList(StaffRequiredMixin, ListView):
     model = Fournisseur
     template_name = 'gui/lister_fournisseurs.html'
+    context_object_name = 'fournisseurs'
 
     def get_queryset(self):
-        # Récupérer les paramètres GET
-        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : tri par 'id'
-        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
-
-        # Définir le préfixe pour la direction du tri
+        sort_by = self.request.GET.get('sort_by', 'nom_fournisseur')
+        order = self.request.GET.get('order', 'asc')
         sort_prefix = '' if order == 'asc' else '-'
-
-        # Options de tri supportées
         sorting_options = {
-
             'nom_fournisseur': 'nom_fournisseur',
-            'adresse': 'adresse__ville',  # Exemple si l'adresse a une relation avec Ville
+            'ville': 'adresses__ville',
         }
 
-        # Récupérer le queryset initial
         queryset = super().get_queryset()
 
-        # Appliquer le tri si valide, sinon fallback au tri par 'id'
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
+        else:
+            queryset = queryset.order_by('nom_fournisseur')
 
-        return queryset
+        return queryset.prefetch_related('adresses')
 
+class FournisseurCreate(StaffRequiredMixin, CreateView):
+    model = Fournisseur
+    form_class = FournisseurForm
+    template_name = 'gui/ajouter_fournisseur.html'
+    success_url = reverse_lazy('fournisseurs_list')
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        form.save_m2m()
+        return response
+
+
+class FournisseurDelete(StaffRequiredMixin, View):
+    template_name = 'gui/supprimer_fournisseur.html'
+
+    def get(self, request):
+        return render(request, self.template_name)
+
+    def post(self, request):
+        nom_fournisseur = request.POST.get('nom_fournisseur')
+        if nom_fournisseur:
+            fournisseur = get_object_or_404(Fournisseur, pk=nom_fournisseur)
+            fournisseur.delete()
+            return redirect(reverse_lazy('fournisseurs_list'))
+        return render(request, self.template_name, {'error': "Nom du fournisseur invalide."})
+
+
+class FournisseurUpdate(StaffRequiredMixin, UpdateView):
+    model = Fournisseur
+    form_class = FournisseurForm
+    template_name = 'gui/modifier_fournisseur.html'
+    success_url = reverse_lazy('fournisseurs_list')
+    pk_url_kwarg = 'nom_fournisseur'
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        form.save_m2m()
+        return response
+
+
+class FournisseurResearch(StaffRequiredMixin, ListView):
+    model = Fournisseur
+    template_name = 'gui/lister_fournisseurs.html'
+    context_object_name = 'fournisseurs'
+
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+
+        if search_query:
+            keywords = search_query.split()
+            query = Q()
+
+            for keyword in keywords:
+                query |= Q(nom_fournisseur__icontains=keyword) | \
+                         Q(adresses__rue__icontains=keyword) | \
+                         Q(adresses__ville__icontains=keyword) | \
+                         Q(adresses__code_postal__icontains=keyword) | \
+                         Q(adresses__pays__icontains=keyword)
+
+            return Fournisseur.objects.filter(query).distinct().prefetch_related('adresses')
+
+        return Fournisseur.objects.all().prefetch_related('adresses')
+
+
+
+class SaisirIDFournisseurView(StaffRequiredMixin, View):
+    template_name = 'gui/saisir_fournisseur_ID.html'
+
+    def get(self, request):
+        form = IDFournisseurForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        form = IDFournisseurForm(request.POST)
+        if form.is_valid():
+            nom_fournisseur = form.cleaned_data['nom_fournisseur']
+
+            if Fournisseur.objects.filter(pk=nom_fournisseur).exists():
+                return redirect(reverse_lazy('fournisseurs_update', kwargs={'nom_fournisseur': nom_fournisseur}))
+            else:
+                return render(request, self.template_name, {'form': form, 'error': 'Fournisseur non trouvé.'})
+        return render(request, self.template_name, {'form': form})
 
 
 

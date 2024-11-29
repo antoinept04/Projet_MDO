@@ -239,13 +239,19 @@ class ReserverForm(forms.ModelForm):
 
 
 class FournisseurForm(forms.ModelForm):
+    adresses = forms.ModelMultipleChoiceField(
+        queryset=Adresse.objects.all(),
+        widget=forms.CheckboxSelectMultiple,  # Vous pouvez utiliser un autre widget si nécessaire
+        required=False
+    )
+
     class Meta:
         model = Fournisseur
-        fields = ['nom_fournisseur']
+        fields = ['nom_fournisseur', 'adresses']
 
-    def __init__(self, *args,  **kwargs):
-        super(FournisseurForm, self).__init__(*args, **kwargs)
-        self.fields['nom_fournisseur'].label = 'Nom du fournisseur'
+class IDFournisseurForm(forms.Form):
+    nom_fournisseur = forms.CharField(label="Nom du Fournisseur", max_length=100)
+
 
 class AchatForm(forms.ModelForm):
     class Meta:

@@ -1,10 +1,114 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Liste des Fournisseurs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .list-container {
+            max-width: 800px;
+            margin: auto;
+        }
+        h2 {
+            text-align: center;
+        }
+        .search-form {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .search-form input[type="text"] {
+            width: 60%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .search-form button {
+            padding: 8px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .search-form button:hover {
+            background-color: #45a049;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li.fournisseur-item {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .fournisseur-item strong {
+            font-size: 1.2em;
+        }
+        .adresse-list {
+            list-style-type: disc;
+            margin-left: 20px;
+        }
+        .actions a {
+            margin-right: 10px;
+            text-decoration: none;
+            color: #008CBA;
+        }
+        .actions a:hover {
+            text-decoration: underline;
+        }
+        .nav-links {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .nav-links a {
+            margin: 0 10px;
+            text-decoration: none;
+            color: #333;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
+    <div class="nav-links">
+        <a href="{% url 'fournisseur_create' %}">Ajouter un Fournisseur</a>
+        <a href="{% url 'fournisseur_delete' %}">Supprimer un Fournisseur</a>
+    </div>
 
+    <div class="list-container">
+        <h2>Liste des Fournisseurs</h2>
+        <form method="get" class="search-form">
+            <input type="text" name="search" placeholder="Rechercher..." value="{{ request.GET.search }}">
+            <button type="submit">Rechercher</button>
+        </form>
+        <ul>
+            {% for fournisseur in fournisseurs %}
+                <li class="fournisseur-item">
+                    <strong>{{ fournisseur.nom_fournisseur }}</strong>
+                    {% if fournisseur.adresses.all %}
+                        <ul class="adresse-list">
+                            {% for adresse in fournisseur.adresses.all %}
+                                <li>{{ adresse.rue }}, {{ adresse.ville }}, {{ adresse.code_postal }}, {{ adresse.pays }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Aucune adresse associée.</p>
+                    {% endif %}
+                    <div class="actions">
+                        <a href="{% url 'fournisseurs_update' nom_fournisseur=fournisseur.nom_fournisseur %}">Modifier</a>
+                        <a href="{% url 'fournisseur_delete' %}">Supprimer</a>
+                    </div>
+                </li>
+            {% empty %}
+                <li>Aucun fournisseur trouvé.</li>
+            {% endfor %}
+        </ul>
+    </div>
 </body>
 </html>

@@ -21,8 +21,8 @@ class Adresse(models.Model):
     n_rue = models.IntegerField()
     ville = models.ForeignKey(Ville, on_delete=models.CASCADE)
 
-    class Meta:
-        db_table = 'Adresse'
+    """class Meta:
+        db_table = 'Adresse'"""
 
     def __str__(self):
         return f"{self.rue}, {self.n_rue}, {self.ville.nom_ville}"
@@ -84,15 +84,18 @@ class Personne(AbstractBaseUser, PermissionsMixin):
         return f"{self.nom} {self.prenom}"
 
 class Fournisseur(models.Model):
-    nom_fournisseur = models.CharField(max_length=100)
-    adresse = models.ForeignKey('Adresse', on_delete=models.CASCADE, null = True)
+    nom_fournisseur = models.CharField(max_length=100, primary_key=True)
+    adresses = models.ManyToManyField(
+        'Adresse',
+        through='FournisseurAdresse',
+        related_name='fournisseurs'
+    )
 
     class Meta:
         db_table = 'Fournisseur'
 
     def __str__(self):
         return self.nom_fournisseur
-
 class Editeur(models.Model):
     nom = models.CharField(max_length=100)
 
@@ -281,3 +284,19 @@ class Notifier(models.Model):
 
     def __str__(self):
         return f"Notification pour {self.livre.titre} ({self.type})"
+
+class FournisseurAdresse(models.Model):
+    fournisseur = models.ForeignKey(
+        'Fournisseur',
+        to_field='nom_fournisseur',
+        db_column='fournisseur_nom',
+        on_delete=models.CASCADE
+    )
+    adresse = models.ForeignKey('Adresse', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('fournisseur', 'adresse')
+        db_table = 'Fournisseur_adresses'
+
+    def __str__(self):
+        return f"{self.fournisseur.nom_fournisseur} - {self.adresse}"

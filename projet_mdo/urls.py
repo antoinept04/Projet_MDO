@@ -34,6 +34,7 @@ from gui.views import (
     loginPage, logoutUser,
     home, create_livre, EditeurUpdate, EditeurDelete, AuteurDelete, AuteurUpdate, saisir_ID_auteur,
     AuteurResearch, EditeurResearch, saisir_ID_editeur, IllustrateurList, IllustrateurCreate, IllustrateurResearch, IllustrateurDelete, IllustrateurUpdate, saisir_ID_illustrateur, TraducteurList, TraducteurCreate, TraducteurResearch, TraducteurDelete, TraducteurUpdate, saisir_ID_traducteur,
+    FournisseurResearch, FournisseurDelete, FournisseurUpdate, SaisirIDFournisseurView, FournisseurCreate, FournisseurList,
 )
 
 urlpatterns = [
@@ -66,8 +67,7 @@ urlpatterns = [
 
 
 
-    path('fournisseurs/', FournisseurList.as_view(), name='fournisseurs_list'),
-    path('fournisseurs/create/', FournisseurCreate.as_view(), name='fournisseurs_create'),
+
 
 
     path('editeurs/', EditeurList.as_view(), name='editeurs_list'),
@@ -134,6 +134,24 @@ urlpatterns = [
     path('reservations/search/', ReserverSearchResult.as_view(), name='reservations_search'),
 
     path('reservations/<int:pk>/terminer/', terminer_reservation, name='terminer_reservation'),
+
+    # Liste des fournisseurs avec possibilité de recherche
+    path('fournisseurs/', FournisseurList.as_view(), name='fournisseurs_list'),
+
+    # Vue de recherche des fournisseurs
+    path('fournisseurs/search/', FournisseurResearch.as_view(), name='fournisseurs_search'),
+
+    # Création d'un nouveau fournisseur
+    path('fournisseurs/ajouter/', FournisseurCreate.as_view(), name='fournisseur_create'),
+
+    # Suppression d'un fournisseur
+    path('fournisseurs/supprimer/', FournisseurDelete.as_view(), name='fournisseur_delete'),
+
+    # Modification d'un fournisseur spécifique identifié par 'nom_fournisseur'
+    path('fournisseurs/modifier/<str:nom_fournisseur>/', FournisseurUpdate.as_view(), name='fournisseurs_update'),
+
+    # Saisie du nom du fournisseur pour redirection vers la modification
+    path('fournisseurs/saisir_id/', SaisirIDFournisseurView.as_view(), name='saisir_id_fournisseur'),
 
 
     path('notifications/', NotificationList.as_view(), name='notifications_list')

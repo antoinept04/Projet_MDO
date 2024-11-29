@@ -2,51 +2,51 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Ajouter un Fournisseur</title>
+    <title>Supprimer un Fournisseur</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
         }
-        .form-container {
-            max-width: 600px;
+        .delete-container {
+            max-width: 400px;
             margin: auto;
+            text-align: center;
         }
         h2 {
-            text-align: center;
+            color: #FF0000;
         }
         form {
             border: 1px solid #ccc;
             padding: 20px;
             border-radius: 5px;
-        }
-        .form-group {
-            margin-bottom: 15px;
+            background-color: #f9f9f9;
         }
         label {
             display: block;
+            margin-bottom: 10px;
             font-weight: bold;
         }
-        input[type="text"],
-        select {
+        input[type="text"] {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
+            margin-bottom: 15px;
         }
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
+        .error-message {
+            color: red;
+            margin-bottom: 15px;
         }
         button {
             padding: 10px 15px;
-            background-color: #4CAF50;
+            background-color: #f44336;
             color: white;
             border: none;
             border-radius: 3px;
             cursor: pointer;
         }
         button:hover {
-            background-color: #45a049;
+            background-color: #da190b;
         }
         .nav-links {
             text-align: center;
@@ -68,23 +68,16 @@
         <a href="{% url 'fournisseur_create' %}">Ajouter un Fournisseur</a>
     </div>
 
-    <div class="form-container">
-        <h2>Ajouter un Fournisseur</h2>
+    <div class="delete-container">
+        <h2>Supprimer un Fournisseur</h2>
         <form method="post">
             {% csrf_token %}
-            <div class="form-group">
-                {{ form.nom_fournisseur.label_tag }}
-                {{ form.nom_fournisseur }}
-            </div>
-            <div class="form-group">
-                {{ form.adresses.label_tag }}
-                <div class="checkbox-group">
-                    {% for adresse in form.adresses %}
-                        <label>{{ adresse }}</label>
-                    {% endfor %}
-                </div>
-            </div>
-            <button type="submit">Enregistrer</button>
+            <label for="id_nom_fournisseur">Nom du Fournisseur :</label>
+            <input type="text" name="nom_fournisseur" id="id_nom_fournisseur" required>
+            {% if error %}
+                <div class="error-message">{{ error }}</div>
+            {% endif %}
+            <button type="submit">Supprimer</button>
         </form>
     </div>
 </body>
