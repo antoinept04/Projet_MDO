@@ -214,6 +214,8 @@ class CommanderForm(forms.ModelForm):
         )
         # Ajouter un queryset pour le champ fournisseur (si nécessaire)
         #self.fields['fournisseur'].queryset = Fournisseur.objects.all()  # Toutes les valeurs de Fournisseur
+class IDCommandeForm(forms.Form):
+    commande_id = forms.IntegerField(label="ID de la commande")
 
 class ReserverForm(forms.ModelForm):
     class Meta:

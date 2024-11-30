@@ -14,7 +14,7 @@ from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Aut
     Achat, Reserver, Illustrateur, Traducteur
 from .decorators import unauthenticated_user_required, staff_required
 from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, IDEditeurForm, EmailInputForm, \
-    IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm, CommanderForm, ReserverForm, AchatForm, FournisseurForm, IDFournisseurForm
+    IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm, CommanderForm, IDCommandeForm, ReserverForm, AchatForm, FournisseurForm, IDFournisseurForm
 from django.db import transaction
 
 
@@ -763,7 +763,6 @@ def saisir_ID_auteur(request):
 
 
 """------------------------------GERER-LES-LIVRES------------------------------"""
-
 class LivreList(StaffRequiredMixin,ListView):
     model = Livre
     template_name = 'gui/lister_livres.html'
@@ -806,7 +805,6 @@ class LivreList(StaffRequiredMixin,ListView):
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
         return queryset
-
 @login_required(login_url='login')
 def create_livre(request):
     if request.method == 'POST':
@@ -868,7 +866,6 @@ def create_livre(request):
     return render(request, 'gui/ajouter_livre.html', {
         'livre_form': livre_form,
     })
-
 class LivreDelete(StaffRequiredMixin,View):
     template_name = 'gui/supprimer_livre.html'
 
@@ -887,7 +884,6 @@ class LivreDelete(StaffRequiredMixin,View):
             # Rediriger vers la liste des livres après la suppression
             return redirect(reverse_lazy('livres_list'))
         return render(request, self.template_name, {'error': 'ID du livre invalide.'})
-
 class LivreUpdate(StaffRequiredMixin,View):
     template_name = 'gui/modifier_livres.html'
 
@@ -905,7 +901,6 @@ class LivreUpdate(StaffRequiredMixin,View):
             return redirect('livres_list')  # Rediriger vers la liste des livres après modification
 
         return render(request, self.template_name, {'form': form, 'livre': livre})
-
 class LivreResearch(StaffRequiredMixin,ListView):
     model = Livre
     template_name = 'gui/lister_livres.html'
@@ -936,7 +931,6 @@ class LivreResearch(StaffRequiredMixin,ListView):
 
         # Si aucun terme de recherche, retourner tous les livres
         return Livre.objects.all()
-
 @login_required(login_url='login')
 def saisir_isbn(request):
     if request.method == 'POST':
@@ -953,22 +947,17 @@ def saisir_isbn(request):
         form = ISBNForm()
     return render(request, 'gui/saisir_isbn.html', {'form': form})
 
-
 """------------------------------LIEN-LIVRE/AUTEUR------------------------------"""
-
 class EcrireList(StaffRequiredMixin,ListView):
     model = Ecrire
     template_name = 'gui/lister_ecrits.html'
-
 class EcrireCreate(StaffRequiredMixin,CreateView):
     model = Ecrire
     fields = ['livre', 'auteur']
     template_name = 'gui/ajouter_ecrire.html'
     success_url = reverse_lazy('ecrits_list')
 
-
 """------------------------------GERER-LES-ILLUSTRATEURS------------------------------"""
-
 class IllustrateurList(StaffRequiredMixin,ListView):
     model = Illustrateur
     template_name = 'gui/lister_illustrateurs.html'
@@ -996,13 +985,11 @@ class IllustrateurList(StaffRequiredMixin,ListView):
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
         return queryset
-
 class IllustrateurCreate(StaffRequiredMixin, CreateView):
     model = Illustrateur
     form_class = IllustrateurForm
     template_name = 'gui/ajouter_illustrateur.html'
     success_url = reverse_lazy('illustrateurs_list')
-
 class IllustrateurDelete(StaffRequiredMixin,View):
     template_name = 'gui/supprimer_illustrateur.html'
 
@@ -1021,7 +1008,6 @@ class IllustrateurDelete(StaffRequiredMixin,View):
             # Rediriger vers la liste des livres après la suppression
             return redirect(reverse_lazy('illustrateurs_list'))
         return render(request, self.template_name, {'error': "ID de l'illustrateur invalide."})
-
 class IllustrateurUpdate(StaffRequiredMixin,View):
     template_name = 'gui/modifier_illustrateur.html'
 
@@ -1039,7 +1025,6 @@ class IllustrateurUpdate(StaffRequiredMixin,View):
             return redirect('illustrateurs_list')  # Rediriger vers la liste des livres après modification
 
         return render(request, self.template_name, {'form': form, 'illustrateur': illustrateur})
-
 class IllustrateurResearch(StaffRequiredMixin,ListView):
     model = Illustrateur
     template_name = 'gui/lister_illustrateurs.html'
@@ -1063,7 +1048,6 @@ class IllustrateurResearch(StaffRequiredMixin,ListView):
 
         # Si aucun terme de recherche, retourner tous les livres
         return Illustrateur.objects.all()
-
 @login_required(login_url='login')
 def saisir_ID_illustrateur(request):
     if request.method == 'POST':
@@ -1079,9 +1063,7 @@ def saisir_ID_illustrateur(request):
         form = IDIllustrateurForm()
     return render(request, 'gui/saisir_illustrateur_ID.html', {'form': form})
 
-
 """------------------------------GERER-LES-TRADUCTEURS------------------------------"""
-
 class TraducteurList(StaffRequiredMixin, ListView):
     model = Traducteur
     template_name = 'gui/lister_traducteurs.html'
@@ -1109,13 +1091,11 @@ class TraducteurList(StaffRequiredMixin, ListView):
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
         return queryset
-
 class TraducteurCreate(StaffRequiredMixin, CreateView):
     model = Traducteur
     form_class = TraducteurForm
     template_name = 'gui/ajouter_traducteur.html'
     success_url = reverse_lazy('traducteurs_list')
-
 class TraducteurDelete(StaffRequiredMixin, View):
     template_name = 'gui/supprimer_traducteur.html'
 
@@ -1134,7 +1114,6 @@ class TraducteurDelete(StaffRequiredMixin, View):
             # Rediriger vers la liste des traducteurs après la suppression
             return redirect(reverse_lazy('traducteurs_list'))
         return render(request, self.template_name, {'error': "ID du traducteur invalide."})
-
 class TraducteurUpdate(StaffRequiredMixin, View):
     template_name = 'gui/modifier_traducteur.html'
 
@@ -1152,7 +1131,6 @@ class TraducteurUpdate(StaffRequiredMixin, View):
             return redirect('traducteurs_list')  # Rediriger vers la liste des traducteurs après modification
 
         return render(request, self.template_name, {'form': form, 'traducteur': traducteur})
-
 class TraducteurResearch(StaffRequiredMixin, ListView):
     model = Traducteur
     template_name = 'gui/lister_traducteurs.html'
@@ -1176,7 +1154,6 @@ class TraducteurResearch(StaffRequiredMixin, ListView):
 
         # Si aucun terme de recherche, retourner tous les traducteurs
         return Traducteur.objects.all()
-
 @login_required(login_url='login')
 def saisir_ID_traducteur(request):
     if request.method == 'POST':
@@ -1192,9 +1169,7 @@ def saisir_ID_traducteur(request):
         form = IDTraducteurForm()
     return render(request, 'gui/saisir_traducteur_ID.html', {'form': form})
 
-
 """------------------------------GERER-LES-ACHATS------------------------------"""
-
 class AchatList(StaffRequiredMixin,ListView):
     model = Achat
     template_name = 'gui/lister_achats.html'
@@ -1256,38 +1231,31 @@ class AchatSearchResult(StaffRequiredMixin, ListView):
             return Achat.objects.filter(query).distinct()
         return Achat.objects.all()
 
-
 """------------------------------GERER-LES-COMMANDES------------------------------"""
-
 class CommanderList(StaffRequiredMixin, ListView):
     model = Commander
     template_name = 'gui/lister_commandes.html'
     context_object_name = 'commandes'
 
     def get_queryset(self):
-        # Récupérer les paramètres GET pour le tri et la recherche
-        search_query = self.request.GET.get('search', '')
+        # Récupérer les paramètres GET
         sort_by = self.request.GET.get('sort_by', 'date_commande')  # Par défaut : tri par date_commande
         order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
 
         sort_prefix = '' if order == 'asc' else '-'
-        valid_sort_fields = ['date_commande', 'quantite', 'statut']
+        sorting_options = {
+            'id':'id_commande',
+            'date':'date_commande',
+            'quantite':'quantite',
+            'statut':'statut',
+        }
 
-        # Assurer que le champ de tri est valide
-        if sort_by not in valid_sort_fields:
-            sort_by = 'date_commande'
+        # Récupérer le queryset initial
+        queryset = super().get_queryset()
 
-        # Appliquer le tri
-        queryset = Commander.objects.order_by(f"{sort_prefix}{sort_by}")
-
-        # Si un terme de recherche est présent
-        if search_query:
-            queryset = queryset.filter(
-                Q(personne__nom__icontains=search_query) |
-                Q(livre__titre__icontains=search_query) |
-                Q(date_commande__icontains=search_query) |
-                Q(fournisseur__nom_fournisseur__icontains=search_query)
-            )
+        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
+        if sort_by in sorting_options:
+            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
         return queryset
 
@@ -1309,39 +1277,52 @@ class CommanderList(StaffRequiredMixin, ListView):
         context['commandes_en_cours'] = commandes_en_cours
         context['commandes_terminees'] = commandes_terminees
         return context
-
 class CommanderCreate(StaffRequiredMixin,CreateView):
     model = Commander
     form_class = CommanderForm
     template_name = 'gui/ajouter_commande.html'
     success_url = reverse_lazy('commandes_list')
-
-    def form_valid(self, form):
-        self.object = form.save(commit=False)
-        self.object.save()
-        return super().form_valid(form)
-
 class CommanderUpdate(StaffRequiredMixin, UpdateView):
     model = Commander
     form_class = CommanderForm
     template_name = 'gui/modifier_commandes.html'
     success_url = reverse_lazy('commandes_list')
-
     def get_object(self):
         return get_object_or_404(Commander, pk=self.kwargs['pk'])
-
 class CommanderDelete(StaffRequiredMixin, View):
     template_name = 'gui/supprimer_commande.html'
-
-    def get(self, request, pk):
-        commande = get_object_or_404(Commander, pk=pk)
+    def get(self, request, pk=None):
+        """
+        Si un `pk` est fourni, pré-remplit le formulaire avec l'ID de la commande.
+        Sinon, affiche un formulaire vide pour que l'utilisateur entre l'ID manuellement.
+        """
+        commande = None
+        if pk:
+            # Si un ID de commande est dans l'URL, on le charge pour affichage
+            commande = get_object_or_404(Commander, pk=pk)
         return render(request, self.template_name, {'commande': commande})
-
-    def post(self, request, pk):
-        commande = get_object_or_404(Commander, pk=pk)
-        commande.delete()
-        return redirect(reverse_lazy('commandes_list'))
-
+    def post(self, request, pk=None):
+        """
+        Supprime une commande :
+        - Si un `pk` est fourni dans l'URL, on supprime directement la commande.
+        - Sinon, on récupère l'ID envoyé dans le formulaire et on redirige pour confirmer la suppression.
+        """
+        commande_id = pk or request.POST.get('commande_id')
+        if commande_id:
+            # Si un ID est fourni, on cherche la commande correspondante
+            try:
+                commande = Commander.objects.get(id=commande_id)
+                if pk:
+                    # Si on est dans la page de confirmation, on supprime la commande directement
+                    commande.delete()
+                    return redirect(reverse_lazy('commandes_list'))  # Redirection après suppression
+                else:
+                    # Si on est dans le formulaire de saisie de l'ID, on redirige vers la confirmation
+                    return redirect(reverse_lazy('commandes_with_ID_delete', kwargs={'pk': commande.id}))
+            except Commander.DoesNotExist:
+                # Si la commande n'existe pas avec l'ID donné
+                return render(request, self.template_name, {'error': "Commande non trouvée."})
+        return render(request, self.template_name, {'error': "ID de commande invalide."})
 class CommanderSearchResult(StaffRequiredMixin, ListView):
     model = Commander
     template_name = 'gui/search_commandes_result.html'  # Nouveau template pour les résultats
@@ -1385,7 +1366,18 @@ def terminer_commande(request, pk):
             )'''
 
     return redirect('commandes_list')
-
+@login_required(login_url='login')
+def saisir_ID_commande(request):
+    if request.method == 'POST':
+        commande_id = request.POST.get('commande_id')
+        if commande_id:
+            try:
+                commande = Commander.objects.get(id=commande_id)
+                # Rediriger vers la page de confirmation avec l'ID
+                return redirect(reverse('commandes_with_ID_delete', kwargs={'pk': commande.id}))
+            except Commander.DoesNotExist:
+                return render(request, 'gui/supprimer_commande.html', {'error': "Commande non trouvée."})
+    return render(request, 'gui/supprimer_commande.html')
 
 """------------------------------GERER-LES-RESERVATIONS------------------------------"""
 

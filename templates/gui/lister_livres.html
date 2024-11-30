@@ -98,6 +98,7 @@
         <a href="/livres/create/" class="button">Ajouter un livre</a>
         <a href="/livres/saisir_isbn/" class="button">Modifier un livre</a>
         <a href="{% url 'livres_delete' %}" class="button">Supprimer un livre</a>
+        
         <form method="GET" action="{% url 'livres_research' %}" style="display: inline-flex; align-items: center; gap: 10px;">
             <input type="text" id="search" name="search" placeholder="Titre, Auteur, ISBN..." value="{{ request.GET.search }}">
             <button type="submit" class="button">Rechercher</button>
