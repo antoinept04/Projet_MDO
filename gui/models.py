@@ -230,7 +230,6 @@ class Achat(models.Model):
 
     def __str__(self):
         return f"Achat de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
-
 class Commander(models.Model):
     STATUT_CHOICES = [
         ('en cours', 'En cours'),
@@ -250,8 +249,6 @@ class Commander(models.Model):
 
     def __str__(self):
         return f"Commande de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
-
-
 class Reserver(models.Model):
     STATUT_CHOICES = [
         ('en cours', 'En cours'),

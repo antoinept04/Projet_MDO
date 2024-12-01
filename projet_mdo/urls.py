@@ -18,27 +18,23 @@ from django.contrib import admin
 from django.urls import path
 from gui.models import Editeur, Illustrateur, Commander
 from gui.views import (
-    VilleList, VilleCreate,
-    AdresseList, create_adresse,
-    RoleList, RoleCreate,
-    PersonneList, personne_create, PersonneDelete, PersonneUpdate, PersonneSelectView,
-    FournisseurList, FournisseurCreate,
-    EditeurList, EditeurCreate,
-    AuteurList, AuteurCreate,
-    LivreList, create_livre, LivreDelete, LivreUpdate, LivreResearch, saisir_isbn, PersonneResearch, AdresseResearch,
-    AdresseList, AdresseDelete,
-    EcrireList, EcrireCreate,
-    CommanderList, CommanderCreate, CommanderUpdate, CommanderDelete, CommanderSearchResult, terminer_commande, saisir_ID_commande,
+    home, loginPage, logoutUser,
+    RoleList,           RoleCreate,
+    VilleList,          VilleCreate,
+    AdresseList,        create_adresse,     AdresseDelete,                          AdresseResearch,
+    PersonneList,       personne_create,    PersonneDelete,     PersonneUpdate,     PersonneResearch,     PersonneSelectView,
+    EditeurList,        EditeurCreate,      EditeurDelete,      EditeurUpdate,      EditeurResearch,      saisir_ID_editeur,
+    AuteurList,         AuteurCreate,       AuteurDelete,       AuteurUpdate,       AuteurResearch,       saisir_ID_auteur,
+    IllustrateurList,   IllustrateurCreate, IllustrateurDelete, IllustrateurUpdate, IllustrateurResearch, saisir_ID_illustrateur,
+    TraducteurList,     TraducteurCreate,   TraducteurDelete,   TraducteurUpdate,   TraducteurResearch,   saisir_ID_traducteur,
+    LivreList,          create_livre,       LivreDelete,        LivreUpdate,        LivreResearch,        saisir_isbn,
+    EcrireList,         EcrireCreate,
+    FournisseurList,    FournisseurCreate,  FournisseurDelete,  FournisseurUpdate,  FournisseurResearch,  SaisirIDFournisseurView,
+    CommanderList,      CommanderCreate,    CommanderDelete,    CommanderUpdate,    CommanderResearch,    saisir_ID_commande,       terminer_commande,
+    ReserverList,       ReserverCreate,     ReserverDelete,     ReserverUpdate,     ReserverResearch,     saisir_ID_reservation,    terminer_reservation,
+    AchatList,          AchatCreate,        AchatDelete,        AchatUpdate,        AchatResearch,        saisir_ID_achat,
     NotificationList,
-    AchatList, AchatCreate, AchatUpdate, AchatDelete, AchatSearchResult,
-    ReserverList, ReserverCreate, ReserverUpdate, ReserverDelete, ReserverSearchResult, terminer_reservation,
-    loginPage, logoutUser,
-    home, create_livre, EditeurUpdate, EditeurDelete, AuteurDelete, AuteurUpdate, saisir_ID_auteur,
-    AuteurResearch, EditeurResearch, saisir_ID_editeur, IllustrateurList, IllustrateurCreate, IllustrateurResearch,
-    IllustrateurDelete, IllustrateurUpdate, saisir_ID_illustrateur, TraducteurList, TraducteurCreate,
-    TraducteurResearch, TraducteurDelete, TraducteurUpdate, saisir_ID_traducteur,
-    FournisseurResearch, FournisseurDelete, FournisseurUpdate, SaisirIDFournisseurView, FournisseurCreate,
-    FournisseurList, saisir_ID_commande,
+
 )
 
 urlpatterns = [
@@ -47,19 +43,17 @@ urlpatterns = [
     path('login/', loginPage, name='login'),
     path('logout/', logoutUser, name='logout'),
 
+    path('roles/', RoleList.as_view(), name='roles_list'),
+    path('roles/create/', RoleCreate.as_view(), name='roles_create'),
+
 
     path('villes/', VilleList.as_view(), name='villes_list'),
     path('villes/create/', VilleCreate.as_view(), name='villes_create'),
-
 
     path('adresses/', AdresseList.as_view(), name='adresses_list'),
     path('adresses/create/', create_adresse, name='adresses_create'),
     path('adresses/research/', AdresseResearch.as_view(), name='adresses_research'),
     path('adresses/delete/',AdresseDelete.as_view(), name='adresses_delete'),
-
-
-    path('roles/', RoleList.as_view(), name='roles_list'),
-    path('roles/create/', RoleCreate.as_view(), name='roles_create'),
 
 
     path('personnes/', PersonneList.as_view(), name='personnes_list'),
@@ -68,10 +62,6 @@ urlpatterns = [
     path('personnes/delete/',PersonneDelete.as_view(), name='personnes_delete'),
     path('personnes/modifier/', PersonneSelectView.as_view(), name='personnes_select'),  # Sélection de la personne à modifier
     path('personnes/modifier/<str:email>/', PersonneUpdate.as_view(), name='personnes_update'),  # Modification de la personne
-
-
-
-
 
 
     path('editeurs/', EditeurList.as_view(), name='editeurs_list'),
@@ -117,30 +107,35 @@ urlpatterns = [
     path('traducteurs/research/', TraducteurResearch.as_view(), name='traducteurs_research'),
     path('traducteurs/saisir_traducteur_ID/', saisir_ID_traducteur, name='saisir_traducteur_ID'),
 
+
     path('achats/', AchatList.as_view(), name='achats_list'),
     path('achats/create/', AchatCreate.as_view(), name='achats_create'),
     path('achats/update/<int:pk>/', AchatUpdate.as_view(), name='achats_update'),
-    path('achats/delete/<int:pk>/', AchatDelete.as_view(), name='achats_delete'),
-    path('achats/search/', AchatSearchResult.as_view(), name='search_achats_result'),
+    path('achats/delete/', AchatDelete.as_view(), name='achats_delete'),
+    path('achats/delete/<int:pk>/', AchatDelete.as_view(), name='achats_with_ID_delete'),
+    path('achats/search/', AchatResearch.as_view(), name='achats_research'),
+    path('achats/saisir_achat_ID/', saisir_ID_achat, name='saisir_achat_ID'),
+
 
     path('commandes/', CommanderList.as_view(), name='commandes_list'),
     path('commandes/create/', CommanderCreate.as_view(), name='commandes_create'),
     path('commandes/update/<int:pk>/', CommanderUpdate.as_view(), name='commandes_update'),
     path('commandes/delete/', CommanderDelete.as_view(), name='commandes_delete'),
     path('commandes/delete/<int:pk>/', CommanderDelete.as_view(), name='commandes_with_ID_delete'),
-    path('commandes/search/', CommanderSearchResult.as_view(), name='search_commandes_result'),
+    path('commandes/search/', CommanderResearch.as_view(), name='commandes_research'),
     path('commandes/terminer/<int:pk>/', terminer_commande, name='terminer_commande'),
     path('commandes/saisir_commande_ID/', saisir_ID_commande, name='saisir_commande_ID'),
-
 
 
     path('reservations/', ReserverList.as_view(), name='reservations_list'),
     path('reservations/create/', ReserverCreate.as_view(), name='reservations_create'),
     path('reservations/update/<int:pk>/', ReserverUpdate.as_view(), name='reservations_update'),
-    path('reservations/delete/<int:pk>/', ReserverDelete.as_view(), name='reservations_delete'),
-    path('reservations/search/', ReserverSearchResult.as_view(), name='reservations_search'),
+    path('reservations/delete/', ReserverDelete.as_view(), name='reservations_delete'),
+    path('reservations/delete/<int:pk>/', ReserverDelete.as_view(), name='reservations_with_ID_delete'),
+    path('reservations/search/', ReserverResearch.as_view(), name='reservations_research'),
+    path('reservations/terminer/<int:pk>/', terminer_reservation, name='terminer_reservation'),
+    path('reservations/saisir_reservation_ID/', saisir_ID_reservation, name='saisir_reservation_ID'),
 
-    path('reservations/<int:pk>/terminer/', terminer_reservation, name='terminer_reservation'),
 
     # Liste des fournisseurs avec possibilité de recherche
     path('fournisseurs/', FournisseurList.as_view(), name='fournisseurs_list'),

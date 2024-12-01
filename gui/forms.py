@@ -14,7 +14,6 @@ class EmailInputForm(forms.Form):
         })
     )
 
-
 class VilleForm(forms.ModelForm):
     class Meta:
         model = Ville
@@ -38,8 +37,6 @@ class VilleForm(forms.ModelForm):
             pass  # La ville n'existe pas, le formulaire créera une nouvelle ville
 
         return cleaned_data
-
-
 
 class AdresseForm(forms.ModelForm):
     class Meta:
@@ -238,7 +235,8 @@ class ReserverForm(forms.ModelForm):
         self.fields['quantite'].label = "Quantité"
         self.fields['statut'].label = "Statut"
         self.fields['date_reservation'].label = "Date de réservation"
-
+class IDReservationForm(forms.Form):
+    reservation_id = forms.IntegerField(label="ID de la reservation")
 
 class FournisseurForm(forms.ModelForm):
     adresses = forms.ModelMultipleChoiceField(
@@ -250,18 +248,21 @@ class FournisseurForm(forms.ModelForm):
     class Meta:
         model = Fournisseur
         fields = ['nom_fournisseur', 'adresses']
-
 class IDFournisseurForm(forms.Form):
     nom_fournisseur = forms.CharField(label="Nom du Fournisseur", max_length=100)
-
 
 class AchatForm(forms.ModelForm):
     class Meta:
         model = Achat
         fields = ['personne', 'livre', 'date_achat', 'quantite']
         widgets = {
-            'date_reservation': forms.DateInput(attrs={'type': 'date'}),
+            'date_achat': forms.DateInput(attrs={'type': 'date'}),
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Filtrer les personnes ayant le rôle "client"
+        self.fields['personne'].queryset = Personne.objects.filter(
+            role__type__in=['client']  # Filtrage par 'role__type'
+        )
+class IDAchatForm(forms.Form):
+    achat_id = forms.IntegerField(label="ID de l'achat'")

@@ -98,6 +98,7 @@
         <a href="/traducteurs/create/" class="button">Ajouter un traducteur</a>
         <a href="/traducteurs/saisir_traducteur_ID/" class="button">Modifier un traducteur</a>
         <a href="/traducteurs/delete/" class="button">Supprimer un traducteur</a>
+        
         <form method="GET" action="{% url 'traducteurs_research' %}" style="display: inline-flex; align-items: center; gap: 10px;">
             <input type="text" id="search" name="search" placeholder="Nom, Prénom..." value="{{ request.GET.search }}">
             <button type="submit" class="button">Rechercher</button>

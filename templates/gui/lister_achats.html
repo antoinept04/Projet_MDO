@@ -142,9 +142,12 @@
     <h1 style="color: #990000; text-align: center; font-size: 3em; margin-top: 20px;">Liste des Achats</h1>
 
     <div class="action-bar">
-        <a href="{% url 'achats_create' %}" class="button">Créer un nouvel achat</a>
-        <form method="GET" action="{% url 'search_achats_result' %}" style="display: inline-flex; align-items: center; gap: 10px;">
-            <input type="text" id="search" name="search" placeholder="Rechercher par personne, livre, date..." value="{{ request.GET.search }}">
+        <a href="/achats/create/" class="button">Ajouter un achat</a>
+        <a href="/achats/saisir_achat_ID/" class="button">Modifier un achat</a>
+        <a href="{% url 'achats_delete' %}" class="button">Supprimer un achat</a>
+        
+        <form method="GET" action="{% url 'achats_research' %}" style="display: inline-flex; align-items: center; gap: 10px;">
+            <input type="text" id="search" name="search" placeholder="Nom, Prénom..." value="{{ request.GET.search }}">
             <button type="submit" class="button">Rechercher</button>
         </form>
     </div>
