@@ -159,7 +159,56 @@
             {% endfor %}
         </tbody>
     </table>
-
+<h2 style="text-align: center; font-size: 2em; color: #990000;">Commandes réservées</h2>
+<table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Personne</th>
+                <th>Livre</th>
+                <th>Quantite</th>
+                <th>Commentaire</th>
+                <th>Date de création</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for notification in notifications_commande %}
+            <tr>
+                <td>{{ notification.id }}</td>
+                <td>{{ notification.personne.nom }}</td>
+                <td>{{ notification.livre.titre }}</td>
+                <td>{{ notification.quantite }}</td>
+                <td>{{ notification.commentaire }}</td>
+                <td>{{ notification.date_creation|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if notification.termine %}
+                        <span class="badge bg-success">Terminé</span>
+                    {% else %}
+                        <span class="badge bg-warning">En cours</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="post" action="{% url 'mark_notification_done' notification.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        {% if not notification.termine %}
+                            <button type="submit" class="button">Terminer</button>
+                        {% endif %}
+                    </form>
+                    <form method="post" action="{% url 'delete_notification' notification.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="button btn-danger">Supprimer</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr class="empty-message">
+                <td colspan="9">Aucune notification de ce type.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     <!-- Placeholders pour d'autres types -->
     <h2 style="text-align: center; font-size: 2em; color: #990000;">Autres types de notifications</h2>
     <p class="alert alert-info">Ajoutez les sections pour les types 2 et 3 ici.</p>

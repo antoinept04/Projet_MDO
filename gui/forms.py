@@ -234,7 +234,7 @@ class ReserverForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(ReserverForm, self).__init__(*args, **kwargs)
         # Filtrer les personnes ayant le rôle "client"
-        self.fields['personne'].queryset = Personne.objects.filter(role__type='Client')
+        self.fields['personne'].queryset = Personne.objects.filter(role__type='client')
 
         # Ajoutez des labels personnalisés si nécessaire
         self.fields['personne'].label = "Personne"

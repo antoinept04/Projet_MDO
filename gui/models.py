@@ -269,10 +269,15 @@ class Reserver(models.Model):
         return f"Réservation de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
 
 class Notifier(models.Model):
+    TYPE_CHOICES = [
+        ('commande', 'Commande'),
+        ('reservation', 'Reservation'),
+        ('quantite_min', 'Quantite min'),
+    ]
     personne = models.ForeignKey(Personne, on_delete=models.CASCADE, null=True, blank=True)  # Autorise les valeurs NULL
     livre = models.ForeignKey(Livre, on_delete=models.CASCADE)
     quantite = models.IntegerField()
-    type = models.CharField(max_length=50)
+    type = models.CharField(max_length=50, choices=TYPE_CHOICES)
     commentaire = models.TextField()
     date_creation = models.DateTimeField(default=timezone.now)
     termine = models.BooleanField(default=False)

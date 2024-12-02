@@ -1512,24 +1512,25 @@ def terminer_commande(request, pk):
     if not request.user.is_staff:  # Vérifie que l'utilisateur est autorisé
         return HttpResponseForbidden("Vous n'avez pas la permission de faire cette action.")
 
+    # Récupérer la commande
     commande = get_object_or_404(Commander, pk=pk)
     if commande.statut == 'en cours':
+        # Mettre à jour le statut de la commande
         commande.statut = 'terminé'
         commande.save()
 
-        '''livre = commande.livre
-        if livre.quantite_disponible < 0:
-            livre.quantite_disponible = 0
-            livre.save()
-
-            # Création d'une notification
+        # Vérifier si le livre est dans la table Reserver
+        reservations = Reserver.objects.filter(livre=commande.livre, statut='en cours')
+        for reservation in reservations:
+            # Créer une nouvelle notification de type 'commande'
             Notifier.objects.create(
-                personne=commande.personne,
-                livre=livre,
-                quantite=livre.quantite_disponible,
+                personne=reservation.personne,
+                livre=commande.livre,
+                quantite=commande.quantite,  # Assurez-vous que `quantite` correspond bien à la commande
                 type='commande',
-                commentaire=f"Stock du livre '{livre.titre}' mis à jour suite à la commande terminée.",
-            )'''
+                commentaire=f"Le livre '{commande.livre.titre}' réservé est maintenant disponible suite à une commande terminée.",
+                date_creation=timezone.now(),
+            )
 
     return redirect('commandes_list')
 @login_required(login_url='login')
@@ -1712,8 +1713,7 @@ def check_reservations(request):
                 commentaire=f"Réservation de {reservation.livre.titre} dépassée depuis plus de 3 semaines.",
                 termine=False,
             ).exists()
-            if existe:
-                print(f"Notification existe")
+
             if not existe:
                 notification = Notifier.objects.create(
                     personne=reservation.personne,
@@ -1723,17 +1723,37 @@ def check_reservations(request):
                     commentaire=f"Réservation de {reservation.livre.titre} dépassée depuis plus de 3 semaines.",
                     termine=False,
                 )
-                print(f"Notification créée : {notification}")
+
         # Rediriger vers la liste des notifications
         return redirect('notifications_list')
 
     # Rediriger si la méthode n'est pas POST
     return redirect('notifications_list')
+
+
 def mark_notification_done(request, notification_id):
     if request.method == 'POST':
+        # Récupérer la notification
         notification = get_object_or_404(Notifier, id=notification_id)
+
+        # Marquer la notification comme terminée
         notification.termine = True
         notification.save()
+
+        # Vérifier si la notification est liée à une réservation
+        if notification.type == 'reservation' and notification.personne and notification.livre:
+            # Rechercher la réservation correspondante
+            reservation = Reserver.objects.filter(
+                personne=notification.personne,
+                livre=notification.livre,
+                statut='en cours'
+            ).first()
+
+            if reservation:
+                # Mettre à jour le statut de la réservation
+                reservation.statut = 'terminé'
+                reservation.save()
+
         return redirect('notifications_list')
 def delete_notification(request, notification_id):
     if request.method == 'POST':
