@@ -1,91 +1,79 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ajouter un Fournisseur</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
         }
-        .form-container {
-            max-width: 600px;
-            margin: auto;
-        }
-        h2 {
-            text-align: center;
-        }
-        form {
-            border: 1px solid #ccc;
+
+        .container {
+            max-width: 700px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 8px;
             padding: 20px;
-            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        .form-group {
-            margin-bottom: 15px;
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
         }
-        label {
-            display: block;
+
+        .form-group label {
             font-weight: bold;
         }
-        input[type="text"],
-        select {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-        }
+
         button {
-            padding: 10px 15px;
-            background-color: #4CAF50;
+            background-color: #007bff;
             color: white;
             border: none;
-            border-radius: 3px;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
             cursor: pointer;
         }
+
         button:hover {
-            background-color: #45a049;
-        }
-        .nav-links {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .nav-links a {
-            margin: 0 10px;
-            text-decoration: none;
-            color: #333;
-        }
-        .nav-links a:hover {
-            text-decoration: underline;
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
-    <div class="nav-links">
-        <a href="{% url 'fournisseurs_list' %}">Liste des Fournisseurs</a>
-        <a href="{% url 'fournisseur_create' %}">Ajouter un Fournisseur</a>
-    </div>
+<div class="container">
+    <h1>Ajouter un Fournisseur</h1>
+    <form method="post">
+        {% csrf_token %}
 
-    <div class="form-container">
-        <h2>Ajouter un Fournisseur</h2>
-        <form method="post">
-            {% csrf_token %}
-            <div class="form-group">
-                {{ form.nom_fournisseur.label_tag }}
-                {{ form.nom_fournisseur }}
-            </div>
-            <div class="form-group">
-                {{ form.adresses.label_tag }}
-                <div class="checkbox-group">
-                    {% for adresse in form.adresses %}
-                        <label>{{ adresse }}</label>
-                    {% endfor %}
-                </div>
-            </div>
-            <button type="submit">Enregistrer</button>
-        </form>
-    </div>
+        <!-- Informations du fournisseur -->
+        <div class="form-group">
+            <h3>Informations du Fournisseur</h3>
+            {{ form_fournisseur.as_p }}
+        </div>
+
+        <!-- Adresse -->
+        <div class="form-group">
+            <h3>Adresse</h3>
+            {{ form_adresse.as_p }}
+        </div>
+
+        <!-- Ville -->
+        <div class="form-group">
+            <h3>Ville</h3>
+            {{ form_ville.as_p }}
+        </div>
+
+        <button type="submit">Ajouter le Fournisseur</button>
+    </form>
+</div>
 </body>
 </html>

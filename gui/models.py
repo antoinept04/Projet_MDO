@@ -84,7 +84,7 @@ class Personne(AbstractBaseUser, PermissionsMixin):
         return f"{self.nom} {self.prenom}"
 
 class Fournisseur(models.Model):
-    nom_fournisseur = models.CharField(max_length=100, primary_key=True)
+    nom_fournisseur = models.CharField(max_length=100)
     adresses = models.ManyToManyField(
         'Adresse',
         through='FournisseurAdresse',
@@ -285,14 +285,12 @@ class Notifier(models.Model):
 class FournisseurAdresse(models.Model):
     fournisseur = models.ForeignKey(
         'Fournisseur',
-        to_field='nom_fournisseur',
-        db_column='fournisseur_nom',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE  # Utilise la clé primaire par défaut (id)
     )
     adresse = models.ForeignKey('Adresse', on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ('fournisseur', 'adresse')
+        unique_together = ('fournisseur', 'adresse')  # Unicité des paires
         db_table = 'Fournisseur_adresses'
 
     def __str__(self):

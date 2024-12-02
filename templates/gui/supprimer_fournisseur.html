@@ -1,84 +1,25 @@
+<!-- gui/templates/gui/supprimer_fournisseur.html -->
+
 <!DOCTYPE html>
-<html lang="fr">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Supprimer un Fournisseur</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .delete-container {
-            max-width: 400px;
-            margin: auto;
-            text-align: center;
-        }
-        h2 {
-            color: #FF0000;
-        }
-        form {
-            border: 1px solid #ccc;
-            padding: 20px;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-        label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            margin-bottom: 15px;
-        }
-        .error-message {
-            color: red;
-            margin-bottom: 15px;
-        }
-        button {
-            padding: 10px 15px;
-            background-color: #f44336;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #da190b;
-        }
-        .nav-links {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .nav-links a {
-            margin: 0 10px;
-            text-decoration: none;
-            color: #333;
-        }
-        .nav-links a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <title>Supprimer Fournisseur</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
 </head>
 <body>
-    <div class="nav-links">
-        <a href="{% url 'fournisseurs_list' %}">Liste des Fournisseurs</a>
-        <a href="{% url 'fournisseur_create' %}">Ajouter un Fournisseur</a>
-    </div>
-
-    <div class="delete-container">
-        <h2>Supprimer un Fournisseur</h2>
-        <form method="post">
-            {% csrf_token %}
-            <label for="id_nom_fournisseur">Nom du Fournisseur :</label>
-            <input type="text" name="nom_fournisseur" id="id_nom_fournisseur" required>
-            {% if error %}
-                <div class="error-message">{{ error }}</div>
-            {% endif %}
-            <button type="submit">Supprimer</button>
-        </form>
-    </div>
+<div class="container mt-5">
+    <h2>Supprimer un Fournisseur</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="nom_fournisseur">Nom du Fournisseur :</label>
+            <input type="text" name="nom_fournisseur" class="form-control" id="nom_fournisseur" required>
+        </div>
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        <button type="submit" class="btn btn-danger">Supprimer</button>
+    </form>
+</div>
 </body>
 </html>

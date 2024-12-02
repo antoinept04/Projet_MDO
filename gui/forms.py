@@ -2,7 +2,7 @@
 from django import forms
 from .models import Personne, Livre, Auteur, Editeur, Adresse, Commander, Ville, Notifier, Illustrateur, Traducteur, \
     Reserver, Fournisseur, Achat
-
+from django.forms import modelformset_factory
 
 class EmailInputForm(forms.Form):
     email = forms.EmailField(
@@ -46,6 +46,13 @@ class AdresseForm(forms.ModelForm):
             'rue': 'Rue',
             'n_rue': 'Numéro',
         }
+
+AdresseFormSet = modelformset_factory(
+    Adresse,
+    form=AdresseForm,
+    extra=1,
+    can_delete=True
+) #formset pour la création de fournisseurs
 
 class PersonneForm(forms.ModelForm):
     class Meta:
@@ -239,15 +246,11 @@ class IDReservationForm(forms.Form):
     reservation_id = forms.IntegerField(label="ID de la reservation")
 
 class FournisseurForm(forms.ModelForm):
-    adresses = forms.ModelMultipleChoiceField(
-        queryset=Adresse.objects.all(),
-        widget=forms.CheckboxSelectMultiple,  # Vous pouvez utiliser un autre widget si nécessaire
-        required=False
-    )
-
     class Meta:
         model = Fournisseur
-        fields = ['nom_fournisseur', 'adresses']
+        fields = ['nom_fournisseur']  # 'adresses' n'est plus inclus
+
+
 class IDFournisseurForm(forms.Form):
     nom_fournisseur = forms.CharField(label="Nom du Fournisseur", max_length=100)
 

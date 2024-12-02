@@ -11,10 +11,10 @@ from django.urls import reverse_lazy, reverse
 from django.utils.timezone import now
 from django.views.generic import ListView, CreateView, DeleteView, UpdateView, View, TemplateView
 from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Auteur, Livre, Ecrire, Commander, Notifier, Illustrer, Traduire, \
-    Achat, Reserver, Illustrateur, Traducteur
+    Achat, Reserver, Illustrateur, Traducteur, FournisseurAdresse
 from .decorators import unauthenticated_user_required, staff_required
 from .forms import PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, IDEditeurForm, EmailInputForm, \
-    IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm, CommanderForm, IDCommandeForm, ReserverForm, AchatForm, FournisseurForm, IDFournisseurForm
+    IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm, CommanderForm, IDCommandeForm, ReserverForm, AchatForm, FournisseurForm, IDFournisseurForm, AdresseFormSet
 from django.db import transaction
 
 
@@ -565,16 +565,54 @@ class FournisseurList(StaffRequiredMixin, ListView):
 
         return queryset.prefetch_related('adresses')
 
-class FournisseurCreate(StaffRequiredMixin, CreateView):
-    model = Fournisseur
-    form_class = FournisseurForm
-    template_name = 'gui/ajouter_fournisseur.html'
-    success_url = reverse_lazy('fournisseurs_list')
+# views.py
 
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        form.save_m2m()
-        return response
+# views.py
+
+# gui/views.py
+
+# gui/views.py
+
+def fournisseur_create(request):
+    if request.method == 'POST':
+        form_fournisseur = FournisseurForm(request.POST)
+        form_adresse = AdresseForm(request.POST)
+        form_ville = VilleForm(request.POST)
+
+        if form_fournisseur.is_valid() and form_adresse.is_valid() and form_ville.is_valid():
+            # Récupérer ou créer la ville
+            ville, _ = Ville.objects.get_or_create(
+                nom_ville=form_ville.cleaned_data['nom_ville'],
+                code_postal=form_ville.cleaned_data['code_postal'],
+                pays=form_ville.cleaned_data['pays']
+            )
+
+            # Récupérer ou créer l'adresse
+            adresse, _ = Adresse.objects.get_or_create(
+                rue=form_adresse.cleaned_data['rue'],
+                n_rue=form_adresse.cleaned_data['n_rue'],
+                ville=ville
+            )
+
+            # Créer le fournisseur
+            fournisseur = form_fournisseur.save()
+
+            # Créer l'instance de l'intermédiaire FournisseurAdresse
+            FournisseurAdresse.objects.create(fournisseur=fournisseur, adresse=adresse)
+
+            # Redirection après succès
+            return redirect('fournisseurs_list')
+    else:
+        form_fournisseur = FournisseurForm()
+        form_adresse = AdresseForm()
+        form_ville = VilleForm()
+
+    return render(request, 'gui/ajouter_fournisseur.html', {
+        'form_fournisseur': form_fournisseur,
+        'form_adresse': form_adresse,
+        'form_ville': form_ville
+    })
+
 
 
 class FournisseurDelete(StaffRequiredMixin, View):
@@ -584,12 +622,13 @@ class FournisseurDelete(StaffRequiredMixin, View):
         return render(request, self.template_name)
 
     def post(self, request):
-        nom_fournisseur = request.POST.get('nom_fournisseur')
-        if nom_fournisseur:
-            fournisseur = get_object_or_404(Fournisseur, pk=nom_fournisseur)
+        fournisseur_id = request.POST.get('fournisseur_id')
+        if fournisseur_id:
+            fournisseur = get_object_or_404(Fournisseur, pk=fournisseur_id)
             fournisseur.delete()
             return redirect(reverse_lazy('fournisseurs_list'))
-        return render(request, self.template_name, {'error': "Nom du fournisseur invalide."})
+        return render(request, self.template_name, {'error': "ID du fournisseur invalide."})
+
 
 
 class FournisseurUpdate(StaffRequiredMixin, UpdateView):
@@ -597,13 +636,12 @@ class FournisseurUpdate(StaffRequiredMixin, UpdateView):
     form_class = FournisseurForm
     template_name = 'gui/modifier_fournisseur.html'
     success_url = reverse_lazy('fournisseurs_list')
-    pk_url_kwarg = 'nom_fournisseur'
+    pk_url_kwarg = 'pk'  # Utiliser 'pk' au lieu de 'nom_fournisseur'
 
     def form_valid(self, form):
         response = super().form_valid(form)
         form.save_m2m()
         return response
-
 
 class FournisseurResearch(StaffRequiredMixin, ListView):
     model = Fournisseur
@@ -641,12 +679,13 @@ class SaisirIDFournisseurView(StaffRequiredMixin, View):
         form = IDFournisseurForm(request.POST)
         if form.is_valid():
             nom_fournisseur = form.cleaned_data['nom_fournisseur']
-
-            if Fournisseur.objects.filter(pk=nom_fournisseur).exists():
-                return redirect(reverse_lazy('fournisseurs_update', kwargs={'nom_fournisseur': nom_fournisseur}))
-            else:
+            try:
+                fournisseur = Fournisseur.objects.get(nom_fournisseur=nom_fournisseur)
+                return redirect(reverse_lazy('fournisseurs_update', kwargs={'pk': fournisseur.pk}))
+            except Fournisseur.DoesNotExist:
                 return render(request, self.template_name, {'form': form, 'error': 'Fournisseur non trouvé.'})
         return render(request, self.template_name, {'form': form})
+
 
 
 #%%------------------------------GERER-LES-EDITEURS----------------------------------

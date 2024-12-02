@@ -29,7 +29,7 @@ from gui.views import (
     TraducteurList,     TraducteurCreate,   TraducteurDelete,   TraducteurUpdate,   TraducteurResearch,   saisir_ID_traducteur,
     LivreList,          create_livre,       LivreDelete,        LivreUpdate,        LivreResearch,        saisir_isbn,
     EcrireList,         EcrireCreate,
-    FournisseurList,    FournisseurCreate,  FournisseurDelete,  FournisseurUpdate,  FournisseurResearch,  SaisirIDFournisseurView,
+    FournisseurList,    fournisseur_create,  FournisseurDelete,  FournisseurUpdate,  FournisseurResearch,  SaisirIDFournisseurView,
     CommanderList,      CommanderCreate,    CommanderDelete,    CommanderUpdate,    CommanderResearch,    saisir_ID_commande,       terminer_commande,
     ReserverList,       ReserverCreate,     ReserverDelete,     ReserverUpdate,     ReserverResearch,     saisir_ID_reservation,    terminer_reservation,
     AchatList,          AchatCreate,        AchatDelete,        AchatUpdate,        AchatResearch,        saisir_ID_achat,
@@ -144,13 +144,13 @@ urlpatterns = [
     path('fournisseurs/search/', FournisseurResearch.as_view(), name='fournisseurs_search'),
 
     # Création d'un nouveau fournisseur
-    path('fournisseurs/ajouter/', FournisseurCreate.as_view(), name='fournisseur_create'),
+    path('fournisseurs/ajouter/',fournisseur_create, name='fournisseur_create'),
 
     # Suppression d'un fournisseur
-    path('fournisseurs/supprimer/', FournisseurDelete.as_view(), name='fournisseur_delete'),
+    path('fournisseurs/supprimer/<int:pk>', FournisseurDelete.as_view(), name='fournisseur_delete'),
 
     # Modification d'un fournisseur spécifique identifié par 'nom_fournisseur'
-    path('fournisseurs/modifier/<str:nom_fournisseur>/', FournisseurUpdate.as_view(), name='fournisseurs_update'),
+    path('fournisseurs/modifier/<int:pk>/', FournisseurUpdate.as_view(), name='fournisseurs_update'),
 
     # Saisie du nom du fournisseur pour redirection vers la modification
     path('fournisseurs/saisir_id/', SaisirIDFournisseurView.as_view(), name='saisir_id_fournisseur'),
