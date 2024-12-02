@@ -8,13 +8,13 @@ from django.db.models import Q, Prefetch
 from django.http import HttpResponseRedirect, HttpResponseForbidden #rediriger vers une autre url, refuser l'accès à une url
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
-from django.utils.timezone import now
+from django.utils import timezone
 from django.views.generic import ListView, CreateView, DeleteView, UpdateView, View, TemplateView
 from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Auteur, Livre, Ecrire, Commander, Notifier, Illustrer, Traduire, \
     Achat, Reserver, Illustrateur, Traducteur, FournisseurAdresse
 from .decorators import unauthenticated_user_required, staff_required
 from .forms import (PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, IDEditeurForm, EmailInputForm, \
-    IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm, CommanderForm, IDCommandeForm, ReserverForm, AchatForm, FournisseurForm, IDFournisseurForm,
+    IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm, IDReservationForm, IDAchatForm, CommanderForm, IDCommandeForm, ReserverForm, AchatForm, FournisseurForm, IDFournisseurForm,
                     AdresseFormSet, FournisseurAdresseFormSet)
 from django.db import transaction
 
@@ -1384,14 +1384,18 @@ class AchatResearch(StaffRequiredMixin, ListView):
 @login_required(login_url='login')
 def saisir_ID_achat(request):
     if request.method == 'POST':
-        achat_id = request.POST.get('achat_id')
-        if achat_id:
-            try:
-                achat = Achat.objects.get(id=achat_id)
-                return redirect(reverse('achats_with_ID_delete', kwargs={'pk': achat.id}))
-            except Achat.DoesNotExist:
-                return render(request, 'gui/supprimer_achat.html', {'error': "Achat non trouvée."})
-    return render(request, 'gui/supprimer_achat.html')
+        form = IDAchatForm(request.POST)
+        if form.is_valid():
+            achat_id = form.cleaned_data['achat_id']
+
+            if Achat.objects.filter(id=achat_id).exists():
+                return redirect(reverse('achats_update', kwargs={'pk': achat_id}))
+            else:
+                return render(request, 'gui/saisir_achat_ID.html',
+                              {'form': form, 'error': 'Achat non trouvé.'})
+    else:
+        form = IDAchatForm()
+    return render(request, 'gui/saisir_achat_ID.html', {'form': form})
 
 #%%------------------------------GERER-LES-COMMANDES---------------------------------
 class CommanderList(StaffRequiredMixin, ListView):
@@ -1404,10 +1408,9 @@ class CommanderList(StaffRequiredMixin, ListView):
         order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
         sort_prefix = '' if order == 'asc' else '-'
         sorting_options = {
-            'id':'id_commande',
+            'id':'id',
             'date':'date_commande',
             'quantite':'quantite',
-            'statut':'statut',
         }
         # Récupérer le queryset initial
         queryset = super().get_queryset()
@@ -1475,24 +1478,34 @@ class CommanderDelete(StaffRequiredMixin, View):
                 # Si la commande n'existe pas avec l'ID donné
                 return render(request, self.template_name, {'error': "Commande non trouvée."})
         return render(request, self.template_name, {'error': "ID de commande invalide."})
-class CommanderResearch(StaffRequiredMixin, ListView):
+class CommanderResearch(ListView):
     model = Commander
-    template_name = 'gui/lister_commandes.html'  # Nouveau template pour les résultats
+    template_name = 'gui/lister_commandes.html'
     context_object_name = 'commandes'
 
     def get_queryset(self):
         search_query = self.request.GET.get('search', '')
+
         if search_query:
-            query = Q()
             keywords = search_query.split()
+            query = Q()
+
             for keyword in keywords:
-                query |= Q(personne__nom__icontains=keyword) | \
-                         Q(id__icontains=keyword) | \
-                         Q(livre__titre__icontains=keyword)
+                # Recherche sur les champs de Commander
+                query |= Q(statut__icontains=keyword) | \
+                         Q(date_commande__icontains=keyword) | \
+                         Q(quantite__icontains=keyword)
 
+                # Recherche sur les relations ForeignKey : Personne, Livre, Fournisseur
+                query |= Q(personne__nom__icontains=keyword)  # Personne liée
+                query |= Q(personne__prenom__icontains=keyword)  # Prenom de la personne
+                query |= Q(livre__titre__icontains=keyword)  # Livre lié
+                query |= Q(fournisseur__nom_fournisseur__icontains=keyword)
+  # Fournisseur lié
 
-            return Commander.objects.filter(query).distinct()
+            return Commander.objects.filter(query).select_related('personne', 'livre', 'fournisseur').distinct()
 
+        # Retourner toutes les commandes si aucun terme de recherche
         return Commander.objects.all()
 @login_required(login_url='login')
 def terminer_commande(request, pk):
@@ -1522,15 +1535,18 @@ def terminer_commande(request, pk):
 @login_required(login_url='login')
 def saisir_ID_commande(request):
     if request.method == 'POST':
-        commande_id = request.POST.get('commande_id')
-        if commande_id:
-            try:
-                commande = Commander.objects.get(id=commande_id)
-                # Rediriger vers la page de confirmation avec l'ID
-                return redirect(reverse('commandes_with_ID_delete', kwargs={'pk': commande.id}))
-            except Commander.DoesNotExist:
-                return render(request, 'gui/supprimer_commande.html', {'error': "Commande non trouvée."})
-    return render(request, 'gui/supprimer_commande.html')
+        form = IDCommandeForm(request.POST)
+        if form.is_valid():
+            commande_id = form.cleaned_data['commande_id']
+
+            if Commander.objects.filter(id=commande_id).exists():
+                return redirect(reverse('commandes_update', kwargs={'pk': commande_id}))
+            else:
+                return render(request, 'gui/saisir_commande_ID.html',
+                              {'form': form, 'error': 'Commande non trouvé.'})
+    else:
+        form = IDCommandeForm()
+    return render(request, 'gui/saisir_commande_ID.html', {'form': form})
 
 #%%------------------------------GERER-LES-RESERVATIONS------------------------------
 class ReserverList(StaffRequiredMixin, ListView):
@@ -1555,7 +1571,6 @@ class ReserverList(StaffRequiredMixin, ListView):
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
         return queryset
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Récupérer les commandes en cours et terminées
@@ -1609,7 +1624,7 @@ class ReserverDelete(StaffRequiredMixin, View):
                 if pk:
                     # Si on est dans la page de confirmation, on supprime la commande directement
                     reservation.delete()
-                    return redirect(reverse_lazy('reservation_list'))  # Redirection après suppression
+                    return redirect(reverse_lazy('reservations_list'))  # Redirection après suppression
                 else:
                     # Si on est dans le formulaire de saisie de l'ID, on redirige vers la confirmation
                     return redirect(reverse_lazy('reservations_with_ID_delete', kwargs={'pk': reservation.id}))
@@ -1617,7 +1632,6 @@ class ReserverDelete(StaffRequiredMixin, View):
                 # Si la commande n'existe pas avec l'ID donné
                 return render(request, self.template_name, {'error': "Reservation non trouvée."})
         return render(request, self.template_name, {'error': "ID de reservation invalide."})
-
 class ReserverResearch(StaffRequiredMixin, ListView):
     model = Reserver
     template_name = 'gui/lister_reservations.html'  # Nouveau template pour les résultats
@@ -1650,43 +1664,79 @@ def terminer_reservation(request, pk):
 @login_required(login_url='login')
 def saisir_ID_reservation(request):
     if request.method == 'POST':
-        reservation_id = request.POST.get('reservation_id')
-        if reservation_id:
-            try:
-                reservation = Reserver.objects.get(id=reservation_id)
-                # Rediriger vers la page de confirmation avec l'ID
-                return redirect(reverse('reservations_with_ID_delete', kwargs={'pk': reservation.id}))
-            except Reserver.DoesNotExist:
-                return render(request, 'gui/supprimer_reservation.html', {'error': "Reservation non trouvée."})
-    return render(request, 'gui/supprimer_reservation.html')
+        form = IDReservationForm(request.POST)
+        if form.is_valid():
+            reservation_id = form.cleaned_data['reservation_id']
 
-"""def verifier_reservations():
-    trois_semaines = now() - timedelta(weeks=3)
-    reservations = Reserver.objects.filter(statut='en cours', date_reservation__lt=trois_semaines)
-
-    for reservation in reservations:
-        reservation.statut = 'terminé'
-        reservation.save()
-
-        # Création d'une notification
-        Notifier.objects.create(
-            personne=reservation.personne,
-            livre=reservation.livre,
-            quantite=reservation.quantite,
-            type='reservation',
-            commentaire=f"La réservation du livre '{reservation.livre.titre}' a expiré après 3 semaines.",
-        )"""
-
+            if Reserver.objects.filter(id=reservation_id).exists():
+                return redirect(reverse('reservations_update', kwargs={'pk': reservation_id}))
+            else:
+                return render(request, 'gui/saisir_reservation_ID.html',
+                              {'form': form, 'error': 'Reservation non trouvé.'})
+    else:
+        form = IDReservationForm()
+    return render(request, 'gui/saisir_reservation_ID.html', {'form': form})
 
 #%%------------------------------GERER-LES-NOTIFICATIONS-----------------------------
 
 class NotificationList(StaffRequiredMixin, TemplateView):
+    model = Notifier
     template_name = 'gui/lister_notifications.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['notifications_commande'] = Notifier.objects.filter(type='commande', termine=False)
-        context['notifications_quantite_min'] = Notifier.objects.filter(type='quantite_min', termine=False)
-        context['notifications_reservation'] = Notifier.objects.filter(type='reservation', termine=False)
+        context['notifications_commande'] = Notifier.objects.filter(type='commande')
+        context['notifications_quantite_min'] = Notifier.objects.filter(type='quantite_min')
+        context['notifications_reservation'] = Notifier.objects.filter(type='reservation')
         return context
 
+#class NotificationDelete(StaffRequiredMixin, View):
+def check_reservations(request):
+    if request.method == "POST":
+        # Calculer la date limite
+        date_limite = timezone.now().date() - timezone.timedelta(weeks=3)
+
+        # Filtrer les réservations en cours dépassées
+        reservations_depassees = Reserver.objects.filter(
+            date_reservation__lt=date_limite,
+            statut='en cours'
+        )
+        # Créer les notifications
+        for reservation in reservations_depassees:
+            # Vérifier si une notification similaire existe déjà
+            existe = Notifier.objects.filter(
+                personne=reservation.personne,
+                livre=reservation.livre,
+                quantite=reservation.quantite,
+                type='reservation',
+                commentaire=f"Réservation de {reservation.livre.titre} dépassée depuis plus de 3 semaines.",
+                termine=False,
+            ).exists()
+            if existe:
+                print(f"Notification existe")
+            if not existe:
+                notification = Notifier.objects.create(
+                    personne=reservation.personne,
+                    livre=reservation.livre,
+                    quantite=reservation.quantite,
+                    type='reservation',
+                    commentaire=f"Réservation de {reservation.livre.titre} dépassée depuis plus de 3 semaines.",
+                    termine=False,
+                )
+                print(f"Notification créée : {notification}")
+        # Rediriger vers la liste des notifications
+        return redirect('notifications_list')
+
+    # Rediriger si la méthode n'est pas POST
+    return redirect('notifications_list')
+def mark_notification_done(request, notification_id):
+    if request.method == 'POST':
+        notification = get_object_or_404(Notifier, id=notification_id)
+        notification.termine = True
+        notification.save()
+        return redirect('notifications_list')
+def delete_notification(request, notification_id):
+    if request.method == 'POST':
+        notification = get_object_or_404(Notifier, id=notification_id)
+        notification.delete()
+        return redirect('notifications_list')

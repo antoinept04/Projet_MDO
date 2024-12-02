@@ -90,16 +90,33 @@
 </head>
 <body>
 {% include 'gui/navbar.html' %}
-<div class="container mt-5">
-    <div class="alert alert-danger text-center">
-        <h1>Supprimer une reservation</h1>
-        <p>Êtes-vous sûr de vouloir supprimer cette reservation ? Cette action est irréversible.</p>
-        <form method="post" class="d-inline-block">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger">Confirmer</button>
-        </form>
-        <a href="{% url 'reservations_list' %}" class="btn btn-secondary">Annuler</a>
-    </div>
-</div>
+<h2>Supprimer une reservation</h2>
+
+{% if reservation %}
+    <!-- Cas avec ID pré-rempli -->
+    <p>Voulez-vous vraiment supprimer la reservation suivante ?</p>
+    <ul>
+        <li>ID : {{ reservation.id }}</li>
+        <li>Client : {{ reservation.personne }}</li>
+        <li>Livre : {{ reservation.livre }}</li>
+        <li>Statut : {{ reservation.statut }}</li>
+    </ul>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="button">Confirmer</button>
+        <a href="{% url 'reservations_list' %}" class="button">Annuler</a>
+    </form>
+{% else %}
+    <!-- Cas sans ID (saisie manuelle) -->
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <label for="reservation_id">ID de la commande :</label>
+        <input type="text" name="reservation_id" id="reservation_id" required>
+        <button type="submit" class="button">Supprimer</button>
+    </form>
+{% endif %}
 </body>
 </html>

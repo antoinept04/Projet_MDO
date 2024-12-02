@@ -146,11 +146,12 @@
         <a href="/commandes/create/" class="button">Ajouter une commande</a>
         <a href="/commandes/saisir_commande_ID/" class="button">Modifier une commande</a>
         <a href="{% url 'commandes_delete' %}" class="button">Supprimer une commande</a>
-        
+        <!-- Barre de recherche -->
         <form method="GET" action="{% url 'commandes_research' %}" style="display: inline-flex; align-items: center; gap: 10px;">
             <input type="text" id="search" name="search" placeholder="Nom, Prénom..." value="{{ request.GET.search }}">
             <button type="submit" class="button">Rechercher</button>
         </form>
+        
     </div>
 
     <h2 style="color: #990000; text-align: center; font-size: 2em;">Commandes en cours</h2>

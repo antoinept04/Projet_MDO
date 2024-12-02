@@ -29,11 +29,11 @@ from gui.views import (
     TraducteurList,     TraducteurCreate,   TraducteurDelete,   TraducteurUpdate,   TraducteurResearch,   saisir_ID_traducteur,
     LivreList,          create_livre,       LivreDelete,        LivreUpdate,        LivreResearch,        saisir_isbn,
     EcrireList,         EcrireCreate,
-    FournisseurList,    fournisseur_create,  FournisseurDelete,  FournisseurUpdate,  FournisseurResearch,  SaisirIDFournisseurView,
-    CommanderList,      CommanderCreate,    CommanderDelete,    CommanderUpdate,    CommanderResearch,    saisir_ID_commande,       terminer_commande,
-    ReserverList,       ReserverCreate,     ReserverDelete,     ReserverUpdate,     ReserverResearch,     saisir_ID_reservation,    terminer_reservation,
+    FournisseurList,    fournisseur_create, FournisseurDelete,  FournisseurUpdate,  FournisseurResearch,  SaisirIDFournisseurView,
+    CommanderList,      CommanderCreate,    CommanderDelete,    CommanderUpdate,    CommanderResearch,    saisir_ID_commande,      terminer_commande,
+    ReserverList,       ReserverCreate,     ReserverDelete,     ReserverUpdate,     ReserverResearch,     saisir_ID_reservation,   terminer_reservation,
     AchatList,          AchatCreate,        AchatDelete,        AchatUpdate,        AchatResearch,        saisir_ID_achat,
-    NotificationList,
+    NotificationList,   check_reservations, mark_notification_done, delete_notification
 
 )
 
@@ -107,7 +107,6 @@ urlpatterns = [
     path('traducteurs/research/', TraducteurResearch.as_view(), name='traducteurs_research'),
     path('traducteurs/saisir_traducteur_ID/', saisir_ID_traducteur, name='saisir_traducteur_ID'),
 
-
     path('achats/', AchatList.as_view(), name='achats_list'),
     path('achats/create/', AchatCreate.as_view(), name='achats_create'),
     path('achats/update/<int:pk>/', AchatUpdate.as_view(), name='achats_update'),
@@ -115,7 +114,6 @@ urlpatterns = [
     path('achats/delete/<int:pk>/', AchatDelete.as_view(), name='achats_with_ID_delete'),
     path('achats/search/', AchatResearch.as_view(), name='achats_research'),
     path('achats/saisir_achat_ID/', saisir_ID_achat, name='saisir_achat_ID'),
-
 
     path('commandes/', CommanderList.as_view(), name='commandes_list'),
     path('commandes/create/', CommanderCreate.as_view(), name='commandes_create'),
@@ -125,7 +123,6 @@ urlpatterns = [
     path('commandes/search/', CommanderResearch.as_view(), name='commandes_research'),
     path('commandes/terminer/<int:pk>/', terminer_commande, name='terminer_commande'),
     path('commandes/saisir_commande_ID/', saisir_ID_commande, name='saisir_commande_ID'),
-
 
     path('reservations/', ReserverList.as_view(), name='reservations_list'),
     path('reservations/create/', ReserverCreate.as_view(), name='reservations_create'),
@@ -137,7 +134,7 @@ urlpatterns = [
     path('reservations/saisir_reservation_ID/', saisir_ID_reservation, name='saisir_reservation_ID'),
 
 
-    # Liste des fournisseurs avec possibilité de recherche
+
     path('fournisseurs/', FournisseurList.as_view(), name='fournisseurs_list'),
 
     # Vue de recherche des fournisseurs
@@ -156,5 +153,8 @@ urlpatterns = [
     path('fournisseurs/saisir_id/', SaisirIDFournisseurView.as_view(), name='saisir_id_fournisseur'),
 
 
-    path('notifications/', NotificationList.as_view(), name='notifications_list')
+    path('notifications/', NotificationList.as_view(), name='notifications_list'),
+    path('notifications/<int:notification_id>/done/', mark_notification_done, name='mark_notification_done'),
+    path('notifications/<int:notification_id>/delete/', delete_notification, name='delete_notification'),
+    path('check_reservations/', check_reservations, name='check_reservations'),
 ]

@@ -6,89 +6,164 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #fff5f5;
+            color: #990000;
             margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-        }
-        .container {
-            width: 80%;
-            margin: 20px auto;
-            background: #fff;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        h2 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
+
+        .navbar {
+            display: flex;
+            justify-content: center;
+            background-color: #cc0000;
+            padding: 10px 0;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 16px;
-        }
-        table th, table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        table th {
-            background-color: #007BFF;
+
+        .nav-buttons a {
+            background-color: #990000;
             color: white;
-        }
-        table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .add-button {
-            display: block;
-            width: fit-content;
-            margin: 20px auto;
-            padding: 10px 20px;
-            text-align: center;
-            background-color: #007BFF;
-            color: white;
+            padding: 12px 20px;
             text-decoration: none;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 1.1em;
+            margin: 0 10px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .nav-buttons a:hover {
+            background-color: #cc0000;
+            transform: translateY(-3px);
+        }
+
+        h1 {
+            color: #990000;
+            text-align: center;
+            font-size: 2.5em;
+            margin-top: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            width: 80%;
+            text-align: left;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ccc;
             border-radius: 5px;
-            font-size: 16px;
+            width: 100%;
         }
-        .add-button:hover {
-            background-color: #0056b3;
+
+        button {
+            background-color: #990000;
+            color: white;
+            padding: 12px 20px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+            width: 200px;
+            margin-top: 10px;
         }
+
+        button:hover {
+            background-color: #cc0000;
+        }
+
+
+
     </style>
 </head>
 <body>
-<div class="button-container">
-    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
+
+<!-- Navbar -->
+    {% include 'gui/navbar.html' %}
+
+<div class="container">
+    <!-- Titre principal -->
+    <h1 style="color: #990000; text-align: center; font-size: 3em; margin-top: 20px;">Liste des Notifications</h1>
+
+
+
+    <!-- Notifications de type 1 -->
+
+<h2 style="text-align: center; font-size: 2em; color: #990000;">Réservations dépassées</h2>
+
+<!-- Barre d'action -->
+    <div class="action-bar">
+        <form method="post" action="{% url 'check_reservations' %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="button">Vérifier les réservations dépassées</button>
+        </form>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Personne</th>
+                <th>Livre</th>
+                <th>Quantite</th>
+                <th>Commentaire</th>
+                <th>Date de création</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for notification in notifications_reservation %}
+            <tr>
+                <td>{{ notification.id }}</td>
+                <td>{{ notification.personne.nom }}</td>
+                <td>{{ notification.livre.titre }}</td>
+                <td>{{ notification.quantite }}</td>
+                <td>{{ notification.commentaire }}</td>
+                <td>{{ notification.date_creation|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if notification.termine %}
+                        <span class="badge bg-success">Terminé</span>
+                    {% else %}
+                        <span class="badge bg-warning">En cours</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="post" action="{% url 'mark_notification_done' notification.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        {% if not notification.termine %}
+                            <button type="submit" class="button">Terminer</button>
+                        {% endif %}
+                    </form>
+                    <form method="post" action="{% url 'delete_notification' notification.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="button btn-danger">Supprimer</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr class="empty-message">
+                <td colspan="9">Aucune notification de ce type.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Placeholders pour d'autres types -->
+    <h2 style="text-align: center; font-size: 2em; color: #990000;">Autres types de notifications</h2>
+    <p class="alert alert-info">Ajoutez les sections pour les types 2 et 3 ici.</p>
 </div>
-<h1>Notifications</h1>
 
-<h2>Commandes</h2>
-<ul>
-    {% for notif in notifications_commande %}
-    <li>{{ notif.date_creation }} - {{ notif.commentaire }}</li>
-    {% empty %}
-    <li>Aucune notification pour les commandes.</li>
-    {% endfor %}
-</ul>
-
-<h2>Stock</h2>
-<ul>
-    {% for notif in notifications_quantite_min %}
-    <li>{{ notif.date_creation }} - {{ notif.commentaire }}</li>
-    {% empty %}
-    <li>Aucune notification liée au stock.</li>
-    {% endfor %}
-</ul>
-
-<h2>Réservations</h2>
-<ul>
-    {% for notif in notifications_reservation %}
-    <li>{{ notif.date_creation }} - {{ notif.commentaire }}</li>
-    {% empty %}
-    <li>Aucune notification pour les réservations.</li>
-    {% endfor %}
-</ul>
 </body>
 </html>

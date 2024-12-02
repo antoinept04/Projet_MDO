@@ -91,17 +91,32 @@
 </head>
 <body>
     {% include 'gui/navbar.html' %}
-    <div class="container">
-        <h1>Supprimer un achat</h1>
+    <h2>Supprimer un achat</h2>
 
-        <div class="alert">
-            <p>Êtes-vous sûr de vouloir supprimer cet achat ? Cette action est irréversible.</p>
-            <form method="post" class="d-inline-block">
-                {% csrf_token %}
-                <button type="submit">Confirmer</button>
-            </form>
-            <a href="{% url 'achats_list' %}" class="btn-secondary">Annuler</a>
-        </div>
-    </div>
+{% if achat %}
+    <!-- Cas avec ID pré-rempli -->
+    <p>Voulez-vous vraiment supprimer l'achat suivant ?</p>
+    <ul>
+        <li>ID : {{ achat.id }}</li>
+        <li>Client : {{ achat.personne }}</li>
+        <li>Livre : {{ achat.livre }}</li>
+    </ul>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="button">Confirmer</button>
+        <a href="{% url 'achats_list' %}" class="button">Annuler</a>
+    </form>
+{% else %}
+    <!-- Cas sans ID (saisie manuelle) -->
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <label for="achat_id">ID de l'achat :</label>
+        <input type="text" name="achat_id" id="achat_id" required>
+        <button type="submit" class="button">Rechercher</button>
+    </form>
+{% endif %}
 </body>
 </html>

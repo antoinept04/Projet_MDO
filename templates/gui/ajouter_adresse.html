@@ -4,13 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajouter une Adresse</title>
+    <title>Ajouter une Commande</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #fff5f5;
             color: #990000;
             margin: 0;
+            padding: 20px;
         }
 
         .navbar {
@@ -57,7 +58,9 @@
             text-align: left;
         }
 
-        .form-group input {
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
             padding: 10px;
             font-size: 1em;
             border: 1px solid #ccc;
@@ -83,19 +86,8 @@
             background-color: #cc0000;
         }
 
-        h2 {
-            color: #990000;
-            margin-top: 20px;
-        }
+        
 
-        ul {
-            list-style-type: none;
-            color: #cc0000;
-        }
-
-        ul li {
-            font-size: 0.9em;
-        }
     </style>
 </head>
 <body>
@@ -103,31 +95,17 @@
     <!-- Navbar -->
     {% include 'gui/navbar.html' %}
 
-    <h1>Ajouter une Adresse</h1>
+    <h1>Créer une Commande</h1>
+
     <form method="post">
         {% csrf_token %}
-        
-        <!-- Form for Address -->
+
         <div class="form-group">
-            <h2>Informations sur l'Adresse</h2>
-            {{ adresse_form.as_p }}
+            {{ form.as_p }}
         </div>
 
-        <!-- Ville Details -->
-        <div class="form-group">
-            <h2>Informations sur la Ville</h2>
-            <label for="nom_ville">Nom de la Ville</label><br>
-            <input type="text" id="nom_ville" name="nom_ville" required><br>
-
-            <label for="code_postal">Code Postal</label><br>
-            <input type="text" id="code_postal" name="code_postal" required><br>
-
-            <label for="pays">Pays</label><br>
-            <input type="text" id="pays" name="pays" required><br>
-        </div>
-
-        <!-- Submit Button -->
         <button type="submit">Enregistrer</button>
+        <a href="{% url 'commandes_list' %}" class="btn btn-secondary">Annuler</a>
     </form>
 
 </body>

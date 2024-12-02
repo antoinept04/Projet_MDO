@@ -145,6 +145,7 @@
         <a href="/reservations/create/" class="button">Ajouter une reservation</a>
         <a href="/reservations/saisir_reservation_ID/" class="button">Modifier une reservation</a>
         <a href="{% url 'reservations_delete' %}" class="button">Supprimer une reservation</a>
+        <!-- Barre de recherche -->
         <form method="GET" action="{% url 'reservations_research' %}" style="display: inline-flex; align-items: center; gap: 10px;">
             <input type="text" id="search" name="search" placeholder="Nom, Prénom..." value="{{ request.GET.search }}">
             <button type="submit" class="button">Rechercher</button>
@@ -180,10 +181,7 @@
                             <button type="submit" class="button">Terminer</button>
                         </form>
                         <a href="{% url 'reservations_update' reservation.id %}" class="btn-warning">Modifier</a>
-                        <form method="POST" action="{% url 'reservations_delete' reservation.id %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn-danger">Supprimer</button>
-                        </form>
+                        <a href="{% url 'reservations_with_ID_delete' pk=reservation.id %}" class="button">Supprimer</a>
                     </div>
                 </td>
             </tr>
@@ -220,10 +218,7 @@
                 <td>
                     <div class="action-buttons">
                         <a href="{% url 'reservations_update' reservation.id %}" class="btn-warning">Modifier</a>
-                        <form method="POST" action="{% url 'reservations_delete' reservation.id %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn-danger">Supprimer</button>
-                        </form>
+                        <a href="{% url 'reservations_with_ID_delete' pk=reservation.id %}" class="button">Supprimer</a>
                     </div>
                 </td>
             </tr>
