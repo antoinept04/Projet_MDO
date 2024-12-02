@@ -1,8 +1,8 @@
 # forms.py
 from django import forms
 from .models import Personne, Livre, Auteur, Editeur, Adresse, Commander, Ville, Notifier, Illustrateur, Traducteur, \
-    Reserver, Fournisseur, Achat
-from django.forms import modelformset_factory
+    Reserver, Fournisseur, Achat, FournisseurAdresse
+from django.forms import modelformset_factory, inlineformset_factory
 
 class EmailInputForm(forms.Form):
     email = forms.EmailField(
@@ -253,6 +253,20 @@ class FournisseurForm(forms.ModelForm):
 
 class IDFournisseurForm(forms.Form):
     nom_fournisseur = forms.CharField(label="Nom du Fournisseur", max_length=100)
+
+class FournisseurAdresseForm(forms.ModelForm):
+    class Meta:
+        model = FournisseurAdresse
+        fields = ['adresse']
+
+# Formset pour gérer plusieurs adresses
+FournisseurAdresseFormSet = inlineformset_factory(
+    Fournisseur,
+    FournisseurAdresse,
+    form=FournisseurAdresseForm,
+    extra=1,
+    can_delete=True
+)
 
 class AchatForm(forms.ModelForm):
     class Meta:

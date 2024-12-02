@@ -96,6 +96,7 @@ class Fournisseur(models.Model):
 
     def __str__(self):
         return self.nom_fournisseur
+
 class Editeur(models.Model):
     nom = models.CharField(max_length=100)
 
@@ -283,15 +284,11 @@ class Notifier(models.Model):
         return f"Notification pour {self.livre.titre} ({self.type})"
 
 class FournisseurAdresse(models.Model):
-    fournisseur = models.ForeignKey(
-        'Fournisseur',
-        on_delete=models.CASCADE  # Utilise la clé primaire par défaut (id)
-    )
-    adresse = models.ForeignKey('Adresse', on_delete=models.CASCADE)
+    fournisseur = models.ForeignKey(Fournisseur, on_delete=models.CASCADE)
+    adresse = models.ForeignKey(Adresse, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ('fournisseur', 'adresse')  # Unicité des paires
-        db_table = 'Fournisseur_adresses'
+        unique_together = ('fournisseur', 'adresse')
 
     def __str__(self):
         return f"{self.fournisseur.nom_fournisseur} - {self.adresse}"

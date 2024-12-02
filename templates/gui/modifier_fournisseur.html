@@ -1,77 +1,78 @@
 <!-- gui/templates/gui/modifier_fournisseur.html -->
 
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
+    <meta charset="UTF-8">
     <title>Modifier Fournisseur</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <style>
+        .formset-form {
+            border: 1px solid #ced4da;
+            padding: 15px;
+            margin-bottom: 10px;
+            position: relative;
+            border-radius: 5px;
+        }
+        .remove-form {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+    </style>
 </head>
 <body>
 <div class="container mt-5">
-    <h2>Modifier le Fournisseur</h2>
+    <h1>Modifier Fournisseur</h1>
     <form method="post">
         {% csrf_token %}
-        <div class="form-group">
-            {{ form.nom_fournisseur.label_tag }}
-            {{ form.nom_fournisseur }}
-        </div>
-        <hr>
-        <h4>Adresses</h4>
-        {{ adresse_formset.management_form }}
-        <div id="adresse-formset">
-            {% for form in adresse_formset %}
-                <div class="form-row align-items-end adresse-form">
-                    <div class="col-md-5">
-                        {{ form.rue.label_tag }}
-                        {{ form.rue }}
-                    </div>
-                    <div class="col-md-3">
-                        {{ form.n_rue.label_tag }}
-                        {{ form.n_rue }}
-                    </div>
-                    <div class="col-md-2">
-                        <span class="remove-form">&times;</span>
-                    </div>
+        {{ form.as_p }}
+        
+        <h3>Adresses</h3>
+        {{ formset_adresse.management_form }}
+        <div id="formset-adresses">
+            {% for form in formset_adresse %}
+                <div class="formset-form">
+                    <span class="remove-form">&times;</span>
+                    {{ form.as_p }}
                 </div>
             {% endfor %}
         </div>
-        <button type="button" class="btn btn-secondary mt-3" id="add-adresse">Ajouter une autre adresse</button>
-        <hr>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <button type="button" class="btn btn-secondary" id="add-adresse">Ajouter une Adresse</button>
+        
+        <button type="submit" class="btn btn-primary mt-3">Enregistrer les Modifications</button>
     </form>
-</div>
-
-<!-- Template pour une nouvelle adresse -->
-<div id="empty-form" style="display: none;">
-    <div class="form-row align-items-end adresse-form">
-        <div class="col-md-5">
-            <label for="id_form-__prefix__-rue">Rue :</label>
-            <input type="text" name="form-__prefix__-rue" class="form-control" id="id_form-__prefix__-rue">
-        </div>
-        <div class="col-md-3">
-            <label for="id_form-__prefix__-n_rue">Numéro :</label>
-            <input type="number" name="form-__prefix__-n_rue" class="form-control" id="id_form-__prefix__-n_rue">
-        </div>
-        <div class="col-md-2">
-            <span class="remove-form">&times;</span>
-        </div>
-    </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script>
     $(document).ready(function(){
-        let formIdx = {{ adresse_formset.total_form_count }};
-        
         $('#add-adresse').click(function(){
-            let newForm = $('#empty-form').html().replace(/__prefix__/g, formIdx);
-            $('#adresse-formset').append(newForm);
-            formIdx++;
+            var formIdx = parseInt($('#id_fournisseuradresse_set-TOTAL_FORMS').val());
+            var formTemplate = `
+                <div class="formset-form">
+                    <span class="remove-form">&times;</span>
+                    <p>
+                        <label for="id_fournisseuradresse_set-${formIdx}-adresse">Adresse :</label>
+                        <select name="fournisseuradresse_set-${formIdx}-adresse" class="form-control" id="id_fournisseuradresse_set-${formIdx}-adresse">
+                            {% for adresse in formset_adresse.forms.0.fields.adresse.queryset %}
+                                <option value="{{ adresse.pk }}">{{ adresse }}</option>
+                            {% endfor %}
+                        </select>
+                    </p>
+                </div>
+            `;
+            $('#formset-adresses').append(formTemplate);
+            $('#id_fournisseuradresse_set-TOTAL_FORMS').val(formIdx + 1);
         });
-        
-        // Supprimer une adresse
-        $('#adresse-formset').on('click', '.remove-form', function(){
-            $(this).closest('.adresse-form').remove();
+
+        $('#formset-adresses').on('click', '.remove-form', function(){
+            $(this).parent('.formset-form').remove();
+            var totalForms = parseInt($('#id_fournisseuradresse_set-TOTAL_FORMS').val());
+            $('#id_fournisseuradresse_set-TOTAL_FORMS').val(totalForms - 1);
         });
     });
 </script>

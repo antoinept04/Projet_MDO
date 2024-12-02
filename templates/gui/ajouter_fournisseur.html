@@ -1,79 +1,83 @@
-{% load static %}
+<!-- gui/templates/gui/ajouter_fournisseur.html -->
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ajouter un Fournisseur</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-        }
-
-        .container {
-            max-width: 700px;
-            margin: 50px auto;
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .form-group label {
-            font-weight: bold;
-        }
-
-        button {
-            background-color: #007bff;
-            color: white;
-            border: none;
+        .formset-form {
+            border: 1px solid #ced4da;
+            padding: 15px;
+            margin-bottom: 10px;
+            position: relative;
             border-radius: 5px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
         }
-
-        button:hover {
-            background-color: #0056b3;
+        .remove-form {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 1.2em;
         }
     </style>
 </head>
 <body>
-<div class="container">
+<div class="container mt-5">
     <h1>Ajouter un Fournisseur</h1>
     <form method="post">
         {% csrf_token %}
-
-        <!-- Informations du fournisseur -->
         <div class="form-group">
             <h3>Informations du Fournisseur</h3>
             {{ form_fournisseur.as_p }}
         </div>
 
-        <!-- Adresse -->
         <div class="form-group">
-            <h3>Adresse</h3>
-            {{ form_adresse.as_p }}
+            <h3>Adresses</h3>
+            {{ formset_adresse.management_form }}
+            <div id="formset-adresses">
+                {% for form in formset_adresse %}
+                    <div class="formset-form">
+                        <span class="remove-form">&times;</span>
+                        {{ form.as_p }}
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="btn btn-secondary" id="add-adresse">Ajouter une Adresse</button>
         </div>
 
-        <!-- Ville -->
-        <div class="form-group">
-            <h3>Ville</h3>
-            {{ form_ville.as_p }}
-        </div>
-
-        <button type="submit">Ajouter le Fournisseur</button>
+        <button type="submit" class="btn btn-primary">Ajouter le Fournisseur</button>
     </form>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script>
+    $(document).ready(function(){
+        $('#add-adresse').click(function(){
+            var formIdx = $('#id_fournisseuradresse_set-TOTAL_FORMS').val();
+            var formTemplate = `
+                <div class="formset-form">
+                    <span class="remove-form">&times;</span>
+                    <label for="id_fournisseuradresse_set-${formIdx}-adresse">Adresse:</label>
+                    <select name="fournisseuradresse_set-${formIdx}-adresse" class="form-control" id="id_fournisseuradresse_set-${formIdx}-adresse">
+                        {% for adresse in formset_adresse.forms.0.fields.adresse.queryset %}
+                            <option value="{{ adresse.pk }}">{{ adresse }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            `;
+            $('#formset-adresses').append(formTemplate);
+            $('#id_fournisseuradresse_set-TOTAL_FORMS').val(parseInt(formIdx) + 1);
+        });
+
+        $('#formset-adresses').on('click', '.remove-form', function(){
+            $(this).parent('.formset-form').remove();
+            var totalForms = parseInt($('#id_fournisseuradresse_set-TOTAL_FORMS').val());
+            $('#id_fournisseuradresse_set-TOTAL_FORMS').val(totalForms - 1);
+        });
+    });
+</script>
 </body>
 </html>
