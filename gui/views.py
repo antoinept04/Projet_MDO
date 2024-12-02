@@ -551,20 +551,30 @@ class FournisseurList(StaffRequiredMixin, ListView):
     def get_queryset(self):
         sort_by = self.request.GET.get('sort_by', 'nom_fournisseur')
         order = self.request.GET.get('order', 'asc')
+        search_query = self.request.GET.get('search', '')
         sort_prefix = '' if order == 'asc' else '-'
         sorting_options = {
             'nom_fournisseur': 'nom_fournisseur',
-            'ville': 'adresses__ville',
+            # 'ville': 'adresses__ville__nom_ville',  # Décommentez si vous souhaitez trier par ville
         }
 
         queryset = super().get_queryset()
 
+        # Filtre le queryset en fonction de la requête de recherche
+        if search_query:
+            queryset = queryset.filter(
+                Q(nom_fournisseur__icontains=search_query) |
+                Q(adresses__ville__nom_ville__icontains=search_query)
+            ).distinct()
+
+        # Trie le queryset en fonction des paramètres de tri
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
         else:
             queryset = queryset.order_by('nom_fournisseur')
 
-        return queryset.prefetch_related('adresses')
+        return queryset.prefetch_related('adresses', 'adresses__ville')
+
 
 # views.py
 
