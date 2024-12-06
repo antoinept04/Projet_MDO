@@ -126,7 +126,7 @@
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Valider</button>
-        <a href="{% url 'commandes_list' %}" class="btn btn-secondary">Annuler</a>
+        <button type="button" onclick="window.location.href='{% url 'commandes_list' %}'">Annuler</button>
     </form>
     {% if error %}
         <div class="error">

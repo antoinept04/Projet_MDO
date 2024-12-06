@@ -3,7 +3,10 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.models import BaseUserManager
 from django.utils import timezone
 import datetime
-
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.db.models import Sum
+from decimal import Decimal
 
 class Ville(models.Model):
     nom_ville = models.CharField(max_length=100, primary_key=True)
@@ -83,6 +86,60 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.nom} {self.prenom}"
 
+        # Méthode pour calculer le total des livres achetés
+
+    def calculer_total_livres_achetes(self):
+        total = Achat.objects.filter(personne=self).aggregate(Sum('quantite'))['quantite__sum']
+        return total if total else 0
+
+        # Méthode pour mettre à jour le solde
+
+    from decimal import Decimal  # Import pour des calculs précis
+
+    def mise_a_jour_solde(self):
+        # Calcul du nouveau total des livres après le dernier achat
+        nouveau_total_livres = self.calculer_total_livres_achetes()
+
+        # Récupérer le dernier achat
+        dernier_achat = Achat.objects.filter(personne=self).order_by('-id').first()
+
+        if dernier_achat:
+            # Calcul de l'ancien total en soustrayant la quantité du dernier achat
+            ancien_total_livres = nouveau_total_livres - dernier_achat.quantite
+        else:
+            # Si aucun achat précédent, ancien total est simplement 0
+            ancien_total_livres = 0
+
+        # Calcul du nombre de multiples de 10 atteints entre l'ancien et le nouveau total
+        multiples_atteints = (nouveau_total_livres // 10) - (ancien_total_livres // 10)
+
+        if multiples_atteints > 0:  # Si un ou plusieurs multiples de 10 ont été atteints
+            achats = Achat.objects.filter(personne=self).order_by('-id')  # Trier par id décroissant
+            livres_consideres = []
+            livres_total = 0
+            prix_total = Decimal('0.0')
+
+            # Parcourir les achats dans l'ordre des plus récents
+            for achat in achats:
+                for _ in range(achat.quantite):  # Ajouter chaque exemplaire du livre
+                    if achat.livre.prix is None:
+                        continue  # Ignorer si le prix est None
+                    livres_consideres.append(achat.livre)
+                    livres_total += 1
+                    prix_total += achat.livre.prix
+
+                    # Arrêter quand on atteint les livres nécessaires pour les multiples atteints
+                    if livres_total == multiples_atteints * 10:
+                        break
+                if livres_total == multiples_atteints * 10:
+                    break
+
+            # Calcul de la remise sur les livres nécessaires
+            remise = prix_total * Decimal('0.05')  # 5% de remise
+            self.solde += remise
+            self.save()
+
+
 class Fournisseur(models.Model):
     nom_fournisseur = models.CharField(max_length=100)
     adresses = models.ManyToManyField(
@@ -119,7 +176,7 @@ class Livre(models.Model):
     date_parution = models.DateField(blank=True,null=True)
     localisation = models.CharField(max_length=100,blank=True,null=True)
     synopsis = models.TextField(blank=True,null=True)
-    prix = models.DecimalField(max_digits=10, decimal_places=2,blank=True,null=True)
+    prix = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     url_reference = models.URLField(blank=True, null=True)
     quantite_disponible = models.IntegerField()
     quantite_totale = models.IntegerField()
@@ -228,9 +285,12 @@ class Achat(models.Model):
     def __str__(self):
         return f"Achat de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
 
+@receiver(post_save, sender=Achat)
+def verifier_fidelite(sender, instance, created, **kwargs):
+    if created:  # Vérifie si un achat vient d'être créé
+        instance.personne.mise_a_jour_solde()
 
-    def __str__(self):
-        return f"Achat de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
+
 class Commander(models.Model):
     STATUT_CHOICES = [
         ('en cours', 'En cours'),
@@ -250,6 +310,7 @@ class Commander(models.Model):
 
     def __str__(self):
         return f"Commande de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
+
 class Reserver(models.Model):
     STATUT_CHOICES = [
         ('en cours', 'En cours'),

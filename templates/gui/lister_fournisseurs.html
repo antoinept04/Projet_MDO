@@ -27,6 +27,7 @@
     <table class="table table-bordered">
         <thead>
             <tr>
+                <th>ID</th>
                 <th>
                     <a href="?{% if request.GET.search %}search={{ request.GET.search }}&amp;{% endif %}sort_by=nom_fournisseur&amp;order={% if request.GET.sort_by == 'nom_fournisseur' and request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
                         Nom
@@ -39,6 +40,7 @@
         <tbody>
             {% for fournisseur in fournisseurs %}
                 <tr>
+                    <td>{{  fournisseur.id }}</td>
                     <td>{{ fournisseur.nom_fournisseur }}</td>
                     <td>
                         {% for adresse in fournisseur.adresses.all %}

@@ -432,14 +432,25 @@ class PersonneDelete(StaffRequiredMixin, View):
         personne_email = request.POST.get('personne_email')
         if personne_email:
             # Obtenir l'objet Personne avec l'email fourni
-            # Assurez-vous que le champ 'email' existe et est unique dans le modèle Personne
             personne = get_object_or_404(Personne, email=personne_email)
+
+            # Vérifier les permissions
+            if not request.user.is_superuser:  # Si l'utilisateur n'est pas un superuser
+                roles_interdits = ['employe', 'admin']  # Rôles interdits
+                if personne.role.type in roles_interdits:  # Vérifier le rôle de la personne
+                    return HttpResponseForbidden(
+                        "Vous n'êtes pas autorisé à supprimer cet utilisateur."
+                    )
+
             # Supprimer la personne
             personne.delete()
             # Rediriger vers la liste des personnes après la suppression
             return redirect(reverse_lazy('personnes_list'))
+
         # Si l'email n'est pas fourni ou invalide, afficher une erreur
         return render(request, self.template_name, {'error': 'Email invalide.'})
+
+
 
 
 class PersonneSelectView(StaffRequiredMixin, View):
@@ -455,6 +466,15 @@ class PersonneSelectView(StaffRequiredMixin, View):
             email = form.cleaned_data['email']
             # Vérifier si la personne existe
             personne = get_object_or_404(Personne, email=email)
+
+            # Vérifier les permissions
+            if not request.user.is_superuser:  # Si l'utilisateur n'est pas un superuser
+                # Récupérer les rôles non autorisés
+                roles_interdits = ['employe', 'admin']
+                if personne.role.type in roles_interdits:
+                    # Interdire l'accès si le rôle est employé ou admin
+                    return HttpResponseForbidden("Vous n'êtes pas autorisé à modifier cet utilisateur.")
+
             # Rediriger vers la vue de modification avec l'email comme paramètre
             return redirect(reverse('personnes_update', args=[email]))
         else:
