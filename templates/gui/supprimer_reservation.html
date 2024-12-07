@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Supprimer une réservation</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -84,17 +84,15 @@
             background-color: #cc0000;
         }
 
-        
-
     </style>
 </head>
 <body>
 {% include 'gui/navbar.html' %}
-<h2>Supprimer une reservation</h2>
+<h2>Supprimer une réservation</h2>
 
 {% if reservation %}
     <!-- Cas avec ID pré-rempli -->
-    <p>Voulez-vous vraiment supprimer la reservation suivante ?</p>
+    <p>Voulez-vous vraiment supprimer la réservation suivante ?</p>
     <ul>
         <li>ID : {{ reservation.id }}</li>
         <li>Client : {{ reservation.personne }}</li>
@@ -103,8 +101,11 @@
     </ul>
     <form method="post">
         {% csrf_token %}
-        <button type="submit" class="button">Confirmer</button>
-        <a href="{% url 'reservations_list' %}" class="button">Annuler</a>
+        <!-- Boutons Confirmer et Annuler identiques -->
+        <div class="d-flex justify-content-between mt-3">
+            <button type="submit" class="btn" style="background-color: #990000; color: white;">Confirmer</button>
+            <button type="button" class="btn" onclick="window.location.href='{% url 'reservations_list' %}'" style="background-color: #990000; color: white;">Annuler</button>
+        </div>
     </form>
 {% else %}
     <!-- Cas sans ID (saisie manuelle) -->
@@ -115,7 +116,7 @@
         {% csrf_token %}
         <label for="reservation_id">ID de la commande :</label>
         <input type="text" name="reservation_id" id="reservation_id" required>
-        <button type="submit" class="button">Supprimer</button>
+        <button type="submit" class="btn" style="background-color: #990000; color: white;">Supprimer</button>
     </form>
 {% endif %}
 </body>

@@ -105,7 +105,7 @@
     <form method="post">
         {% csrf_token %}
         <button type="submit" class="button">Confirmer</button>
-        <a href="{% url 'commandes_list' %}" class="button">Annuler</a>
+        <button type="button" onclick="window.location.href='{% url 'commandes_list' %}'">Annuler</button>
     </form>
 {% else %}
     <!-- Cas sans ID (saisie manuelle) -->

@@ -284,6 +284,15 @@ class Achat(models.Model):
 
     def __str__(self):
         return f"Achat de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
+    def save(self, *args, **kwargs):
+        # Vérifie si c'est un nouvel achat
+        is_new = self._state.adding
+        super().save(*args, **kwargs)
+
+        # Si c'est un nouvel achat, met à jour la quantité du livre
+        if is_new:
+            self.livre.quantite_disponible -= self.quantite
+            self.livre.save()
 
 @receiver(post_save, sender=Achat)
 def verifier_fidelite(sender, instance, created, **kwargs):

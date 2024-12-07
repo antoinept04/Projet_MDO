@@ -1398,7 +1398,8 @@ class AchatResearch(StaffRequiredMixin, ListView):
             for keyword in keywords:
                 query |= Q(personne__nom__icontains=keyword) | \
                          Q(personne__prenom__icontains=keyword) | \
-                         Q(livre__titre__icontains=keyword)
+                         Q(livre__titre__icontains=keyword) | \
+                         Q(id__icontains=keyword)
             return Achat.objects.filter(query).distinct()
         return Achat.objects.all()
 @login_required(login_url='login')
@@ -1504,29 +1505,50 @@ class CommanderResearch(ListView):
     context_object_name = 'commandes'
 
     def get_queryset(self):
+        # Récupérer les paramètres de recherche et de tri
         search_query = self.request.GET.get('search', '')
+        sort_by = self.request.GET.get('sort_by', 'date_commande')
+        order = self.request.GET.get('order', 'asc')
+        sort_prefix = '' if order == 'asc' else '-'
+
+        # Définir la recherche de manière générique pour tous les cas
+        query = Q()
 
         if search_query:
             keywords = search_query.split()
-            query = Q()
-
             for keyword in keywords:
                 # Recherche sur les champs de Commander
                 query |= Q(statut__icontains=keyword) | \
                          Q(date_commande__icontains=keyword) | \
-                         Q(quantite__icontains=keyword)
+                         Q(quantite__icontains=keyword) |\
+                         Q(id__icontains=keyword)
 
                 # Recherche sur les relations ForeignKey : Personne, Livre, Fournisseur
                 query |= Q(personne__nom__icontains=keyword)  # Personne liée
                 query |= Q(personne__prenom__icontains=keyword)  # Prenom de la personne
                 query |= Q(livre__titre__icontains=keyword)  # Livre lié
-                query |= Q(fournisseur__nom_fournisseur__icontains=keyword)
-  # Fournisseur lié
+                query |= Q(fournisseur__nom_fournisseur__icontains=keyword)  # Fournisseur lié
 
-            return Commander.objects.filter(query).select_related('personne', 'livre', 'fournisseur').distinct()
+        # Filtrer les commandes selon le statut et la recherche
+        commandes_en_cours = Commander.objects.filter(statut='en cours').filter(query)
+        commandes_terminees = Commander.objects.filter(statut='terminé').filter(query)
 
-        # Retourner toutes les commandes si aucun terme de recherche
-        return Commander.objects.all()
+        # Appliquer le tri
+        commandes_en_cours = commandes_en_cours.order_by(f"{sort_prefix}{sort_by}")
+        commandes_terminees = commandes_terminees.order_by(f"{sort_prefix}{sort_by}")
+
+        return commandes_en_cours, commandes_terminees
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Récupérer les commandes en cours et terminées avec recherche et tri
+        commandes_en_cours, commandes_terminees = self.get_queryset()
+
+        # Ajouter les commandes au contexte
+        context['commandes_en_cours'] = commandes_en_cours
+        context['commandes_terminees'] = commandes_terminees
+        return context
 @login_required(login_url='login')
 def terminer_commande(request, pk):
     if not request.user.is_staff:  # Vérifie que l'utilisateur est autorisé
@@ -1653,25 +1675,54 @@ class ReserverDelete(StaffRequiredMixin, View):
                 # Si la commande n'existe pas avec l'ID donné
                 return render(request, self.template_name, {'error': "Reservation non trouvée."})
         return render(request, self.template_name, {'error': "ID de reservation invalide."})
-class ReserverResearch(StaffRequiredMixin, ListView):
+class ReserverResearch(ListView):
     model = Reserver
-    template_name = 'gui/lister_reservations.html'  # Nouveau template pour les résultats
+    template_name = 'gui/lister_reservations.html'
     context_object_name = 'reservations'
 
     def get_queryset(self):
+        # Récupérer les paramètres de recherche et de tri
         search_query = self.request.GET.get('search', '')
+        sort_by = self.request.GET.get('sort_by', 'date_reservation')
+        order = self.request.GET.get('order', 'asc')
+        sort_prefix = '' if order == 'asc' else '-'
+
+        # Définir la recherche de manière générique pour tous les cas
+        query = Q()
+
         if search_query:
-            query = Q()
             keywords = search_query.split()
             for keyword in keywords:
-                query |= Q(personne__nom__icontains=keyword) | \
-                         Q(id__icontains=keyword) | \
-                         Q(livre__titre__icontains=keyword)
+                # Recherche sur les champs de Reserver
+                query |= Q(statut__icontains=keyword) | \
+                         Q(date_reservation__icontains=keyword) | \
+                         Q(id__icontains=keyword)
 
+                # Recherche sur les relations ForeignKey : Personne, Livre
+                query |= Q(personne__nom__icontains=keyword)  # Personne liée
+                query |= Q(personne__prenom__icontains=keyword)  # Prenom de la personne
+                query |= Q(livre__titre__icontains=keyword)  # Livre lié
 
-            return Reserver.objects.filter(query).distinct()
+        # Filtrer les réservations selon le statut et la recherche
+        reservations_en_cours = Reserver.objects.filter(statut='en cours').filter(query)
+        reservations_terminees = Reserver.objects.filter(statut='terminé').filter(query)
 
-        return Reserver.objects.all()
+        # Appliquer le tri
+        reservations_en_cours = reservations_en_cours.order_by(f"{sort_prefix}{sort_by}")
+        reservations_terminees = reservations_terminees.order_by(f"{sort_prefix}{sort_by}")
+
+        return reservations_en_cours, reservations_terminees
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Récupérer les réservations en cours et terminées avec recherche et tri
+        reservations_en_cours, reservations_terminees = self.get_queryset()
+
+        # Ajouter les réservations au contexte
+        context['reservations_en_cours'] = reservations_en_cours
+        context['reservations_terminees'] = reservations_terminees
+        return context
 @login_required(login_url='login')
 def terminer_reservation(request, pk):
     if not request.user.is_staff:  # Vérifie que l'utilisateur est autorisé
