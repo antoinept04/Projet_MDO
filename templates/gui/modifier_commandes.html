@@ -106,11 +106,9 @@
 
     <form method="post" class="card p-4 shadow-sm">
         {% csrf_token %}
-        {{ form.as_p }}  <!-- Le formulaire inclura le champ fournisseur modifiable -->
-        <div class="action-bar">
-                <button type="submit">Enregistrer</button>
-                <button type="button" onclick="window.location.href='{% url 'commandes_list' %}'">Annuler</button>
-        </div>
+        {{ form.as_p }}  
+        <button type="submit">Enregistrer</button>
+        <button type="button" onclick="window.location.href='{% url 'commandes_list' %}'">Annuler</button>
     </form>
 </div>
 </body>

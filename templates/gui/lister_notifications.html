@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Liste des Notifications</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -43,6 +43,13 @@
             margin-top: 20px;
         }
 
+        h2 {
+            text-align: center;
+            font-size: 2em;
+            color: #990000;
+            margin-top: 30px;
+        }
+
         form {
             display: flex;
             flex-direction: column;
@@ -66,7 +73,12 @@
             width: 100%;
         }
 
-        button {
+        .action-bar {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .action-bar button {
             background-color: #990000;
             color: white;
             padding: 12px 20px;
@@ -77,14 +89,56 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: background-color 0.3s;
             width: 200px;
-            margin-top: 10px;
         }
 
-        button:hover {
+        .action-bar button:hover {
             background-color: #cc0000;
         }
 
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse; /* Assure que les bordures des cellules se rejoignent */
+        }
 
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #990000; /* Bordure rouge pour correspondre à la couleur des boutons */
+        }
+
+        th {
+            background-color: #990000; /* Fond rouge des en-têtes de tableau */
+            color: white; /* Texte blanc pour contraste */
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .badge.bg-success {
+            background-color: #28a745;
+        }
+
+        .badge.bg-warning {
+            background-color: #ffc107;
+        }
+
+        .empty-message {
+            text-align: center;
+            font-style: italic;
+            color: #990000;
+        }
+
+        button.btn-danger {
+            background-color: #dc3545;
+        }
+
+        button.btn-danger:hover {
+            background-color: #c82333;
+        }
 
     </style>
 </head>
@@ -95,28 +149,26 @@
 
 <div class="container">
     <!-- Titre principal -->
-    <h1 style="color: #990000; text-align: center; font-size: 3em; margin-top: 20px;">Liste des Notifications</h1>
-
-
+    <h1>Liste des Notifications</h1>
 
     <!-- Notifications de type 1 -->
+    <h2>Réservations dépassées</h2>
 
-<h2 style="text-align: center; font-size: 2em; color: #990000;">Réservations dépassées</h2>
-
-<!-- Barre d'action -->
+    <!-- Barre d'action -->
     <div class="action-bar">
         <form method="post" action="{% url 'check_reservations' %}" style="display: inline;">
             {% csrf_token %}
-            <button type="submit" class="button">Vérifier les réservations dépassées</button>
+            <button type="submit">Vérifier les réservations dépassées</button>
         </form>
     </div>
+
     <table>
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Personne</th>
                 <th>Livre</th>
-                <th>Quantite</th>
+                <th>Quantité</th>
                 <th>Commentaire</th>
                 <th>Date de création</th>
                 <th>Statut</th>
@@ -154,19 +206,21 @@
             </tr>
             {% empty %}
             <tr class="empty-message">
-                <td colspan="9">Aucune notification de ce type.</td>
+                <td colspan="8">Aucune notification de ce type.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-<h2 style="text-align: center; font-size: 2em; color: #990000;">Commandes réservées</h2>
-<table>
+
+    <!-- Notifications de type 2 -->
+    <h2>Commandes réservées</h2>
+    <table>
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Personne</th>
                 <th>Livre</th>
-                <th>Quantite</th>
+                <th>Quantité</th>
                 <th>Commentaire</th>
                 <th>Date de création</th>
                 <th>Statut</th>
@@ -204,18 +258,20 @@
             </tr>
             {% empty %}
             <tr class="empty-message">
-                <td colspan="9">Aucune notification de ce type.</td>
+                <td colspan="8">Aucune notification de ce type.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
-    <h2 style="text-align: center; font-size: 2em; color: #990000;">Quantité inférieure au seuil</h2>
-<table>
+
+    <!-- Notifications de type 3 -->
+    <h2>Quantité inférieure au seuil</h2>
+    <table>
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Livre</th>
-                <th>Quantite</th>
+                <th>Quantité</th>
                 <th>Commentaire</th>
                 <th>Date de création</th>
                 <th>Statut</th>
@@ -252,7 +308,7 @@
             </tr>
             {% empty %}
             <tr class="empty-message">
-                <td colspan="9">Aucune notification de ce type.</td>
+                <td colspan="8">Aucune notification de ce type.</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -112,12 +112,8 @@
     <form method="post" class="card p-4 shadow-sm">
         {% csrf_token %}
         {{ form.as_p }}
-        <div class="d-flex justify-content-between mt-3">
-            <!-- Enregistrer Button -->
-            <button type="submit" class="btn" style="background-color: #990000; color: white;">Enregistrer</button>
-            <!-- Annuler Button -->
-            <button type="button" class="btn" onclick="window.location.href='{% url 'reservations_list' %}'" style="background-color: #990000; color: white;">Annuler</button>
-        </div>
+        <button type="submit" class="btn" style="background-color: #990000; color: white;">Enregistrer</button>
+        <button type="button" class="btn" onclick="window.location.href='{% url 'reservations_list' %}'" style="background-color: #990000; color: white;">Annuler</button>
     </form>
 </div>
 </body>

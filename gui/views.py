@@ -49,6 +49,9 @@ def logoutUser(request):
 def home(request):
     return render(request, 'gui/homepage.html')
 
+@login_required(login_url='login')
+def autres(request):
+    return render(request, 'gui/autres.html')
 
 #%%"""########################################################"""
 #Super classe définissant les permissions

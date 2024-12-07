@@ -33,13 +33,14 @@ from gui.views import (
     CommanderList,      CommanderCreate,    CommanderDelete,    CommanderUpdate,    CommanderResearch,    saisir_ID_commande,      terminer_commande,
     ReserverList,       ReserverCreate,     ReserverDelete,     ReserverUpdate,     ReserverResearch,     saisir_ID_reservation,   terminer_reservation,
     AchatList,          AchatCreate,        AchatDelete,        AchatUpdate,        AchatResearch,        saisir_ID_achat,
-    NotificationList,   check_reservations, mark_notification_done, delete_notification
+    NotificationList,   check_reservations, mark_notification_done, delete_notification, autres
 
 )
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='homepage'),
+    path('autres/', autres, name='autres'),
     path('login/', loginPage, name='login'),
     path('logout/', logoutUser, name='logout'),
 
