@@ -1,22 +1,5 @@
-"""
-URL configuration for projet_mdo project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path
-from gui.models import Editeur, Illustrateur, Commander
 from gui.views import (
     home, loginPage, logoutUser,
     RoleList,           RoleCreate,
@@ -24,11 +7,8 @@ from gui.views import (
     AdresseList,        create_adresse,     AdresseDelete,                          AdresseResearch,
     PersonneList,       personne_create,    PersonneDelete,     PersonneUpdate,     PersonneResearch,     PersonneSelectView,
     EditeurList,        EditeurCreate,      EditeurDelete,      EditeurUpdate,      EditeurResearch,      saisir_ID_editeur,
-    AuteurList,         AuteurCreate,       AuteurDelete,       AuteurUpdate,       AuteurResearch,       saisir_ID_auteur,
-    IllustrateurList,   IllustrateurCreate, IllustrateurDelete, IllustrateurUpdate, IllustrateurResearch, saisir_ID_illustrateur,
-    TraducteurList,     TraducteurCreate,   TraducteurDelete,   TraducteurUpdate,   TraducteurResearch,   saisir_ID_traducteur,
+    ContributeurList,   ContributeurCreate, ContributeurDelete, ContributeurUpdate, ContributeurResearch, saisir_ID_contributeur,
     LivreList,          create_livre,       LivreDelete,        LivreUpdate,        LivreResearch,        saisir_isbn,
-    EcrireList,         EcrireCreate,
     FournisseurList,    fournisseur_create, FournisseurDelete,  FournisseurUpdate,  FournisseurResearch,  SaisirIDFournisseurView,
     CommanderList,      CommanderCreate,    CommanderDelete,    CommanderUpdate,    CommanderResearch,    saisir_ID_commande,      terminer_commande,
     ReserverList,       ReserverCreate,     ReserverDelete,     ReserverUpdate,     ReserverResearch,     saisir_ID_reservation,   terminer_reservation,
@@ -73,12 +53,12 @@ urlpatterns = [
     path('editeurs/research/', EditeurResearch.as_view(), name='editeurs_research'),
 
 
-    path('auteurs/', AuteurList.as_view(), name='auteurs_list'),
-    path('auteurs/create/', AuteurCreate.as_view(), name='auteurs_create'),
-    path('auteurs/delete/',AuteurDelete.as_view(),name='auteurs_delete'),
-    path('auteurs/update/<int:auteur_id>/',AuteurUpdate.as_view(), name='auteurs_update'),
-    path('auteurs/research/', AuteurResearch.as_view(), name='auteurs_research'),
-    path('auteurs/saisir_auteur_ID/',saisir_ID_auteur, name='saisir_auteur_ID'),
+    path('contributeurs/', ContributeurList.as_view(), name='contributeurs_list'),
+    path('contributeurs/create/', ContributeurCreate.as_view(), name='contributeurs_create'),
+    path('contributeurs/delete/',ContributeurDelete.as_view(),name='contributeurs_delete'),
+    path('contributeurs/update/<int:pk>/',ContributeurUpdate.as_view(), name='contributeurs_update'),
+    path('contributeurs/research/', ContributeurResearch.as_view(), name='contributeurs_research'),
+    path('contributeurs/saisir_contributeur_ID/',saisir_ID_contributeur, name='saisir_contributeur_ID'),
 
 
     path('livres/', LivreList.as_view(), name='livres_list'),
@@ -87,26 +67,6 @@ urlpatterns = [
     path('livres/saisir_isbn/', saisir_isbn, name='saisir_isbn'),  # Page pour saisir l'ISBN
     path('livres/update/<str:isbn13>/', LivreUpdate.as_view(), name='livre_update'),  # Page pour modifier le livre
     path('livres/research/', LivreResearch.as_view(), name='livres_research'),
-
-
-    path('ecrits/', EcrireList.as_view(), name='ecrits_list'),
-    path('ecrits/create/', EcrireCreate.as_view(), name='ecrits_create'),
-
-
-    path('illustrateurs/', IllustrateurList.as_view(), name='illustrateurs_list'),
-    path('illustrateurs/create/', IllustrateurCreate.as_view(), name='illustrateurs_create'),
-    path('illustrateurs/delete/', IllustrateurDelete.as_view(), name='illustrateurs_delete'),
-    path('illustrateurs/update/<int:illustrateur_id>/', IllustrateurUpdate.as_view(), name='illustrateurs_update'),
-    path('illustrateurs/research/', IllustrateurResearch.as_view(), name='illustrateurs_research'),
-    path('illustrateurs/saisir_illustrateur_ID/', saisir_ID_illustrateur, name='saisir_illustrateur_ID'),
-
-
-    path('traducteurs/', TraducteurList.as_view(), name='traducteurs_list'),
-    path('traducteurs/create/', TraducteurCreate.as_view(), name='traducteurs_create'),
-    path('traducteurs/delete/', TraducteurDelete.as_view(), name='traducteurs_delete'),
-    path('traducteurs/update/<int:traducteur_id>/', TraducteurUpdate.as_view(), name='traducteurs_update'),
-    path('traducteurs/research/', TraducteurResearch.as_view(), name='traducteurs_research'),
-    path('traducteurs/saisir_traducteur_ID/', saisir_ID_traducteur, name='saisir_traducteur_ID'),
 
     path('achats/', AchatList.as_view(), name='achats_list'),
     path('achats/create/', AchatCreate.as_view(), name='achats_create'),

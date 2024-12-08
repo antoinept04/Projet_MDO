@@ -18,7 +18,6 @@ class Ville(models.Model):
 
     def __str__(self):
         return self.nom_ville
-
 class Adresse(models.Model):
     rue = models.CharField(max_length=255)
     n_rue = models.IntegerField()
@@ -29,7 +28,6 @@ class Adresse(models.Model):
 
     def __str__(self):
         return f"{self.rue}, {self.n_rue}, {self.ville.nom_ville}"
-
 class Role(models.Model):
     type = models.CharField(max_length=50)
 
@@ -38,7 +36,6 @@ class Role(models.Model):
 
     def __str__(self):
         return self.type
-
 class PersonneManager(BaseUserManager):
     def get_by_natural_key(self, email):
         return self.get(email=email)
@@ -59,7 +56,6 @@ class PersonneManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
 
         return self.create_user(email, password, **extra_fields)
-
 class Personne(AbstractBaseUser, PermissionsMixin):
     nom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100)
@@ -138,8 +134,6 @@ class Personne(AbstractBaseUser, PermissionsMixin):
             remise = prix_total * Decimal('0.05')  # 5% de remise
             self.solde += remise
             self.save()
-
-
 class Fournisseur(models.Model):
     nom_fournisseur = models.CharField(max_length=100)
     adresses = models.ManyToManyField(
@@ -153,7 +147,15 @@ class Fournisseur(models.Model):
 
     def __str__(self):
         return self.nom_fournisseur
+class FournisseurAdresse(models.Model):
+    fournisseur = models.ForeignKey(Fournisseur, on_delete=models.CASCADE)
+    adresse = models.ForeignKey(Adresse, on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = ('fournisseur', 'adresse')
+
+    def __str__(self):
+        return f"{self.fournisseur.nom_fournisseur} - {self.adresse}"
 class Editeur(models.Model):
     nom = models.CharField(max_length=100)
 
@@ -163,6 +165,20 @@ class Editeur(models.Model):
     def __str__(self):
         return self.nom
 
+class Contributeur(models.Model):
+    TYPE_CHOICES = [
+        ('Auteur', 'Auteur'),
+        ('Traducteur', 'Traducteur'),
+        ('Illustrateur', 'Illustrateur'),
+    ]
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    nom = models.CharField(max_length=100)
+    prenom = models.CharField(max_length=100)
+    date_naissance = models.DateField(blank=True, null=True)
+    class Meta:
+        db_table = 'Contributeur'
+    def __str__(self):
+        return self.nom
 class Livre(models.Model):
     isbn13 = models.CharField(max_length=13, primary_key=True)
     titre = models.CharField(max_length=255)
@@ -178,10 +194,10 @@ class Livre(models.Model):
     synopsis = models.TextField(blank=True,null=True)
     prix = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     url_reference = models.URLField(blank=True, null=True)
-    quantite_disponible = models.IntegerField()
-    quantite_totale = models.IntegerField()
-    quantite_minimale = models.IntegerField()
+    quantite_disponible = models.PositiveIntegerField()
+    quantite_minimale = models.PositiveIntegerField(default=1)
     editeur = models.ForeignKey(Editeur, on_delete=models.CASCADE)
+    contributeurs = models.ManyToManyField(Contributeur)
 
     class Meta:
         db_table = 'Livre'
@@ -212,65 +228,6 @@ class Livre(models.Model):
         # Appelle la méthode save de la classe parente pour effectuer la sauvegarde réelle
         super().save(*args, **kwargs)
 
-class Auteur(models.Model):
-    nom = models.CharField(max_length=100)
-    prenom = models.CharField(max_length=100)
-    date_naissance = models.DateField(blank=True,null=True)
-
-    class Meta:
-        db_table = 'Auteur'
-
-    def __str__(self):
-        return f"{self.nom} {self.prenom}"
-class Ecrire(models.Model):
-    livre = models.ForeignKey(Livre, on_delete=models.CASCADE, related_name="ecrire_set")
-    auteur = models.ForeignKey(Auteur, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'Ecrire'
-
-    def __str__(self):
-        return f"{self.auteur.nom} a écrit {self.livre.titre}"
-
-class Illustrateur(models.Model):
-    nom = models.CharField(max_length=100)
-    prenom = models.CharField(max_length=100)
-    date_naissance = models.DateField(blank=True,null=True)
-
-    class Meta:
-        db_table = 'Illustrateur'
-
-    def __str__(self):
-        return f"{self.nom} {self.prenom}"
-class Illustrer(models.Model):
-    livre = models.ForeignKey(Livre, on_delete=models.CASCADE, related_name="illustrer_set")
-    illustrateur = models.ForeignKey(Illustrateur, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'Illustrer'
-
-    def __str__(self):
-        return f"{self.illustrateur.nom} a écrit {self.livre.titre}"
-
-class Traducteur(models.Model):
-    nom = models.CharField(max_length=100)
-    prenom = models.CharField(max_length=100)
-    date_naissance = models.DateField(blank=True,null=True)
-
-    class Meta:
-        db_table = 'Traducteur'
-
-    def __str__(self):
-        return f"{self.nom} {self.prenom}"
-class Traduire(models.Model):
-    livre = models.ForeignKey(Livre, on_delete=models.CASCADE, related_name="traduire_set")
-    traducteur = models.ForeignKey(Traducteur, on_delete=models.CASCADE)
-
-    class Meta:
-        db_table = 'Traduire'
-
-    def __str__(self):
-        return f"{self.traducteur.nom} a écrit {self.livre.titre}"
 
 class Achat(models.Model):
     personne = models.ForeignKey(Personne, on_delete=models.CASCADE)
@@ -293,13 +250,10 @@ class Achat(models.Model):
         if is_new:
             self.livre.quantite_disponible -= self.quantite
             self.livre.save()
-
 @receiver(post_save, sender=Achat)
 def verifier_fidelite(sender, instance, created, **kwargs):
     if created:  # Vérifie si un achat vient d'être créé
         instance.personne.mise_a_jour_solde()
-
-
 class Commander(models.Model):
     STATUT_CHOICES = [
         ('en cours', 'En cours'),
@@ -319,7 +273,6 @@ class Commander(models.Model):
 
     def __str__(self):
         return f"Commande de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
-
 class Reserver(models.Model):
     STATUT_CHOICES = [
         ('en cours', 'En cours'),
@@ -337,7 +290,6 @@ class Reserver(models.Model):
 
     def __str__(self):
         return f"Réservation de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
-
 class Notifier(models.Model):
     TYPE_CHOICES = [
         ('commande', 'Commande'),
@@ -357,13 +309,3 @@ class Notifier(models.Model):
 
     def __str__(self):
         return f"Notification pour {self.livre.titre} ({self.type})"
-
-class FournisseurAdresse(models.Model):
-    fournisseur = models.ForeignKey(Fournisseur, on_delete=models.CASCADE)
-    adresse = models.ForeignKey(Adresse, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ('fournisseur', 'adresse')
-
-    def __str__(self):
-        return f"{self.fournisseur.nom_fournisseur} - {self.adresse}"

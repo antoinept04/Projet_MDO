@@ -10,84 +10,61 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.views.generic import ListView, CreateView, DeleteView, UpdateView, View, TemplateView
-from gui.models import Ville, Adresse, Role, Personne, Fournisseur, Editeur, Auteur, Livre, Ecrire, Commander, Notifier, Illustrer, Traduire, \
-    Achat, Reserver, Illustrateur, Traducteur, FournisseurAdresse
+from gui.models import Role, Ville, Adresse, Personne, Fournisseur, FournisseurAdresse, Editeur, Contributeur, Livre, \
+                       Achat, Commander, Reserver, Notifier
 from .decorators import unauthenticated_user_required, staff_required
-from .forms import (PersonneForm, AdresseForm, LivreForm, ISBNForm, AuteurForm, VilleForm, EditeurForm, IDEditeurForm, EmailInputForm, \
-    IDAuteurForm, IllustrateurForm, IDIllustrateurForm, TraducteurForm, IDTraducteurForm, IDReservationForm, IDAchatForm, CommanderForm, IDCommandeForm, ReserverForm, AchatForm, FournisseurForm, IDFournisseurForm,
-                    AdresseFormSet, FournisseurAdresseFormSet)
+from .forms import (VilleForm, AdresseForm, AdresseFormSet, PersonneForm, EmailInputForm, FournisseurForm, IDFournisseurForm, FournisseurAdresseFormSet, \
+                    EditeurForm, IDEditeurForm, ContributeurForm, IDContributeurForm, LivreForm, ISBNForm, AchatForm, IDAchatForm, ReserverForm, IDReservationForm, CommanderForm, IDCommandeForm)
 from django.db import transaction
 
 
-#%%"""------------------------------LOGIN/LOGOUT------------------------------"""
-
+#%%------------------------------LOGIN/LOGOUT----------------------------------------
 @unauthenticated_user_required
 def loginPage(request):
-
     if request.method == 'POST':
-
         user = authenticate(request, email=request.POST.get('email'), password=request.POST.get('password'))
-
         if user is not None:
             login(request, user)
             return redirect('homepage')
         else:
             messages.info(request, "L'email ou le mot de passe est incorrect")
-
     context = {}
     return render(request, 'gui/login.html', context)
-
 @login_required(login_url='login')
 def logoutUser(request):
     logout(request)
-
     return redirect('login')
-
-
-#%%"""------------------------------HOMEPAGE------------------------------"""
+#%%------------------------------HOMEPAGE--------------------------------------------
 @login_required(login_url='login')
 def home(request):
     return render(request, 'gui/homepage.html')
-
 @login_required(login_url='login')
 def autres(request):
     return render(request, 'gui/autres.html')
-
-#%%"""########################################################"""
-#Super classe définissant les permissions
+#%%------------------------------PERMISSIONS-----------------------------------------
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     login_url = 'login'  # URL de redirection si l'utilisateur n'est pas connecté
-
     def test_func(self):
         # Vérifie que l'utilisateur a le statut is_staff
         return self.request.user.is_staff
-
-
-#%%------------------------------GERER-LES-ROLES------------------------------
-
+#%%------------------------------GERER-LES-ROLES-------------------------------------
 class RoleList(StaffRequiredMixin,ListView):
     model = Role
     template_name = 'gui/lister_roles.html'
-
 class RoleCreate(StaffRequiredMixin,CreateView):
     model = Role
     fields = ['type']
     template_name = 'gui/ajouter_role.html'
     success_url = reverse_lazy('roles_list')
-
-
-#%%------------------------------GERER-LES-VILLES------------------------------
-
+#%%------------------------------GERER-LES-VILLES------------------------------------
 class VilleList(StaffRequiredMixin,ListView):
     model = Ville
     template_name = 'gui/lister_villes.html'
-
 class VilleCreate(StaffRequiredMixin,CreateView):
     model = Ville
     fields = ['nom', 'code_postal', 'pays']
     template_name = 'gui/ajouter_ville.html'
     success_url = reverse_lazy('villes_list')
-
 def ville_create(request):
     if request.method == 'POST':
 
@@ -117,10 +94,7 @@ def ville_create(request):
     return render(request, 'gui/ajouter_ville.html', {
         'form_ville': form_ville
     })
-
-
 #%%------------------------------GERER-LES-ADRESSES----------------------------------
-
 class AdresseList(StaffRequiredMixin,ListView):
     model = Adresse
     template_name = 'gui/lister_adresses.html'
@@ -149,8 +123,6 @@ class AdresseList(StaffRequiredMixin,ListView):
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
         return queryset
-
-
 @login_required(login_url='login')
 def create_adresse(request):
     if request.method == 'POST':
@@ -195,7 +167,6 @@ def create_adresse(request):
     return render(request, 'gui/ajouter_adresse.html', {
         'adresse_form': adresse_form,
     })
-
 class AdresseResearch(StaffRequiredMixin,ListView):
     model = Adresse
     template_name = 'gui/lister_adresses.html'
@@ -221,7 +192,6 @@ class AdresseResearch(StaffRequiredMixin,ListView):
 
         # Si aucun terme de recherche, retourner tous les livres
         return Adresse.objects.all()
-
 class AdresseDelete(StaffRequiredMixin, View):
     template_name = 'gui/supprimer_adresse.html'
 
@@ -242,11 +212,7 @@ class AdresseDelete(StaffRequiredMixin, View):
             return redirect(reverse_lazy('adresses_list'))
         # Si l'email n'est pas fourni ou invalide, afficher une erreur
         return render(request, self.template_name, {'error': 'Adresse invalide.'})
-
-
-
 #%%------------------------------GERER-LES-PERSONNES---------------------------------
-
 class PersonneList(StaffRequiredMixin,ListView):
     model = Personne
     template_name = 'gui/lister_personnes.html'
@@ -279,7 +245,6 @@ class PersonneList(StaffRequiredMixin,ListView):
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
         return queryset
-
 @staff_required
 def personne_create(request):
     if request.method == 'POST':
@@ -393,9 +358,6 @@ def personne_create(request):
         'form_adresse': form_adresse,
         'form_ville': form_ville
     })
-
-
-
 class PersonneResearch(StaffRequiredMixin,ListView):
     model = Personne
     template_name = 'gui/lister_personnes.html'
@@ -422,7 +384,6 @@ class PersonneResearch(StaffRequiredMixin,ListView):
 
         # Si aucun terme de recherche, retourner tous les livres
         return Personne.objects.all()
-
 class PersonneDelete(StaffRequiredMixin, View):
     template_name = 'gui/supprimer_personne.html'
 
@@ -452,10 +413,6 @@ class PersonneDelete(StaffRequiredMixin, View):
 
         # Si l'email n'est pas fourni ou invalide, afficher une erreur
         return render(request, self.template_name, {'error': 'Email invalide.'})
-
-
-
-
 class PersonneSelectView(StaffRequiredMixin, View):
     template_name = 'gui/select_personne.html'
 
@@ -483,7 +440,6 @@ class PersonneSelectView(StaffRequiredMixin, View):
         else:
             messages.error(request, 'Veuillez saisir un email valide.')
             return render(request, self.template_name, {'form': form})
-
 class PersonneUpdate(StaffRequiredMixin, View):
     template_name = 'gui/modifier_personnes.html'
 
@@ -564,13 +520,11 @@ class PersonneUpdate(StaffRequiredMixin, View):
             'ville_form': ville_form,
             'personne': personne
         })
-
 #%%------------------------------GERER-LES-FOURNISSEURS------------------------------
 class FournisseurList(StaffRequiredMixin, ListView):
     model = Fournisseur
     template_name = 'gui/lister_fournisseurs.html'
     context_object_name = 'fournisseurs'
-
     def get_queryset(self):
         sort_by = self.request.GET.get('sort_by', 'nom_fournisseur')
         order = self.request.GET.get('order', 'asc')
@@ -597,16 +551,6 @@ class FournisseurList(StaffRequiredMixin, ListView):
             queryset = queryset.order_by('nom_fournisseur')
 
         return queryset.prefetch_related('adresses', 'adresses__ville')
-
-
-# views.py
-
-# views.py
-
-# gui/views.py
-
-# gui/views.py
-
 def fournisseur_create(request):
     if request.method == 'POST':
         form_fournisseur = FournisseurForm(request.POST)
@@ -631,9 +575,6 @@ def fournisseur_create(request):
         'form_fournisseur': form_fournisseur,
         'formset_adresse': formset_adresse
     })
-
-
-
 class FournisseurDelete(DeleteView):
     model = Fournisseur
     template_name = 'gui/supprimer_fournisseur.html'
@@ -646,10 +587,6 @@ class FournisseurDelete(DeleteView):
     # De même pour la méthode post(), si nécessaire
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
-
-
-
-
 class FournisseurUpdate(StaffRequiredMixin, UpdateView):
     model = Fournisseur
     form_class = FournisseurForm
@@ -674,7 +611,6 @@ class FournisseurUpdate(StaffRequiredMixin, UpdateView):
             return redirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(form=form))
-
 class FournisseurResearch(StaffRequiredMixin, ListView):
     model = Fournisseur
     template_name = 'gui/lister_fournisseurs.html'
@@ -697,9 +633,6 @@ class FournisseurResearch(StaffRequiredMixin, ListView):
             return Fournisseur.objects.filter(query).distinct().prefetch_related('adresses')
 
         return Fournisseur.objects.all().prefetch_related('adresses')
-
-
-
 class SaisirIDFournisseurView(StaffRequiredMixin, View):
     template_name = 'gui/saisir_fournisseur_ID.html'
 
@@ -717,12 +650,7 @@ class SaisirIDFournisseurView(StaffRequiredMixin, View):
             except Fournisseur.DoesNotExist:
                 return render(request, self.template_name, {'form': form, 'error': 'Fournisseur non trouvé.'})
         return render(request, self.template_name, {'form': form})
-
-
-
 #%%------------------------------GERER-LES-EDITEURS----------------------------------
-
-#%%
 class EditeurList(ListView):
     model = Editeur
     template_name = 'gui/lister_editeurs.html'
@@ -749,7 +677,7 @@ class EditeurList(ListView):
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
         return queryset
-#%%
+
 class EditeurCreate(StaffRequiredMixin,CreateView):
     model = Editeur
     fields = ['nom']
@@ -822,6 +750,117 @@ def saisir_ID_editeur(request):
         form = IDEditeurForm()
     return render(request, 'gui/saisir_editeur_ID.html', {'form': form})
 
+#%%------------------------------GERER-LES-CONTRIBUTEURS-----------------------------
+class ContributeurList(StaffRequiredMixin,ListView):
+    model = Contributeur
+    template_name = 'gui/lister_contributeurs.html'
+
+    def get_queryset(self):
+        # Récupérer les paramètres GET
+        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : tri par 'nom'
+        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+
+        # Définir le préfixe pour la direction du tri
+        sort_prefix = '' if order == 'asc' else '-'
+
+        # Options de tri supportées
+        sorting_options = {
+            'id':'id',
+            'nom': 'nom',
+            'prenom': 'prenom',
+        }
+
+        # Récupérer le queryset initial
+        queryset = super().get_queryset()
+
+        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
+        if sort_by in sorting_options:
+            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
+
+        return queryset
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        auteurs = Contributeur.objects.filter(type='Auteur')
+        traducteurs = Contributeur.objects.filter(type='Traducteur')
+        illustrateurs = Contributeur.objects.filter(type='Illustrateur')
+        sort_by = self.request.GET.get('sort_by', 'id')
+        order = self.request.GET.get('order', 'asc')
+        sort_prefix = '' if order == 'asc' else '-'
+        auteurs = auteurs.order_by(f"{sort_prefix}{sort_by}")
+        traducteurs = traducteurs.order_by(f"{sort_prefix}{sort_by}")
+        illustrateurs = illustrateurs.order_by(f"{sort_prefix}{sort_by}")
+        context['auteurs'] = auteurs
+        context['traducteurs'] = traducteurs
+        context['illustrateurs'] = illustrateurs
+        return context
+class ContributeurCreate(StaffRequiredMixin,CreateView):
+    model = Contributeur
+    form_class = ContributeurForm
+    template_name = 'gui/ajouter_contributeur.html'
+    success_url = reverse_lazy('contributeurs_list')
+class ContributeurDelete(StaffRequiredMixin,View):
+    template_name = 'gui/supprimer_contributeur.html'
+
+    def get(self, request):
+        return render(request, self.template_name)
+
+    def post(self, request):
+        contributeur_id = request.POST.get('contributeur_id')
+        if contributeur_id:
+            contributeur = get_object_or_404(Contributeur, pk=contributeur_id)
+            contributeur.delete()
+            return redirect(reverse_lazy('contributeurs_list'))
+        return render(request, self.template_name, {'error': "ID du contributeur invalide."})
+class ContributeurUpdate(StaffRequiredMixin, UpdateView):
+    model = Contributeur
+    form_class = ContributeurForm
+    template_name = 'gui/modifier_contributeur.html'
+    pk_url_kwarg = 'pk'  # Par défaut, donc vous pouvez supprimer cette ligne
+
+    def form_valid(self, form):
+        form.save()
+        return redirect('contributeurs_list')
+
+    def form_invalid(self, form):
+        return self.render_to_response(self.get_context_data(form=form))
+class ContributeurResearch(StaffRequiredMixin,ListView):
+    model = Contributeur
+    template_name = 'gui/lister_contributeurs.html'
+
+    def get_queryset(self):
+        search_query = self.request.GET.get('search', '')
+
+        if search_query:
+            # Diviser la chaîne de recherche en mots-clés
+            keywords = search_query.split()
+            query = Q()
+
+            for keyword in keywords:
+                # Ajouter chaque mot aux différents champs de recherche
+                query |= Q(nom__icontains=keyword) | \
+                         Q(prenom__icontains=keyword)|\
+                        Q(id__icontains=keyword)
+
+            # Retourner les livres correspondant aux critères
+            return Contributeur.objects.filter(query).distinct()
+
+        # Si aucun terme de recherche, retourner tous les livres
+        return Contributeur.objects.all()
+@login_required(login_url='login')
+def saisir_ID_contributeur(request):
+    if request.method == 'POST':
+        form = IDContributeurForm(request.POST)
+        if form.is_valid():
+            contributeur_id = form.cleaned_data['contributeur_id']
+
+            if Contributeur.objects.filter(id=contributeur_id).exists():
+                # Utiliser 'pk' pour correspondre avec la configuration de l'URL
+                return redirect(reverse('contributeurs_update', kwargs={'pk': contributeur_id}))
+            else:
+                return render(request, 'gui/saisir_contributeur_ID.html', {'form': form, 'error': 'Contributeur non trouvé.'})
+    else:
+        form = IDContributeurForm()
+    return render(request, 'gui/saisir_contributeur_ID.html', {'form': form})
 
 #%%------------------------------GERER-LES-LIVRES------------------------------------
 class LivreList(StaffRequiredMixin,ListView):
@@ -1007,337 +1046,6 @@ def saisir_isbn(request):
     else:
         form = ISBNForm()
     return render(request, 'gui/saisir_isbn.html', {'form': form})
-
-#%%------------------------------GERER-LES-AUTEURS-----------------------------------
-
-class AuteurList(StaffRequiredMixin,ListView):
-    model = Auteur
-    template_name = 'gui/lister_auteurs.html'
-
-    def get_queryset(self):
-        # Récupérer les paramètres GET
-        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : tri par 'nom'
-        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
-
-        # Définir le préfixe pour la direction du tri
-        sort_prefix = '' if order == 'asc' else '-'
-
-        # Options de tri supportées
-        sorting_options = {
-            'id':'id',
-            'nom': 'nom',
-            'prenom': 'prenom',
-        }
-
-        # Récupérer le queryset initial
-        queryset = super().get_queryset()
-
-        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
-        if sort_by in sorting_options:
-            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
-
-        return queryset
-
-class AuteurCreate(StaffRequiredMixin,CreateView):
-    model = Auteur
-    form_class = AuteurForm
-    template_name = 'gui/ajouter_auteur.html'
-    success_url = reverse_lazy('auteurs_list')
-
-class AuteurDelete(StaffRequiredMixin,View):
-    template_name = 'gui/supprimer_auteur.html'
-
-    def get(self, request):
-        # Afficher le formulaire où l'utilisateur entre l'ID du livre
-        return render(request, self.template_name)
-
-    def post(self, request):
-        # Récupérer l'ID du livre soumis dans le formulaire
-        auteur_id = request.POST.get('auteur_id')
-        if auteur_id:
-            # Obtenir l'objet Livre avec l'ID fourni
-            auteur = get_object_or_404(Auteur, pk=auteur_id)
-            # Supprimer le livre
-            auteur.delete()
-            # Rediriger vers la liste des livres après la suppression
-            return redirect(reverse_lazy('auteurs_list'))
-        return render(request, self.template_name, {'error': "ID de l'auteur invalide."})
-
-class AuteurUpdate(StaffRequiredMixin,View):
-    template_name = 'gui/modifier_auteur.html'
-
-    def get(self, request, auteur_id):
-        auteur = get_object_or_404(Auteur, id=auteur_id)
-        form = AuteurForm(instance=auteur)
-        return render(request, self.template_name, {'form': form, 'auteur': auteur})
-
-    def post(self, request, auteur_id):
-        auteur = get_object_or_404(Auteur, id=auteur_id)
-        form = AuteurForm(request.POST, instance=auteur)
-
-        if form.is_valid():
-            form.save()
-            return redirect('auteurs_list')  # Rediriger vers la liste des livres après modification
-
-        return render(request, self.template_name, {'form': form, 'auteur': auteur})
-
-class AuteurResearch(StaffRequiredMixin,ListView):
-    model = Auteur
-    template_name = 'gui/lister_auteurs.html'
-
-    def get_queryset(self):
-        search_query = self.request.GET.get('search', '')
-
-        if search_query:
-            # Diviser la chaîne de recherche en mots-clés
-            keywords = search_query.split()
-            query = Q()
-
-            for keyword in keywords:
-                # Ajouter chaque mot aux différents champs de recherche
-                query |= Q(nom__icontains=keyword) | \
-                         Q(prenom__icontains=keyword)|\
-                        Q(id__icontains=keyword)
-
-            # Retourner les livres correspondant aux critères
-            return Auteur.objects.filter(query).distinct()
-
-        # Si aucun terme de recherche, retourner tous les livres
-        return Auteur.objects.all()
-
-@login_required(login_url='login')
-def saisir_ID_auteur(request):
-    if request.method == 'POST':
-        form = IDAuteurForm(request.POST)
-        if form.is_valid():
-            auteur_id = form.cleaned_data['auteur_id']
-
-            if Auteur.objects.filter(id=auteur_id).exists():
-                return redirect(reverse('auteurs_update', kwargs={'auteur_id': auteur_id}))
-            else:
-                return render(request, 'gui/saisir_auteur_ID.html', {'form': form, 'error': 'Auteur non trouvé.'})
-    else:
-        form = IDAuteurForm()
-    return render(request, 'gui/saisir_auteur_ID.html', {'form': form})
-
-
-#%%------------------------------LIEN-LIVRE/AUTEUR-----------------------------------
-class EcrireList(StaffRequiredMixin,ListView):
-    model = Ecrire
-    template_name = 'gui/lister_ecrits.html'
-class EcrireCreate(StaffRequiredMixin,CreateView):
-    model = Ecrire
-    fields = ['livre', 'auteur']
-    template_name = 'gui/ajouter_ecrire.html'
-    success_url = reverse_lazy('ecrits_list')
-
-#%%------------------------------GERER-LES-ILLUSTRATEURS-----------------------------
-class IllustrateurList(StaffRequiredMixin,ListView):
-    model = Illustrateur
-    template_name = 'gui/lister_illustrateurs.html'
-
-    def get_queryset(self):
-        # Récupérer les paramètres GET
-        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : tri par 'nom'
-        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
-
-        # Définir le préfixe pour la direction du tri
-        sort_prefix = '' if order == 'asc' else '-'
-
-        # Options de tri supportées
-        sorting_options = {
-            'id':'id',
-            'nom': 'nom',
-            'prenom': 'prenom',
-        }
-
-        # Récupérer le queryset initial
-        queryset = super().get_queryset()
-
-        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
-        if sort_by in sorting_options:
-            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
-
-        return queryset
-class IllustrateurCreate(StaffRequiredMixin, CreateView):
-    model = Illustrateur
-    form_class = IllustrateurForm
-    template_name = 'gui/ajouter_illustrateur.html'
-    success_url = reverse_lazy('illustrateurs_list')
-class IllustrateurDelete(StaffRequiredMixin,View):
-    template_name = 'gui/supprimer_illustrateur.html'
-
-    def get(self, request):
-        # Afficher le formulaire où l'utilisateur entre l'ID du livre
-        return render(request, self.template_name)
-
-    def post(self, request):
-        # Récupérer l'ID du livre soumis dans le formulaire
-        illustrateur_id = request.POST.get('illustrateur_id')
-        if illustrateur_id:
-            # Obtenir l'objet Livre avec l'ID fourni
-            illustrateur = get_object_or_404(Illustrateur, pk=illustrateur_id)
-            # Supprimer le livre
-            illustrateur.delete()
-            # Rediriger vers la liste des livres après la suppression
-            return redirect(reverse_lazy('illustrateurs_list'))
-        return render(request, self.template_name, {'error': "ID de l'illustrateur invalide."})
-class IllustrateurUpdate(StaffRequiredMixin,View):
-    template_name = 'gui/modifier_illustrateur.html'
-
-    def get(self, request, illustrateur_id):
-        illustrateur = get_object_or_404(Illustrateur, id=illustrateur_id)
-        form = IllustrateurForm(instance=illustrateur)
-        return render(request, self.template_name, {'form': form, 'illustrateur': illustrateur})
-
-    def post(self, request, illustrateur_id):
-        illustrateur = get_object_or_404(Illustrateur, id=illustrateur_id)
-        form = IllustrateurForm(request.POST, instance=illustrateur)
-
-        if form.is_valid():
-            form.save()
-            return redirect('illustrateurs_list')  # Rediriger vers la liste des livres après modification
-
-        return render(request, self.template_name, {'form': form, 'illustrateur': illustrateur})
-class IllustrateurResearch(StaffRequiredMixin,ListView):
-    model = Illustrateur
-    template_name = 'gui/lister_illustrateurs.html'
-
-    def get_queryset(self):
-        search_query = self.request.GET.get('search', '')
-
-        if search_query:
-            # Diviser la chaîne de recherche en mots-clés
-            keywords = search_query.split()
-            query = Q()
-
-            for keyword in keywords:
-                # Ajouter chaque mot aux différents champs de recherche
-                query |= Q(nom__icontains=keyword) | \
-                         Q(prenom__icontains=keyword)|\
-                        Q(id__icontains=keyword)
-
-            # Retourner les livres correspondant aux critères
-            return Illustrateur.objects.filter(query).distinct()
-
-        # Si aucun terme de recherche, retourner tous les livres
-        return Illustrateur.objects.all()
-@login_required(login_url='login')
-def saisir_ID_illustrateur(request):
-    if request.method == 'POST':
-        form = IDIllustrateurForm(request.POST)
-        if form.is_valid():
-            illustrateur_id = form.cleaned_data['illustrateur_id']
-
-            if Illustrateur.objects.filter(id=illustrateur_id).exists():
-                return redirect(reverse('illustrateurs_update', kwargs={'illustrateur_id': illustrateur_id}))
-            else:
-                return render(request, 'gui/saisir_illustrateur_ID.html', {'form': form, 'error': 'Illustrateur non trouvé.'})
-    else:
-        form = IDIllustrateurForm()
-    return render(request, 'gui/saisir_illustrateur_ID.html', {'form': form})
-
-#%%------------------------------GERER-LES-TRADUCTEURS-------------------------------
-class TraducteurList(StaffRequiredMixin, ListView):
-    model = Traducteur
-    template_name = 'gui/lister_traducteurs.html'
-    def get_queryset(self):
-        # Récupérer les paramètres GET
-        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : tri par 'nom'
-        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
-        # Définir le préfixe pour la direction du tri
-        sort_prefix = '' if order == 'asc' else '-'
-        # Options de tri supportées
-        sorting_options = {
-            'id':'id',
-            'nom': 'nom',
-            'prenom': 'prenom',
-        }
-        # Récupérer le queryset initial
-        queryset = super().get_queryset()
-        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
-        if sort_by in sorting_options:
-            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
-
-        return queryset
-class TraducteurCreate(StaffRequiredMixin, CreateView):
-    model = Traducteur
-    form_class = TraducteurForm
-    template_name = 'gui/ajouter_traducteur.html'
-    success_url = reverse_lazy('traducteurs_list')
-class TraducteurDelete(StaffRequiredMixin, View):
-    template_name = 'gui/supprimer_traducteur.html'
-
-    def get(self, request):
-        # Afficher le formulaire où l'utilisateur entre l'ID du traducteur
-        return render(request, self.template_name)
-
-    def post(self, request):
-        # Récupérer l'ID du traducteur soumis dans le formulaire
-        traducteur_id = request.POST.get('traducteur_id')
-        if traducteur_id:
-            # Obtenir l'objet Traducteur avec l'ID fourni
-            traducteur = get_object_or_404(Traducteur, pk=traducteur_id)
-            # Supprimer le traducteur
-            traducteur.delete()
-            # Rediriger vers la liste des traducteurs après la suppression
-            return redirect(reverse_lazy('traducteurs_list'))
-        return render(request, self.template_name, {'error': "ID du traducteur invalide."})
-class TraducteurUpdate(StaffRequiredMixin, View):
-    template_name = 'gui/modifier_traducteur.html'
-
-    def get(self, request, traducteur_id):
-        traducteur = get_object_or_404(Traducteur, id=traducteur_id)
-        form = TraducteurForm(instance=traducteur)
-        return render(request, self.template_name, {'form': form, 'traducteur': traducteur})
-
-    def post(self, request, traducteur_id):
-        traducteur = get_object_or_404(Traducteur, id=traducteur_id)
-        form = TraducteurForm(request.POST, instance=traducteur)
-
-        if form.is_valid():
-            form.save()
-            return redirect('traducteurs_list')  # Rediriger vers la liste des traducteurs après modification
-
-        return render(request, self.template_name, {'form': form, 'traducteur': traducteur})
-class TraducteurResearch(StaffRequiredMixin, ListView):
-    model = Traducteur
-    template_name = 'gui/lister_traducteurs.html'
-
-    def get_queryset(self):
-        search_query = self.request.GET.get('search', '')
-
-        if search_query:
-            # Diviser la chaîne de recherche en mots-clés
-            keywords = search_query.split()
-            query = Q()
-
-            for keyword in keywords:
-                # Ajouter chaque mot aux différents champs de recherche
-                query |= Q(nom__icontains=keyword) | \
-                         Q(prenom__icontains=keyword) | \
-                         Q(id__icontains=keyword)
-
-            # Retourner les traducteurs correspondant aux critères
-            return Traducteur.objects.filter(query).distinct()
-
-        # Si aucun terme de recherche, retourner tous les traducteurs
-        return Traducteur.objects.all()
-@login_required(login_url='login')
-def saisir_ID_traducteur(request):
-    if request.method == 'POST':
-        form = IDTraducteurForm(request.POST)
-        if form.is_valid():
-            traducteur_id = form.cleaned_data['traducteur_id']
-
-            if Traducteur.objects.filter(id=traducteur_id).exists():
-                return redirect(reverse('traducteurs_update', kwargs={'traducteur_id': traducteur_id}))
-            else:
-                return render(request, 'gui/saisir_traducteur_ID.html', {'form': form, 'error': 'Traducteur non trouvé.'})
-    else:
-        form = IDTraducteurForm()
-    return render(request, 'gui/saisir_traducteur_ID.html', {'form': form})
-
 #%%------------------------------GERER-LES-ACHATS------------------------------------
 class AchatList(StaffRequiredMixin,ListView):
     model = Achat
