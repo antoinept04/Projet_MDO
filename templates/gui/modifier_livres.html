@@ -103,7 +103,45 @@
             <div class="form-group">
                 {{ form.as_p }}
             </div>
+<h2>Nouveaux contributeurs</h2>
+        <!-- Conteneur des auteurs -->
+        <div id="auteurs-container" class="form-group">
+            <h3>Auteurs</h3>
+            <div class="auteur-container">
+                <input type="text" name="nom_auteur" placeholder="Nom de l'auteur" />
+                <input type="text" name="prenom_auteur" placeholder="Prénom de l'auteur" />
+                <input type="date" name="date_naissance_auteur" placeholder="Date de naissance" />
+            </div>
+        </div>
+        <button type="button" id="add-author-btn">Ajouter un auteur +</button>
 
+        <!-- Conteneur des traducteurs -->
+        <div id="traducteurs-container" class="form-group">
+            <h3>Traducteurs</h3>
+            <div class="traducteur-container">
+                <input type="text" name="nom_traducteur" placeholder="Nom du traducteur" />
+                <input type="text" name="prenom_traducteur" placeholder="Prénom du traducteur" />
+                <input type="date" name="date_naissance_traducteur" placeholder="Date de naissance" />
+            </div>
+        </div>
+        <button type="button" id="add-traducteur-btn">Ajouter un traducteur +</button>
+
+        <!-- Conteneur des illustrateurs -->
+        <div id="illustrateurs-container" class="form-group">
+            <h3>Illustrateurs</h3>
+            <div class="illustrateur-container">
+                <input type="text" name="nom_illustrateur" placeholder="Nom de l'illustrateur" />
+                <input type="text" name="prenom_illustrateur" placeholder="Prénom de l'illustrateur" />
+                <input type="date" name="date_naissance_illustrateur" placeholder="Date de naissance" />
+            </div>
+        </div>
+        <button type="button" id="add-illustrateur-btn">Ajouter un illustrateur +</button>
+
+        <br>
+        
+    
+
+    
             <button type="submit">Modifier</button>
         </form>
 
@@ -111,6 +149,36 @@
             <p class="error-message">Il y a des erreurs dans le formulaire. Veuillez les corriger.</p>
         {% endif %}
     </div>
+<script>
+        // Ajouter un nouvel auteur
+        document.getElementById('add-author-btn').addEventListener('click', function() {
+            var newAuteurField = document.createElement('div');
+            newAuteurField.classList.add('auteur-container');
+            newAuteurField.innerHTML = '<input type="text" name="nom_auteur" placeholder="Nom de l\'auteur" />' +
+                                      '<input type="text" name="prenom_auteur" placeholder="Prénom de l\'auteur" />' +
+                                      '<input type="date" name="date_naissance_auteur" placeholder="Date de naissance" />';
+            document.getElementById('auteurs-container').appendChild(newAuteurField);
+        });
 
+        // Ajouter un nouveau traducteur
+        document.getElementById('add-traducteur-btn').addEventListener('click', function() {
+            var newTraducteurField = document.createElement('div');
+            newTraducteurField.classList.add('traducteur-container');
+            newTraducteurField.innerHTML = '<input type="text" name="nom_traducteur" placeholder="Nom du traducteur" />' +
+                                          '<input type="text" name="prenom_traducteur" placeholder="Prénom du traducteur" />' +
+                                          '<input type="date" name="date_naissance_traducteur" placeholder="Date de naissance" />';
+            document.getElementById('traducteurs-container').appendChild(newTraducteurField);
+        });
+
+        // Ajouter un nouvel illustrateur
+        document.getElementById('add-illustrateur-btn').addEventListener('click', function() {
+            var newIllustrateurField = document.createElement('div');
+            newIllustrateurField.classList.add('illustrateur-container');
+            newIllustrateurField.innerHTML = '<input type="text" name="nom_illustrateur" placeholder="Nom de l\'illustrateur" />' +
+                                            '<input type="text" name="prenom_illustrateur" placeholder="Prénom de l\'illustrateur" />' +
+                                            '<input type="date" name="date_naissance_illustrateur" placeholder="Date de naissance" />';
+            document.getElementById('illustrateurs-container').appendChild(newIllustrateurField);
+        });
+    </script>
 </body>
 </html>

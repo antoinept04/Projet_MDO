@@ -863,18 +863,11 @@ def saisir_ID_contributeur(request):
     return render(request, 'gui/saisir_contributeur_ID.html', {'form': form})
 
 #%%------------------------------GERER-LES-LIVRES------------------------------------
-class LivreList(StaffRequiredMixin,ListView):
+class LivreList(StaffRequiredMixin, ListView):
     model = Livre
     template_name = 'gui/lister_livres.html'
 
     def get_queryset(self):
-        # Précharger les relations pour optimiser les requêtes
-        queryset = Livre.objects.prefetch_related(
-            Prefetch('ecrire_set', queryset=Ecrire.objects.select_related('auteur')),
-            Prefetch('illustrer_set', queryset=Illustrer.objects.select_related('illustrateur')),
-            Prefetch('traduire_set', queryset=Traduire.objects.select_related('traducteur')),
-        )
-
         # Récupérer les paramètres GET
         sort_by = self.request.GET.get('sort_by', 'titre')  # Par défaut : titre
         order = self.request.GET.get('order', 'asc')  # Par défaut : asc
@@ -886,9 +879,7 @@ class LivreList(StaffRequiredMixin,ListView):
         sorting_options = {
             'isbn13': 'isbn13',
             'titre': 'titre',
-            'auteur_nom': 'ecrire_set__auteur__nom',
-            'illustrateur_nom' : 'illustrer_set__illustrateur__nom',
-            'traducteur_nom' : 'traduire_set__traducteur__nom',
+            'auteur_nom': 'contributeurs__nom',
             'type': 'type',
             'genre_litteraire': 'genre_litteraire',
             'sous_genre': 'sous_genre',
@@ -900,11 +891,34 @@ class LivreList(StaffRequiredMixin,ListView):
             'editeur': 'editeur',
         }
 
-        # Appliquer le tri si valide, sinon fallback au tri par titre
+        # Récupérer le queryset initial
+        queryset = super().get_queryset()
+
+        # Précharger les contributeurs de type 'Auteur', 'Traducteur', 'Illustrateur' pour optimiser les requêtes
+        contributeurs_prefetch = Prefetch(
+            'contributeurs',
+            queryset=Contributeur.objects.filter(type__in=['Auteur', 'Traducteur', 'Illustrateur']),
+            to_attr='contributeurs_data'
+        )
+        queryset = queryset.prefetch_related(contributeurs_prefetch)
+
+        # Appliquer le tri si valide, sinon fallback au tri par 'titre'
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Ajouter les contributeurs par type pour chaque livre
+        for livre in context['object_list']:
+            livre.auteurs = [c for c in livre.contributeurs.all() if c.type == 'Auteur']
+            livre.traducteurs = [c for c in livre.contributeurs.all() if c.type == 'Traducteur']
+            livre.illustrateurs = [c for c in livre.contributeurs.all() if c.type == 'Illustrateur']
+
+        return context
+
 @login_required(login_url='login')
 def create_livre(request):
     if request.method == 'POST':
@@ -914,58 +928,46 @@ def create_livre(request):
             # Sauvegarder le livre
             livre = livre_form.save()
 
-            # Récupérer les informations des auteurs depuis le formulaire
-            noms_auteurs = request.POST.getlist('nom_auteur')  # Récupère tous les noms d'auteurs
-            prenoms_auteurs = request.POST.getlist('prenom_auteur')  # Récupère tous les prénoms d'auteurs
-            dates_naissance_auteurs = request.POST.getlist('date_naissance_auteur')  # Récupère toutes les dates de naissance
+            # Fonction générique pour ajouter des contributeurs
+            def ajouter_contributeurs(noms, prenoms, dates_naissance, type_contributeur):
+                for nom, prenom, date_naissance in zip(noms, prenoms, dates_naissance):
+                    if nom and prenom:  # Vérifier que les informations sont présentes
+                        contributeur, created = Contributeur.objects.get_or_create(
+                            nom=nom,
+                            prenom=prenom,
+                            date_naissance=date_naissance if date_naissance else None,
+                            type=type_contributeur
+                        )
+                        # Ajouter un seul contributeur à chaque fois
+                        livre.contributeurs.add(contributeur)
 
-            for nom, prenom, date_naissance in zip(noms_auteurs, prenoms_auteurs, dates_naissance_auteurs):
-                if nom and prenom:  # Vérifier que les informations sont présentes
-                    auteur, created = Auteur.objects.get_or_create(
-                        nom=nom,
-                        prenom=prenom,
-                        date_naissance=date_naissance if date_naissance else None
-                    )
-                    # Associer l'auteur au livre dans la table intermédiaire 'Ecrire'
-                    Ecrire.objects.create(livre=livre, auteur=auteur)
+            # Ajouter les auteurs
+            noms_auteurs = request.POST.getlist('nom_auteur')
+            prenoms_auteurs = request.POST.getlist('prenom_auteur')
+            dates_naissance_auteurs = request.POST.getlist('date_naissance_auteur')
+            ajouter_contributeurs(noms_auteurs, prenoms_auteurs, dates_naissance_auteurs, 'Auteur')
 
-            # Gérer les traducteurs
+            # Ajouter les traducteurs
             noms_traducteurs = request.POST.getlist('nom_traducteur')
             prenoms_traducteurs = request.POST.getlist('prenom_traducteur')
             dates_naissance_traducteurs = request.POST.getlist('date_naissance_traducteur')
+            ajouter_contributeurs(noms_traducteurs, prenoms_traducteurs, dates_naissance_traducteurs, 'Traducteur')
 
-            for nom, prenom, date_naissance in zip(noms_traducteurs, prenoms_traducteurs, dates_naissance_traducteurs):
-                if nom and prenom:
-                    traducteur, created = Traducteur.objects.get_or_create(
-                        nom=nom,
-                        prenom=prenom,
-                        date_naissance=date_naissance if date_naissance else None
-                    )
-                    # Associer le traducteur au livre
-                    Traduire.objects.create(livre=livre, traducteur=traducteur)
-
-            # Gérer les illustrateurs
+            # Ajouter les illustrateurs
             noms_illustrateurs = request.POST.getlist('nom_illustrateur')
             prenoms_illustrateurs = request.POST.getlist('prenom_illustrateur')
             dates_naissance_illustrateurs = request.POST.getlist('date_naissance_illustrateur')
-
-            for nom, prenom, date_naissance in zip(noms_illustrateurs, prenoms_illustrateurs, dates_naissance_illustrateurs):
-                if nom and prenom:
-                    illustrateur, created = Illustrateur.objects.get_or_create(
-                        nom=nom,
-                        prenom=prenom,
-                        date_naissance=date_naissance if date_naissance else None
-                    )
-                    # Associer l'illustrateur au livre
-                    Illustrer.objects.create(livre=livre, illustrateur=illustrateur)
+            ajouter_contributeurs(noms_illustrateurs, prenoms_illustrateurs, dates_naissance_illustrateurs, 'Illustrateur')
 
             return redirect('livres_list')  # Redirige vers la liste des livres ou une page de succès
+
     else:
         livre_form = LivreForm()
 
     return render(request, 'gui/ajouter_livre.html', {
         'livre_form': livre_form,
     })
+
 class LivreDelete(StaffRequiredMixin,View):
     template_name = 'gui/supprimer_livre.html'
 
@@ -989,7 +991,21 @@ class LivreUpdate(StaffRequiredMixin,View):
 
     def get(self, request, isbn13):
         livre = get_object_or_404(Livre, isbn13=isbn13)
-        form = LivreForm(instance=livre)
+        # Préparer les contributeurs existants (auteurs)
+        initial_auteurs = livre.contributeurs.filter(type='Auteur')
+        initial_traducteurs = livre.contributeurs.filter(type='Traducteur')
+        initial_illustrateurs = livre.contributeurs.filter(type='Illustrateur')
+
+        # Créer le formulaire avec les contributeurs existants sélectionnés
+        form = LivreForm(
+            instance=livre,
+            initial={
+                'auteurs': initial_auteurs,  # Pré-sélectionner les auteurs
+                'traducteur': initial_traducteurs,  # Pré-sélectionner les traducteurs
+                'illustrateur': initial_illustrateurs,  # Pré-sélectionner les illustrateurs
+            }
+        )
+
         return render(request, self.template_name, {'form': form, 'livre': livre})
 
     def post(self, request, isbn13):
@@ -997,8 +1013,41 @@ class LivreUpdate(StaffRequiredMixin,View):
         form = LivreForm(request.POST, instance=livre)
 
         if form.is_valid():
-            form.save()
-            return redirect('livres_list')  # Rediriger vers la liste des livres après modification
+            livre = form.save()
+
+            # Fonction générique pour ajouter des contributeurs
+            def ajouter_contributeurs(noms, prenoms, dates_naissance, type_contributeur):
+                for nom, prenom, date_naissance in zip(noms, prenoms, dates_naissance):
+                    if nom and prenom:  # Vérifier que les informations sont présentes
+                        contributeur, created = Contributeur.objects.get_or_create(
+                            nom=nom,
+                            prenom=prenom,
+                            date_naissance=date_naissance if date_naissance else None,
+                            type=type_contributeur
+                        )
+                        # Ajouter un seul contributeur à chaque fois
+                        livre.contributeurs.add(contributeur)
+
+            # Ajouter les auteurs
+            noms_auteurs = request.POST.getlist('nom_auteur')
+            prenoms_auteurs = request.POST.getlist('prenom_auteur')
+            dates_naissance_auteurs = request.POST.getlist('date_naissance_auteur')
+            ajouter_contributeurs(noms_auteurs, prenoms_auteurs, dates_naissance_auteurs, 'Auteur')
+
+            # Ajouter les traducteurs
+            noms_traducteurs = request.POST.getlist('nom_traducteur')
+            prenoms_traducteurs = request.POST.getlist('prenom_traducteur')
+            dates_naissance_traducteurs = request.POST.getlist('date_naissance_traducteur')
+            ajouter_contributeurs(noms_traducteurs, prenoms_traducteurs, dates_naissance_traducteurs, 'Traducteur')
+
+            # Ajouter les illustrateurs
+            noms_illustrateurs = request.POST.getlist('nom_illustrateur')
+            prenoms_illustrateurs = request.POST.getlist('prenom_illustrateur')
+            dates_naissance_illustrateurs = request.POST.getlist('date_naissance_illustrateur')
+            ajouter_contributeurs(noms_illustrateurs, prenoms_illustrateurs, dates_naissance_illustrateurs, 'Illustrateur')
+
+            return redirect('livres_list')  # Redirige vers la liste des livres ou une page de succès
+
 
         return render(request, self.template_name, {'form': form, 'livre': livre})
 class LivreResearch(StaffRequiredMixin,ListView):
@@ -1008,29 +1057,44 @@ class LivreResearch(StaffRequiredMixin,ListView):
     def get_queryset(self):
         search_query = self.request.GET.get('search', '')
 
+        # Filtrer les livres en fonction de la recherche
         if search_query:
             # Diviser la chaîne de recherche en mots-clés
             keywords = search_query.split()
             query = Q()
 
             for keyword in keywords:
-                # Ajouter chaque mot aux différents champs de recherche
                 query |= Q(titre__icontains=keyword) | \
                          Q(editeur__nom__icontains=keyword) | \
-                         Q(ecrire_set__auteur__nom__icontains=keyword) | \
+                         Q(contributeurs__nom__icontains=keyword) | \
                          Q(isbn13__icontains=keyword) | \
                          Q(type__icontains=keyword) | \
                          Q(genre_litteraire__icontains=keyword) | \
                          Q(sous_genre__icontains=keyword) | \
-                         Q(illustrateur__icontains=keyword) | \
-                         Q(langue__icontains=keyword) | \
-                         Q(ecrire_set__auteur__prenom__icontains=keyword)
+                         Q(langue__icontains=keyword)
 
-            # Retourner les livres correspondant aux critères
-            return Livre.objects.filter(query).distinct()
+            # Pré-charger les contributeurs pour les livres retournés
+            livres = Livre.objects.filter(query).distinct().prefetch_related(
+                Prefetch('contributeurs', queryset=Contributeur.objects.all())
+            )
+        else:
+            # Si aucun terme de recherche, retourner tous les livres avec leurs contributeurs
+            livres = Livre.objects.all().prefetch_related(
+                Prefetch('contributeurs', queryset=Contributeur.objects.all())
+            )
 
-        # Si aucun terme de recherche, retourner tous les livres
-        return Livre.objects.all()
+        return livres
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Ajouter les contributeurs par type pour chaque livre
+        for livre in context['object_list']:
+            livre.auteurs = [c for c in livre.contributeurs.all() if c.type == 'Auteur']
+            livre.traducteurs = [c for c in livre.contributeurs.all() if c.type == 'Traducteur']
+            livre.illustrateurs = [c for c in livre.contributeurs.all() if c.type == 'Illustrateur']
+
+        return context
 @login_required(login_url='login')
 def saisir_isbn(request):
     if request.method == 'POST':

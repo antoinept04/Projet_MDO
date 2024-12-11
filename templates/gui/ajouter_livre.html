@@ -115,10 +115,10 @@
     <form method="post">
         {% csrf_token %}
         {{ livre_form.as_p }}
-        
+        <h2>Nouveaux contributeurs</h2>
         <!-- Conteneur des auteurs -->
         <div id="auteurs-container" class="form-group">
-            <h2>Auteurs</h2>
+            <h3>Auteurs</h3>
             <div class="auteur-container">
                 <input type="text" name="nom_auteur" placeholder="Nom de l'auteur" />
                 <input type="text" name="prenom_auteur" placeholder="Prénom de l'auteur" />
@@ -129,7 +129,7 @@
 
         <!-- Conteneur des traducteurs -->
         <div id="traducteurs-container" class="form-group">
-            <h2>Traducteurs</h2>
+            <h3>Traducteurs</h3>
             <div class="traducteur-container">
                 <input type="text" name="nom_traducteur" placeholder="Nom du traducteur" />
                 <input type="text" name="prenom_traducteur" placeholder="Prénom du traducteur" />
@@ -140,7 +140,7 @@
 
         <!-- Conteneur des illustrateurs -->
         <div id="illustrateurs-container" class="form-group">
-            <h2>Illustrateurs</h2>
+            <h3>Illustrateurs</h3>
             <div class="illustrateur-container">
                 <input type="text" name="nom_illustrateur" placeholder="Nom de l'illustrateur" />
                 <input type="text" name="prenom_illustrateur" placeholder="Prénom de l'illustrateur" />

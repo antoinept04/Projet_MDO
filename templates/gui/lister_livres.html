@@ -110,9 +110,21 @@
             <tr>
                 <th><a href="?sort_by=isbn13&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">ISBN13</a></th>
                 <th><a href="?sort_by=titre&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Titre</a></th>
-                <th><a href="?sort_by=auteur_nom&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Auteur</a></th>
-                <th><a href="?sort_by=traducteur_nom&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Traducteur</a></th>
-                <th><a href="?sort_by=illustrateur_nom&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Illustrateur</a></th>
+                <th>
+                <a href="?sort_by=contributeur_auteur_nom&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
+                    Auteur
+                </a>
+            </th>
+            <th>
+                <a href="?sort_by=contributeur_traducteur_nom&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
+                    Traducteur
+                </a>
+            </th>
+            <th>
+                <a href="?sort_by=contributeur_illustrateur_nom&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">
+                    Illustrateur
+                </a>
+            </th>
                 <th><a href="?sort_by=type&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Type</a></th>
                 <th><a href="?sort_by=genre_litteraire&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Genre Littéraire</a></th>
                 <th><a href="?sort_by=sous_genre&order={% if request.GET.order == 'asc' %}desc{% else %}asc{% endif %}">Sous Genre</a></th>
@@ -133,42 +145,48 @@
         </thead>
         <tbody>
             {% for livre in object_list %}
-                <tr>
-                    <td>{{ livre.isbn13 }}</td>
+                
+    <tr>
+    <td>{{ livre.isbn13 }}</td>
                     <td>{{ livre.titre }}</td>
-                    <td>
-                        {% if livre.ecrire_set.all %}
-                            {% for ecrire in livre.ecrire_set.all %}
-                                <p><strong>Nom :</strong> {{ ecrire.auteur.nom }}</p>
-                                <p><strong>Prénom :</strong> {{ ecrire.auteur.prenom }}</p>
-                                <p><strong>Date de naissance :</strong> {{ ecrire.auteur.date_naissance }}</p>
-                            {% endfor %}
-                        {% else %}
-                            Aucun auteur
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if livre.traduire_set.all %}
-                            {% for traduire in livre.traduire_set.all %}
-                                <p><strong>Nom :</strong> {{ traduire.traducteur.nom }}</p>
-                                <p><strong>Prénom :</strong> {{ traduire.traducteur.prenom }}</p>
-                                <p><strong>Date de naissance :</strong> {{ traduire.traducteur.date_naissance }}</p>
-                            {% endfor %}
-                        {% else %}
-                            Aucun traducteur
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if livre.illustrer_set.all %}
-                            {% for illustrer in livre.illustrer_set.all %}
-                                <p><strong>Nom :</strong> {{ illustrer.illustrateur.nom }}</p>
-                                <p><strong>Prénom :</strong> {{ illustrer.illustrateur.prenom }}</p>
-                                <p><strong>Date de naissance :</strong> {{ illustrer.illustrateur.date_naissance }}</p>
-                            {% endfor %}
-                        {% else %}
-                            Aucun illustrateur
-                        {% endif %}
-                    </td>
+        <!-- Auteurs -->
+        <td>
+            {% if livre.auteurs %}
+                {% for auteur in livre.auteurs %}
+                    <p><strong>Nom :</strong> {{ auteur.nom }}</p>
+                    <p><strong>Prénom :</strong> {{ auteur.prenom }}</p>
+                    <p><strong>Date de naissance :</strong> {{ auteur.date_naissance }}</p>
+                {% endfor %}
+            {% else %}
+                Aucun auteur
+            {% endif %}
+        </td>
+
+                <!-- Traducteurs -->
+        <td>
+            {% if livre.traducteurs %}
+                {% for traducteur in livre.traducteurs %}
+                    <p><strong>Nom :</strong> {{ traducteur.nom }}</p>
+                    <p><strong>Prénom :</strong> {{ traducteur.prenom }}</p>
+                    <p><strong>Date de naissance :</strong> {{ traducteur.date_naissance }}</p>
+                {% endfor %}
+            {% else %}
+                Aucun traducteur
+            {% endif %}
+        </td>
+
+        <!-- Illustrateurs -->
+        <td>
+            {% if livre.illustrateurs %}
+                {% for illustrateur in livre.illustrateurs %}
+                    <p><strong>Nom :</strong> {{ illustrateur.nom }}</p>
+                    <p><strong>Prénom :</strong> {{ illustrateur.prenom }}</p>
+                    <p><strong>Date de naissance :</strong> {{ illustrateur.date_naissance }}</p>
+                {% endfor %}
+            {% else %}
+                Aucun illustrateur
+            {% endif %}
+        </td>
                     <td>{{ livre.type }}</td>
                     <td>{{ livre.genre_litteraire }}</td>
                     <td>{{ livre.sous_genre }}</td>
