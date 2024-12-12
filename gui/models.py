@@ -197,7 +197,7 @@ class Livre(models.Model):
     quantite_disponible = models.PositiveIntegerField()
     quantite_minimale = models.PositiveIntegerField(default=1)
     editeur = models.ForeignKey(Editeur, on_delete=models.CASCADE)
-    contributeurs = models.ManyToManyField(Contributeur, null=True, blank=True)
+    contributeurs = models.ManyToManyField(Contributeur)
 
     class Meta:
         db_table = 'Livre'

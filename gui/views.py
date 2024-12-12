@@ -444,9 +444,6 @@ class PersonneUpdate(StaffRequiredMixin, View):
     template_name = 'gui/modifier_personnes.html'
 
     def get(self, request, email):
-        """
-        Affiche les formulaires pré-remplis avec les données de la personne, de son adresse et de sa ville.
-        """
         personne = get_object_or_404(Personne, email=email)
         adresse = personne.adresse
         ville = adresse.ville if adresse.ville else None
@@ -463,63 +460,76 @@ class PersonneUpdate(StaffRequiredMixin, View):
         })
 
     def post(self, request, email):
-        """
-        Traite les données soumises et met à jour la personne, son adresse et sa ville si les données sont valides.
-        """
         personne = get_object_or_404(Personne, email=email)
-        adresse = personne.adresse
-        ville = adresse.ville if adresse.ville else None
+        adresse_initiale = personne.adresse
+        ville_initiale = adresse_initiale.ville if adresse_initiale.ville else None
 
         personne_form = PersonneForm(request.POST, instance=personne, user=request.user)
-        adresse_form = AdresseForm(request.POST, instance=adresse)
-        ville_form = VilleForm(request.POST, instance=ville)
+        adresse_form = AdresseForm(request.POST)  # On ne lui donne plus instance=adresse_initiale
+        ville_form = VilleForm(request.POST)      # On ne lui donne plus instance=ville_initiale
 
         if personne_form.is_valid() and adresse_form.is_valid() and ville_form.is_valid():
             with transaction.atomic():
-                # Gérer la Ville
-                cleaned_ville = ville_form.cleaned_data
-                nom_ville = cleaned_ville.get('nom_ville')
-                code_postal = cleaned_ville.get('code_postal')
-                pays = cleaned_ville.get('pays')
+                # Données nettoyées
+                ville_data = ville_form.cleaned_data
+                nom_ville = ville_data.get('nom_ville')
+                code_postal = ville_data.get('code_postal')
+                pays = ville_data.get('pays')
 
+                # Gestion de la ville
+                # Si tous les champs de la ville sont présents, on tente un get_or_create.
+                # Sinon, ville_obj = None
                 if nom_ville and code_postal and pays:
-                    ville_obj, created = Ville.objects.get_or_create(
+                    ville_obj, _ = Ville.objects.get_or_create(
                         nom_ville=nom_ville,
                         code_postal=code_postal,
                         pays=pays
                     )
                 else:
-                    ville_obj = None  # Gérer les cas où les champs sont manquants
+                    ville_obj = None
 
-                # Gérer l'Adresse
-                # Vérifier si l'adresse est partagée
-                if Adresse.objects.filter(pk=adresse.pk).exclude(personne=personne).exists():
-                    # L'adresse est partagée, créer une nouvelle adresse pour cette personne
-                    nouvelle_adresse = Adresse.objects.create(
-                        rue=adresse.rue,
-                        n_rue=adresse.n_rue,
+                # Gestion de l'adresse
+                adresse_data = adresse_form.cleaned_data
+                rue = adresse_data.get('rue')
+                n_rue = adresse_data.get('n_rue')
+
+                # On vérifie si l'adresse initiale est partagée OU si l'adresse a été modifiée.
+                # L'adresse est considérée modifiée si la rue ou le numéro ou la ville diffèrent.
+                adresse_modifiee = (
+                    (rue != adresse_initiale.rue) or
+                    (n_rue != adresse_initiale.n_rue) or
+                    (ville_obj != ville_initiale)
+                )
+
+                adresse_partagee = Adresse.objects.filter(pk=adresse_initiale.pk).exclude(personne=personne).exists()
+
+                if adresse_partagee or adresse_modifiee:
+                    # On crée (ou récupère) une nouvelle adresse correspondant à ces champs
+                    # Pour éviter de créer des doublons inutiles, on peut essayer un get_or_create:
+                    nouvelle_adresse, _ = Adresse.objects.get_or_create(
+                        rue=rue,
+                        n_rue=n_rue,
                         ville=ville_obj
                     )
                     personne.adresse = nouvelle_adresse
                 else:
-                    # L'adresse n'est pas partagée, la modifier directement
-                    adresse_form.instance.ville = ville_obj
-                    adresse_form.save()
+                    # L'adresse n'est pas partagée et n'est pas modifiée, on la laisse telle quelle.
+                    pass
 
-                # Gérer la Personne
+                # Gestion de la personne
                 personne_form.save()
 
             messages.success(request, 'La personne, son adresse et sa ville ont été mises à jour avec succès.')
             return redirect(reverse_lazy('personnes_list'))
 
-        # Si l'un des formulaires n'est pas valide, réafficher les formulaires avec les erreurs
-        messages.error(request, 'Certaines données sont invalides. Veuillez corriger les erreurs ci-dessous.')
+        # Si formulaires invalides, on repasse les instances actuelles
         return render(request, self.template_name, {
             'personne_form': personne_form,
             'adresse_form': adresse_form,
             'ville_form': ville_form,
             'personne': personne
         })
+
 #%%------------------------------GERER-LES-FOURNISSEURS------------------------------
 class FournisseurList(StaffRequiredMixin, ListView):
     model = Fournisseur
@@ -986,70 +996,97 @@ class LivreDelete(StaffRequiredMixin,View):
             # Rediriger vers la liste des livres après la suppression
             return redirect(reverse_lazy('livres_list'))
         return render(request, self.template_name, {'error': 'ID du livre invalide.'})
-class LivreUpdate(StaffRequiredMixin,View):
+
+
+class LivreUpdate(StaffRequiredMixin, View):
     template_name = 'gui/modifier_livres.html'
 
     def get(self, request, isbn13):
         livre = get_object_or_404(Livre, isbn13=isbn13)
-        # Préparer les contributeurs existants (auteurs)
-        initial_auteurs = livre.contributeurs.filter(type='Auteur')
-        initial_traducteurs = livre.contributeurs.filter(type='Traducteur')
-        initial_illustrateurs = livre.contributeurs.filter(type='Illustrateur')
 
-        # Créer le formulaire avec les contributeurs existants sélectionnés
-        form = LivreForm(
-            instance=livre,
-            initial={
-                'auteurs': initial_auteurs,  # Pré-sélectionner les auteurs
-                'traducteur': initial_traducteurs,  # Pré-sélectionner les traducteurs
-                'illustrateur': initial_illustrateurs,  # Pré-sélectionner les illustrateurs
-            }
-        )
+        # Contributeurs existants
+        auteurs_ex = livre.contributeurs.filter(type='Auteur')
+        traducteurs_ex = livre.contributeurs.filter(type='Traducteur')
+        illustrateurs_ex = livre.contributeurs.filter(type='Illustrateur')
 
-        return render(request, self.template_name, {'form': form, 'livre': livre})
+        form = LivreForm(instance=livre)
+
+        context = {
+            'form': form,
+            'livre': livre,
+            'auteurs_ex': auteurs_ex,
+            'traducteurs_ex': traducteurs_ex,
+            'illustrateurs_ex': illustrateurs_ex,
+        }
+
+        return render(request, self.template_name, context)
 
     def post(self, request, isbn13):
         livre = get_object_or_404(Livre, isbn13=isbn13)
         form = LivreForm(request.POST, instance=livre)
 
+        # Contributeurs actuels
+        auteurs_ex = livre.contributeurs.filter(type='Auteur')
+        traducteurs_ex = livre.contributeurs.filter(type='Traducteur')
+        illustrateurs_ex = livre.contributeurs.filter(type='Illustrateur')
+
         if form.is_valid():
             livre = form.save()
 
-            # Fonction générique pour ajouter des contributeurs
-            def ajouter_contributeurs(noms, prenoms, dates_naissance, type_contributeur):
-                for nom, prenom, date_naissance in zip(noms, prenoms, dates_naissance):
-                    if nom and prenom:  # Vérifier que les informations sont présentes
-                        contributeur, created = Contributeur.objects.get_or_create(
-                            nom=nom,
-                            prenom=prenom,
-                            date_naissance=date_naissance if date_naissance else None,
-                            type=type_contributeur
-                        )
-                        # Ajouter un seul contributeur à chaque fois
-                        livre.contributeurs.add(contributeur)
+            # Supprimer les contributeurs cochés
+            for a in auteurs_ex:
+                if request.POST.get(f'delete_auteur_{a.id}', '') == 'on':
+                    livre.contributeurs.remove(a)
 
-            # Ajouter les auteurs
+            for t in traducteurs_ex:
+                if request.POST.get(f'delete_traducteur_{t.id}', '') == 'on':
+                    livre.contributeurs.remove(t)
+
+            for i in illustrateurs_ex:
+                if request.POST.get(f'delete_illustrateur_{i.id}', '') == 'on':
+                    livre.contributeurs.remove(i)
+
+            # Ajouter les nouveaux contributeurs en création
             noms_auteurs = request.POST.getlist('nom_auteur')
             prenoms_auteurs = request.POST.getlist('prenom_auteur')
             dates_naissance_auteurs = request.POST.getlist('date_naissance_auteur')
-            ajouter_contributeurs(noms_auteurs, prenoms_auteurs, dates_naissance_auteurs, 'Auteur')
+            self.ajouter_contributeurs(livre, noms_auteurs, prenoms_auteurs, dates_naissance_auteurs, 'Auteur')
 
-            # Ajouter les traducteurs
             noms_traducteurs = request.POST.getlist('nom_traducteur')
             prenoms_traducteurs = request.POST.getlist('prenom_traducteur')
             dates_naissance_traducteurs = request.POST.getlist('date_naissance_traducteur')
-            ajouter_contributeurs(noms_traducteurs, prenoms_traducteurs, dates_naissance_traducteurs, 'Traducteur')
+            self.ajouter_contributeurs(livre, noms_traducteurs, prenoms_traducteurs, dates_naissance_traducteurs,
+                                       'Traducteur')
 
-            # Ajouter les illustrateurs
             noms_illustrateurs = request.POST.getlist('nom_illustrateur')
             prenoms_illustrateurs = request.POST.getlist('prenom_illustrateur')
             dates_naissance_illustrateurs = request.POST.getlist('date_naissance_illustrateur')
-            ajouter_contributeurs(noms_illustrateurs, prenoms_illustrateurs, dates_naissance_illustrateurs, 'Illustrateur')
+            self.ajouter_contributeurs(livre, noms_illustrateurs, prenoms_illustrateurs, dates_naissance_illustrateurs,
+                                       'Illustrateur')
 
-            return redirect('livres_list')  # Redirige vers la liste des livres ou une page de succès
+            return redirect('livres_list')
+
+        context = {
+            'form': form,
+            'livre': livre,
+            'auteurs_ex': auteurs_ex,
+            'traducteurs_ex': traducteurs_ex,
+            'illustrateurs_ex': illustrateurs_ex,
+        }
+        return render(request, self.template_name, context)
+
+    def ajouter_contributeurs(self, livre, noms, prenoms, dates, type_contributeur):
+        for nom, prenom, date_naissance in zip(noms, prenoms, dates):
+            if nom and prenom:
+                contributeur, created = Contributeur.objects.get_or_create(
+                    nom=nom,
+                    prenom=prenom,
+                    date_naissance=date_naissance if date_naissance else None,
+                    type=type_contributeur
+                )
+                livre.contributeurs.add(contributeur)
 
 
-        return render(request, self.template_name, {'form': form, 'livre': livre})
 class LivreResearch(StaffRequiredMixin,ListView):
     model = Livre
     template_name = 'gui/lister_livres.html'

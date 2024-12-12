@@ -91,6 +91,25 @@
             margin-top: 20px;
         }
 
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            margin-bottom: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #990000;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #cc0000;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -103,45 +122,106 @@
             <div class="form-group">
                 {{ form.as_p }}
             </div>
-<h2>Nouveaux contributeurs</h2>
-        <!-- Conteneur des auteurs -->
-        <div id="auteurs-container" class="form-group">
+
+            <h2>Contributeurs existants</h2>
             <h3>Auteurs</h3>
-            <div class="auteur-container">
-                <input type="text" name="nom_auteur" placeholder="Nom de l'auteur" />
-                <input type="text" name="prenom_auteur" placeholder="Prénom de l'auteur" />
-                <input type="date" name="date_naissance_auteur" placeholder="Date de naissance" />
-            </div>
-        </div>
-        <button type="button" id="add-author-btn">Ajouter un auteur +</button>
+            <table>
+                <tr>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Action</th>
+                </tr>
+                {% for auteur in auteurs_ex %}
+                <tr>
+                    <td>{{ auteur.nom }}</td>
+                    <td>{{ auteur.prenom }}</td>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="delete_auteur_{{ auteur.id }}" /> Supprimer
+                        </label>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">Aucun auteur associé.</td></tr>
+                {% endfor %}
+            </table>
 
-        <!-- Conteneur des traducteurs -->
-        <div id="traducteurs-container" class="form-group">
             <h3>Traducteurs</h3>
-            <div class="traducteur-container">
-                <input type="text" name="nom_traducteur" placeholder="Nom du traducteur" />
-                <input type="text" name="prenom_traducteur" placeholder="Prénom du traducteur" />
-                <input type="date" name="date_naissance_traducteur" placeholder="Date de naissance" />
-            </div>
-        </div>
-        <button type="button" id="add-traducteur-btn">Ajouter un traducteur +</button>
+            <table>
+                <tr>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Action</th>
+                </tr>
+                {% for t in traducteurs_ex %}
+                <tr>
+                    <td>{{ t.nom }}</td>
+                    <td>{{ t.prenom }}</td>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="delete_traducteur_{{ t.id }}" /> Supprimer
+                        </label>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">Aucun traducteur associé.</td></tr>
+                {% endfor %}
+            </table>
 
-        <!-- Conteneur des illustrateurs -->
-        <div id="illustrateurs-container" class="form-group">
             <h3>Illustrateurs</h3>
-            <div class="illustrateur-container">
-                <input type="text" name="nom_illustrateur" placeholder="Nom de l'illustrateur" />
-                <input type="text" name="prenom_illustrateur" placeholder="Prénom de l'illustrateur" />
-                <input type="date" name="date_naissance_illustrateur" placeholder="Date de naissance" />
+            <table>
+                <tr>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Action</th>
+                </tr>
+                {% for i in illustrateurs_ex %}
+                <tr>
+                    <td>{{ i.nom }}</td>
+                    <td>{{ i.prenom }}</td>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="delete_illustrateur_{{ i.id }}" /> Supprimer
+                        </label>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">Aucun illustrateur associé.</td></tr>
+                {% endfor %}
+            </table>
+
+            <h2>Nouveaux contributeurs (Création)</h2>
+            <div id="auteurs-container" class="form-group">
+                <h3>Auteurs</h3>
+                <div class="auteur-container">
+                    <input type="text" name="nom_auteur" placeholder="Nom de l'auteur" />
+                    <input type="text" name="prenom_auteur" placeholder="Prénom de l'auteur" />
+                    <input type="date" name="date_naissance_auteur" placeholder="Date de naissance" />
+                </div>
             </div>
-        </div>
-        <button type="button" id="add-illustrateur-btn">Ajouter un illustrateur +</button>
+            <button type="button" id="add-author-btn">Ajouter un auteur +</button>
 
-        <br>
-        
-    
+            <div id="traducteurs-container" class="form-group">
+                <h3>Traducteurs</h3>
+                <div class="traducteur-container">
+                    <input type="text" name="nom_traducteur" placeholder="Nom du traducteur" />
+                    <input type="text" name="prenom_traducteur" placeholder="Prénom du traducteur" />
+                    <input type="date" name="date_naissance_traducteur" placeholder="Date de naissance" />
+                </div>
+            </div>
+            <button type="button" id="add-traducteur-btn">Ajouter un traducteur +</button>
 
-    
+            <div id="illustrateurs-container" class="form-group">
+                <h3>Illustrateurs</h3>
+                <div class="illustrateur-container">
+                    <input type="text" name="nom_illustrateur" placeholder="Nom de l'illustrateur" />
+                    <input type="text" name="prenom_illustrateur" placeholder="Prénom de l'illustrateur" />
+                    <input type="date" name="date_naissance_illustrateur" placeholder="Date de naissance" />
+                </div>
+            </div>
+            <button type="button" id="add-illustrateur-btn">Ajouter un illustrateur +</button>
+
+            <br>
             <button type="submit">Modifier</button>
         </form>
 
@@ -149,7 +229,8 @@
             <p class="error-message">Il y a des erreurs dans le formulaire. Veuillez les corriger.</p>
         {% endif %}
     </div>
-<script>
+
+    <script>
         // Ajouter un nouvel auteur
         document.getElementById('add-author-btn').addEventListener('click', function() {
             var newAuteurField = document.createElement('div');

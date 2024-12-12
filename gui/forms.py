@@ -86,70 +86,32 @@ class ContributeurForm(forms.ModelForm):
         fields = ['type', 'nom', 'prenom', 'date_naissance']
 class IDContributeurForm(forms.Form):
     contributeur_id = forms.IntegerField(label="ID du contributeur")
+
 class LivreForm(forms.ModelForm):
     editeur_nom = forms.CharField(max_length=255, required=False, label="Nom de l'éditeur")
-    auteurs = forms.ModelMultipleChoiceField(
-        queryset=Contributeur.objects.filter(type='Auteur'),  # Vous pouvez filtrer en fonction du type si nécessaire
-        required=False,
-        widget=forms.SelectMultiple,  # Affichage sous forme de cases à cocher, changez selon vos besoins
-        label="Auteur(s)"
-    )
-    traducteur = forms.ModelMultipleChoiceField(
-        queryset=Contributeur.objects.filter(type='Traducteur'),  # Vous pouvez filtrer en fonction du type si nécessaire
-        required=False,
-        widget=forms.SelectMultiple,  # Affichage sous forme de cases à cocher, changez selon vos besoins
-        label="Traducteur(s)"
-    )
-    illustrateur = forms.ModelMultipleChoiceField(
-        queryset=Contributeur.objects.filter(type='Illustrateur'),  # Vous pouvez filtrer en fonction du type si nécessaire
-        required=False,
-        widget=forms.SelectMultiple,  # Affichage sous forme de cases à cocher, changez selon vos besoins
-        label="Illustrateur(s)"
-    )
+
     class Meta:
         model = Livre
-        fields = ['isbn13', 'titre', 'type', 'genre_litteraire', 'sous_genre', 'langue',
-                  'format', 'nombre_pages', 'dimensions', 'date_parution', 'localisation', 'synopsis',
-                  'prix', 'url_reference', 'quantite_disponible',
-                  'quantite_minimale', 'editeur_nom']
-
-
-        widgets ={
-            'date_parution' : forms.DateInput(attrs={'type': 'date'}),
+        fields = [
+            'isbn13', 'titre', 'type', 'genre_litteraire', 'sous_genre', 'langue',
+            'format', 'nombre_pages', 'dimensions', 'date_parution', 'localisation', 'synopsis',
+            'prix', 'url_reference', 'quantite_disponible', 'quantite_minimale', 'editeur_nom'
+        ]
+        widgets = {
+            'date_parution': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def save(self, commit=True):
-        # Sauvegarde du livre
         livre = super().save(commit=False)
-
         # Gestion de l'éditeur
         editeur_nom = self.cleaned_data['editeur_nom']
-        if editeur_nom:  # Création de l'éditeur si nécessaire
+        if editeur_nom:
             editeur, created = Editeur.objects.get_or_create(nom=editeur_nom)
             livre.editeur = editeur
         if commit:
             livre.save()
-        # Gestion des contributeurs (auteurs, traducteurs, illustrateurs)
-        auteurs = self.cleaned_data.get('auteurs', [])
-        traducteurs = self.cleaned_data.get('traducteur', [])
-        illustrateurs = self.cleaned_data.get('illustrateur', [])
-
-        # Vider les contributeurs existants avant de les ajouter
-        livre.contributeurs.clear()
-
-        # Ajouter les contributeurs
-        for auteur in auteurs:
-            livre.contributeurs.add(auteur)
-
-        for traducteur in traducteurs:
-            livre.contributeurs.add(traducteur)
-
-        for illustrateur in illustrateurs:
-            livre.contributeurs.add(illustrateur)
-
-        # Sauvegarder le livre une fois les contributeurs ajoutés
-
         return livre
+
 class ISBNForm(forms.Form):
     isbn13 = forms.CharField(label='ISBN13 du livre', max_length=13)
 
