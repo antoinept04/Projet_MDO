@@ -1,6 +1,8 @@
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.models import BaseUserManager
+from django.core.mail import send_mail
 from django.utils import timezone
 import datetime
 from django.db.models.signals import post_save
@@ -319,3 +321,23 @@ class Notifier(models.Model):
 
     def __str__(self):
         return f"Notification pour {self.livre.titre} ({self.type})"
+
+# Signal pour envoyer un mail lors de la création d'une notification
+@receiver(post_save, sender=Notifier)
+def send_notification_email(sender, instance, created, **kwargs):
+    if created:  # Si l'objet a été créé
+        subject = f"Nouvelle notification pour le livre {instance.livre.titre}"
+        message = f"Une nouvelle notification a été créée pour le livre '{instance.livre.titre}'.\n\n" \
+                  f"Type : {instance.get_type_display()}\n" \
+                  f"Quantité : {instance.quantite}\n" \
+                  f"Commentaire : {instance.commentaire}\n" \
+                  f"Date : {instance.date_creation.strftime('%d/%m/%Y %H:%M:%S')}"
+        recipient_list = ['sachamalray2000@gmail.com']  # Remplace par l'email cible
+
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            recipient_list,
+            fail_silently=False,  # Pour ne pas échouer silencieusement en cas d'erreur d'envoi
+        )
