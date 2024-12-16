@@ -235,21 +235,31 @@ class Achat(models.Model):
     date_achat = models.DateField(default=datetime.date.today)
     quantite = models.PositiveIntegerField()
 
-
     class Meta:
         db_table = 'Achat'
 
     def __str__(self):
         return f"Achat de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
-    def save(self, *args, **kwargs):
-        # Vérifie si c'est un nouvel achat
-        is_new = self._state.adding
-        super().save(*args, **kwargs)
 
-        # Si c'est un nouvel achat, met à jour la quantité du livre
+    def save(self, *args, **kwargs):
+        # Vérification si l'objet est nouveau
+        is_new = self.pk is None
+
+        # Validation de la quantité
+        if self.quantite > self.livre.quantite_disponible:
+            raise ValueError(
+                f"Stock insuffisant pour le livre '{self.livre.titre}'. "
+                f"Disponible : {self.livre.quantite_disponible}, demandé : {self.quantite}."
+            )
+
+        super().save(*args, **kwargs)  # Enregistrement de l'achat
+
+        # Mise à jour du stock du livre (uniquement si l'achat est nouveau)
         if is_new:
             self.livre.quantite_disponible -= self.quantite
             self.livre.save()
+
+
 @receiver(post_save, sender=Achat)
 def verifier_fidelite(sender, instance, created, **kwargs):
     if created:  # Vérifie si un achat vient d'être créé

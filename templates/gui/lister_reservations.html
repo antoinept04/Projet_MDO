@@ -133,12 +133,43 @@
         .btn-danger:hover {
             background-color: #d32f2f;
         }
+        
+        .button-container {
+        position: relative;
+        display: inline-block;
+    }
+
+        .error-tooltip {
+        position: absolute;
+        top: -5px;
+        left: 100%;
+        margin-left: 10px;
+        background-color: #ff3b3b; /* Couleur rouge pour l'erreur */
+        color: white;
+        border-radius: 5px;
+        padding: 5px;
+        font-size: 12px;
+        white-space: nowrap;
+        display: none; /* Cacher la bulle par défaut */
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+        .button-container:hover .error-tooltip {
+        display: inline-block;
+        opacity: 1; /* Afficher la bulle au survol du bouton */
+    }
+
     </style>
 </head>
 <body>
     <!-- Navbar -->
     {% include 'gui/navbar.html' %}
+  
+        
 
+    
+    
     <h1 style="color: #990000; text-align: center; font-size: 3em; margin-top: 20px;">Liste des Réservations</h1>
 
     <div class="action-bar">
@@ -176,13 +207,23 @@
                 <td>{{ reservation.statut }}</td>
                 <td>
                     <div class="action-buttons">
-                        <form method="POST" action="{% url 'terminer_reservation' reservation.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="button">Terminer</button>
-                        </form>
-                        <a href="{% url 'reservations_update' reservation.id %}" class="btn-warning">Modifier</a>
-                        <a href="{% url 'reservations_with_ID_delete' pk=reservation.id %}" class="button">Supprimer</a>
-                    </div>
+    <form method="POST" action="{% url 'terminer_reservation' reservation.id %}">
+        {% csrf_token %}
+        <div class="button-container">
+            <button type="submit" class="button">Terminer</button>
+            {% if messages %}
+                {% for message in messages %}
+                    {% if message.tags == 'error' %}
+                        <span class="error-tooltip">{{ message }}</span>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+    </form>
+    <a href="{% url 'reservations_update' reservation.id %}" class="btn-warning">Modifier</a>
+    <a href="{% url 'reservations_with_ID_delete' pk=reservation.id %}" class="button">Supprimer</a>
+</div>
+                
                 </td>
             </tr>
             {% empty %}
@@ -229,5 +270,15 @@
             {% endfor %}
         </tbody>
     </table>
+<script>
+    {% if messages %}
+        setTimeout(function () {
+            var alert = document.querySelector('.alert');
+            if (alert) {
+                alert.style.display = 'none'; // Masquer l'alerte après 5 secondes
+            }
+        }, 5000);  // 5000 ms = 5 secondes
+    {% endif %}
+</script>
 </body>
 </html>

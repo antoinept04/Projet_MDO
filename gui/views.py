@@ -13,8 +13,11 @@ from django.views.generic import ListView, CreateView, DeleteView, UpdateView, V
 from gui.models import Role, Ville, Adresse, Personne, Fournisseur, FournisseurAdresse, Editeur, Contributeur, Livre, \
                        Achat, Commander, Reserver, Notifier
 from .decorators import unauthenticated_user_required, staff_required
-from .forms import (VilleForm, AdresseForm, AdresseFormSet, PersonneForm, EmailInputForm, FournisseurForm, IDFournisseurForm, FournisseurAdresseFormSet, \
-                    EditeurForm, IDEditeurForm, ContributeurForm, IDContributeurForm, LivreForm, ISBNForm, AchatForm, IDAchatForm, ReserverForm, IDReservationForm, CommanderForm, IDCommandeForm)
+from .forms import (VilleForm, AdresseForm, AdresseFormSet, PersonneForm, EmailInputForm, FournisseurForm,
+                    IDFournisseurForm, FournisseurAdresseFormSet, \
+                    EditeurForm, IDEditeurForm, ContributeurForm, IDContributeurForm, LivreForm, ISBNForm, AchatForm,
+                    AchatUpdateForm, IDAchatForm, ReserverUpdateForm, ReserverForm, IDReservationForm, CommanderForm, IDCommandeForm,
+                    CommanderUpdateForm)
 from django.db import transaction
 
 
@@ -928,7 +931,6 @@ class LivreList(StaffRequiredMixin, ListView):
             livre.illustrateurs = [c for c in livre.contributeurs.all() if c.type == 'Illustrateur']
 
         return context
-
 @login_required(login_url='login')
 def create_livre(request):
     if request.method == 'POST':
@@ -1166,18 +1168,102 @@ class AchatList(StaffRequiredMixin,ListView):
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
         return queryset
-class AchatCreate(StaffRequiredMixin,CreateView):
+class AchatCreate(StaffRequiredMixin, CreateView):
     model = Achat
     form_class = AchatForm
     template_name = 'gui/ajouter_achat.html'
     success_url = reverse_lazy('achats_list')
+
+
+    def form_valid(self, form):
+        # Récupérer les données générales du formulaire
+        personne = form.cleaned_data['personne']
+        date_achat = form.cleaned_data['date_achat']
+
+        # Récupérer les livres et quantités depuis le POST
+        livres = self.request.POST.getlist('livres[]')  # Liste des isbn13
+        quantites = self.request.POST.getlist('quantites[]')  # Quantités associées
+
+        if not livres or not quantites:
+            form.add_error(None, "Vous devez ajouter au moins un livre avec une quantité.")
+            return self.form_invalid(form)
+
+        try:
+            with transaction.atomic():  # Gestion transactionnelle
+                for isbn13, quantite in zip(livres, quantites):
+                    if isbn13 and quantite:
+                        quantite = int(quantite)  # Conversion explicite en entier
+                        if quantite <= 0:
+                            form.add_error(None, f"Quantité invalide pour le livre {isbn13}.")
+                            return self.form_invalid(form)
+                        # Rechercher le livre via isbn13
+
+                        # Rechercher le livre par isbn13
+                        try:
+                            livre = Livre.objects.get(isbn13=isbn13)
+                        except Livre.DoesNotExist:
+                            form.add_error(None, f"Le livre avec l'ISBN {isbn13} n'existe pas.")
+                            return self.form_invalid(form)
+                        # Validation stock
+                        if quantite > livre.quantite_disponible:
+                            form.add_error(
+                                None,
+                                f"Quantité demandée ({quantite}) pour le livre '{livre.titre}' dépasse le stock disponible ({livre.quantite_disponible})."
+                            )
+                            return self.form_invalid(form)
+
+                        # Créer un achat
+                        Achat.objects.create(
+                            personne=personne,
+                            livre=livre,
+                            date_achat=date_achat,
+                            quantite=int(quantite)
+                        )
+
+        except Exception as e:
+            form.add_error(None, f"Erreur lors de l'enregistrement : {e}")
+            return self.form_invalid(form)
+
+        return HttpResponseRedirect(self.success_url)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['livres'] = Livre.objects.all()  # Passer tous les livres disponibles
+        return context
 class AchatUpdate(StaffRequiredMixin, UpdateView):
     model = Achat
-    form_class = AchatForm
+    form_class = AchatUpdateForm
     template_name = 'gui/modifier_achat.html'
-    sucess_url = reverse_lazy('achats_list')
+    success_url = reverse_lazy('achats_list')
     def get_object(self):
         return get_object_or_404(Achat, pk=self.kwargs['pk'])
+
+    def form_valid(self, form):
+        # Récupérer l'instance de l'achat avant modification
+        achat_instance = self.get_object()
+
+        # Récupérer le livre et la quantité avant modification
+        livre = achat_instance.livre
+        ancienne_quantite = achat_instance.quantite
+
+        # Récupérer la nouvelle quantité
+        nouvelle_quantite = form.cleaned_data['quantite']
+
+        # Vérifier la différence de quantité
+        difference = nouvelle_quantite - ancienne_quantite
+
+        # Mettre à jour le stock du livre (ajouter ou soustraire selon la différence)
+        livre.quantite_disponible -= difference
+        if livre.quantite_disponible < 0:
+            form.add_error('quantite', "Le stock est insuffisant pour cette quantité.")
+            return self.form_invalid(form)
+
+        livre.save()  # Sauvegarder la mise à jour du stock
+
+        # Enregistrer les modifications de l'achat
+        response = super().form_valid(form)
+
+        return response
 class AchatDelete(StaffRequiredMixin, View):
     template_name = 'gui/supprimer_achat.html'
 
@@ -1192,13 +1278,22 @@ class AchatDelete(StaffRequiredMixin, View):
         if achat_id:
             try:
                 achat = Achat.objects.get(id=achat_id)
-                if pk:
-                    achat.delete()
-                    return redirect(reverse_lazy('achats_list'))
-                else:
-                    return redirect(reverse_lazy('achats_with_ID_delete', kwargs={'pk': achat.id}))
+
+                # Récupérer le livre et la quantité associée à l'achat
+                livre = achat.livre
+                quantite_achat = achat.quantite
+
+                # Mettre à jour la quantité disponible du livre
+                livre.quantite_disponible += quantite_achat
+                livre.save()  # Sauvegarder la mise à jour de la quantité
+
+                # Supprimer l'achat
+                achat.delete()
+
+                return redirect(reverse_lazy('achats_list'))
+
             except Achat.DoesNotExist:
-                return render(request, self.template_name, {'error': "Achat non trouvée."})
+                return render(request, self.template_name, {'error': "Achat non trouvé."})
         return render(request, self.template_name, {'error': "ID d'achat invalide."})
 class AchatResearch(StaffRequiredMixin, ListView):
     model = Achat
@@ -1267,14 +1362,70 @@ class CommanderList(StaffRequiredMixin, ListView):
         context['commandes_en_cours'] = commandes_en_cours
         context['commandes_terminees'] = commandes_terminees
         return context
-class CommanderCreate(StaffRequiredMixin,CreateView):
+
+
+class CommanderCreate(StaffRequiredMixin, CreateView):
     model = Commander
     form_class = CommanderForm
     template_name = 'gui/ajouter_commande.html'
     success_url = reverse_lazy('commandes_list')
+
+    def form_valid(self, form):
+        # Récupérer les données générales du formulaire
+        personne = form.cleaned_data['personne']
+        date_commande = form.cleaned_data['date_commande']
+        fournisseur = form.cleaned_data['fournisseur']
+        statut = form.cleaned_data['statut']
+
+        # Récupérer les livres et quantités depuis le POST
+        livres = self.request.POST.getlist('livres[]')  # Liste des isbn13
+        quantites = self.request.POST.getlist('quantites[]')  # Quantités associées
+
+        if not livres or not quantites:
+            form.add_error(None, "Vous devez ajouter au moins un livre avec une quantité.")
+            return self.form_invalid(form)
+
+        try:
+            with transaction.atomic():  # Gestion transactionnelle
+                for isbn13, quantite in zip(livres, quantites):
+                    if isbn13 and quantite:
+                        quantite = int(quantite)  # Conversion explicite en entier
+                        if quantite <= 0:
+                            form.add_error(None, f"Quantité invalide pour le livre {isbn13}.")
+                            return self.form_invalid(form)
+
+                        # Rechercher le livre via isbn13
+                        try:
+                            livre = Livre.objects.get(isbn13=isbn13)
+                        except Livre.DoesNotExist:
+                            form.add_error(None, f"Le livre avec l'ISBN {isbn13} n'existe pas.")
+                            return self.form_invalid(form)
+
+                        # Créer une commande
+                        Commander.objects.create(
+                            personne=personne,
+                            livre=livre,
+                            date_commande=date_commande,
+                            quantite=quantite,
+                            fournisseur=fournisseur,
+                            statut=statut
+                        )
+
+        except Exception as e:
+            form.add_error(None, f"Erreur lors de l'enregistrement : {e}")
+            return self.form_invalid(form)
+
+        return HttpResponseRedirect(self.success_url)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['livres'] = Livre.objects.all()  # Passer tous les livres disponibles
+        return context
+
+
 class CommanderUpdate(StaffRequiredMixin, UpdateView):
     model = Commander
-    form_class = CommanderForm
+    form_class = CommanderUpdateForm
     template_name = 'gui/modifier_commandes.html'
     success_url = reverse_lazy('commandes_list')
     def get_object(self):
@@ -1375,6 +1526,10 @@ def terminer_commande(request, pk):
         commande.statut = 'terminé'
         commande.save()
 
+        livre = commande.livre
+        livre.quantite_disponible += commande.quantite  # Ajouter la quantité de la commande
+        livre.save()
+
         # Vérifier si le livre est dans la table Reserver
         reservations = Reserver.objects.filter(livre=commande.livre, statut='en cours')
         for reservation in reservations:
@@ -1442,14 +1597,67 @@ class ReserverList(StaffRequiredMixin, ListView):
         context['reservations_en_cours'] = reservations_en_cours
         context['reservations_terminees'] = reservations_terminees
         return context
+
+
 class ReserverCreate(StaffRequiredMixin, CreateView):
     model = Reserver
-    form_class = ReserverForm  # Formulaire à créer pour Reserver
+    form_class = ReserverForm
     template_name = 'gui/ajouter_reservation.html'
     success_url = reverse_lazy('reservations_list')
+
+    def form_valid(self, form):
+        # Récupérer les données générales du formulaire
+        personne = form.cleaned_data['personne']
+        date_reservation = form.cleaned_data['date_reservation']
+        statut = form.cleaned_data['statut']
+
+        # Récupérer les livres et quantités depuis le POST
+        livres = self.request.POST.getlist('livres[]')  # Liste des isbn13
+        quantites = self.request.POST.getlist('quantites[]')  # Quantités associées
+
+        if not livres or not quantites:
+            form.add_error(None, "Vous devez ajouter au moins un livre avec une quantité.")
+            return self.form_invalid(form)
+
+        try:
+            with transaction.atomic():  # Gestion transactionnelle
+                for isbn13, quantite in zip(livres, quantites):
+                    if isbn13 and quantite:
+                        quantite = int(quantite)  # Conversion explicite en entier
+                        if quantite <= 0:
+                            form.add_error(None, f"Quantité invalide pour le livre {isbn13}.")
+                            return self.form_invalid(form)
+                        # Rechercher le livre via isbn13
+                        try:
+                            livre = Livre.objects.get(isbn13=isbn13)
+                        except Livre.DoesNotExist:
+                            form.add_error(None, f"Le livre avec l'ISBN {isbn13} n'existe pas.")
+                            return self.form_invalid(form)
+
+                        # Créer une réservation
+                        Reserver.objects.create(
+                            personne=personne,
+                            livre=livre,
+                            date_reservation=date_reservation,
+                            statut=statut,
+                            quantite=quantite
+                        )
+
+        except Exception as e:
+            form.add_error(None, f"Erreur lors de l'enregistrement : {e}")
+            return self.form_invalid(form)
+
+        return HttpResponseRedirect(self.success_url)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['livres'] = Livre.objects.all()  # Passer tous les livres disponibles
+        return context
+
+
 class ReserverUpdate(StaffRequiredMixin, UpdateView):
     model = Reserver
-    form_class = ReserverForm  # Formulaire à créer pour Reserver
+    form_class = ReserverUpdateForm  # Formulaire à créer pour Reserver
     template_name = 'gui/modifier_reservations.html'
     success_url = reverse_lazy('reservations_list')
 
@@ -1539,12 +1747,26 @@ class ReserverResearch(ListView):
         return context
 @login_required(login_url='login')
 def terminer_reservation(request, pk):
-    if not request.user.is_staff:  # Vérifie que l'utilisateur est autorisé
+    if not request.user.is_staff:
         return HttpResponseForbidden("Vous n'avez pas la permission d'effectuer cette action.")
+
     reservation = get_object_or_404(Reserver, pk=pk)
+    livre = reservation.livre
+
     if reservation.statut == 'en cours':
+        # Vérifier que la quantité réservée ne dépasse pas le stock disponible
+        if reservation.quantite > livre.quantite_disponible:
+            messages.error(request, "La quantité réservée dépasse le stock disponible.")
+            return redirect('reservations_list')  # Ou rediriger vers une autre page si nécessaire
+
         reservation.statut = 'terminé'
         reservation.save()
+
+        # Mise à jour du stock du livre
+        livre.quantite_disponible -= reservation.quantite
+        livre.save()
+
+        messages.success(request, "Réservation terminée avec succès.")
 
     return redirect('reservations_list')
 @login_required(login_url='login')

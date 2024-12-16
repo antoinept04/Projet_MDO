@@ -95,18 +95,49 @@
     <!-- Navbar -->
     {% include 'gui/navbar.html' %}
 
-    <h1>Créer une Commande</h1>
-
-    <form method="post">
-        {% csrf_token %}
-
-        <div class="form-group">
-            {{ form.as_p }}
+    <h1>Ajouter une Commande</h1>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    
+    <h3>Livres et Quantités</h3>
+    <div id="livres-container">
+        <div class="livre-entry">
+            <label for="livre">Livre:</label>
+            <select name="livres[]" required>
+                {% for livre in livres %}
+                <option value="{{ livre.isbn13 }}">{{ livre.titre }} (Stock: {{ livre.quantite_disponible }})</option>
+                {% endfor %}
+            </select>
+            <label for="quantite">Quantité:</label>
+            <input type="number" name="quantites[]" min="1" required>
+            <button type="button" class="remove-entry">Supprimer</button>
         </div>
+    </div>
+    
+    <button type="button" id="add-livre">Ajouter un Livre</button>
+    <br><br>
+    <button type="submit">Enregistrer</button>
+</form>
 
-        <button type="submit">Enregistrer</button>
-        <button type="button" onclick="window.location.href='{% url 'commandes_list' %}'">Annuler</button>
-    </form>
+<script>
+document.getElementById('add-livre').addEventListener('click', function () {
+    const container = document.getElementById('livres-container');
+    const newEntry = document.querySelector('.livre-entry').cloneNode(true);
+    newEntry.querySelector('select').value = '';  // Reset the selected value
+    newEntry.querySelector('input').value = '';  // Reset the quantity input
+    container.appendChild(newEntry);
+});
+
+document.getElementById('livres-container').addEventListener('click', function (e) {
+    if (e.target.classList.contains('remove-entry')) {
+        e.target.parentElement.remove();
+    }
+});
+</script>
+
+
+
 
 </body>
 </html>

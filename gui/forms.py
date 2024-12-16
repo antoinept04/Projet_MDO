@@ -79,14 +79,12 @@ class PersonneForm(forms.ModelForm):
         # Si l'utilisateur n'est pas un superutilisateur, retirer le champ 'role'
         if self.user and not self.user.is_superuser:
             self.fields.pop('role', None)
-
 class ContributeurForm(forms.ModelForm):
     class Meta:
         model = Contributeur
         fields = ['type', 'nom', 'prenom', 'date_naissance']
 class IDContributeurForm(forms.Form):
     contributeur_id = forms.IntegerField(label="ID du contributeur")
-
 class LivreForm(forms.ModelForm):
     editeur_nom = forms.CharField(max_length=255, required=False, label="Nom de l'éditeur")
 
@@ -111,12 +109,8 @@ class LivreForm(forms.ModelForm):
         if commit:
             livre.save()
         return livre
-
 class ISBNForm(forms.Form):
     isbn13 = forms.CharField(label='ISBN13 du livre', max_length=13)
-
-
-
 class EditeurForm(forms.ModelForm):
     class Meta:
         model = Editeur
@@ -124,6 +118,22 @@ class EditeurForm(forms.ModelForm):
 class IDEditeurForm(forms.Form):
     id = forms.IntegerField(label="ID de l'éditeur")
 class CommanderForm(forms.ModelForm):
+    class Meta:
+        model = Commander
+        fields = ['personne', 'date_commande', 'fournisseur', 'statut']  # Ajout du fournisseur 'fournisseur',
+        widgets = {
+            'date_commande': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrer les personnes ayant le rôle "Employé" ou "Admin"
+        self.fields['personne'].queryset = Personne.objects.filter(
+            role__type__in=['employé', 'admin']  # Filtrage par 'role__type'
+        )
+        # Ajouter un queryset pour le champ fournisseur (si nécessaire)
+        #self.fields['fournisseur'].queryset = Fournisseur.objects.all()  # Toutes les valeurs de Fournisseur
+class CommanderUpdateForm(forms.ModelForm):
     class Meta:
         model = Commander
         fields = ['personne', 'livre', 'date_commande', 'quantite', 'fournisseur', 'statut']  # Ajout du fournisseur 'fournisseur',
@@ -144,6 +154,20 @@ class IDCommandeForm(forms.Form):
 class ReserverForm(forms.ModelForm):
     class Meta:
         model = Reserver
+        fields = ['personne', 'statut', 'date_reservation']
+
+        widgets = {
+            'date_reservation': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # Utilisation de super() simplifié
+        # Filtrer les personnes ayant le rôle "client"
+        self.fields['personne'].queryset = Personne.objects.filter(role__type='client')
+
+class ReserverUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Reserver
         fields = ['personne', 'livre', 'quantite', 'statut', 'date_reservation']
 
         widgets = {
@@ -152,16 +176,10 @@ class ReserverForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super(ReserverForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)  # Utilisation de super() simplifié
         # Filtrer les personnes ayant le rôle "client"
         self.fields['personne'].queryset = Personne.objects.filter(role__type='client')
 
-        # Ajoutez des labels personnalisés si nécessaire
-        self.fields['personne'].label = "Personne"
-        self.fields['livre'].label = "Livre"
-        self.fields['quantite'].label = "Quantité"
-        self.fields['statut'].label = "Statut"
-        self.fields['date_reservation'].label = "Date de réservation"
 class IDReservationForm(forms.Form):
     reservation_id = forms.IntegerField(label="ID de la reservation")
 class FournisseurForm(forms.ModelForm):
@@ -183,9 +201,10 @@ FournisseurAdresseFormSet = inlineformset_factory(
     can_delete=True
 )
 class AchatForm(forms.ModelForm):
+
     class Meta:
         model = Achat
-        fields = ['personne', 'livre', 'date_achat', 'quantite']
+        fields = ['personne', 'date_achat']
         widgets = {
             'date_achat': forms.DateInput(attrs={'type': 'date'}),
         }
@@ -197,3 +216,16 @@ class AchatForm(forms.ModelForm):
         )
 class IDAchatForm(forms.Form):
     achat_id = forms.IntegerField(label="ID de l'achat'")
+
+class AchatUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Achat
+        fields = ['personne', 'date_achat', 'livre', 'quantite']
+        widgets = {
+            'date_achat': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrer les personnes ayant le rôle "client"
+        self.fields['personne'].queryset = Personne.objects.filter(role__type='client')
