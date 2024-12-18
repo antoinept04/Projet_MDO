@@ -325,19 +325,30 @@ class Notifier(models.Model):
 # Signal pour envoyer un mail lors de la création d'une notification
 @receiver(post_save, sender=Notifier)
 def send_notification_email(sender, instance, created, **kwargs):
-    if created:  # Si l'objet a été créé
+    if created:  # Si une notification est nouvellement créée
         subject = f"Nouvelle notification pour le livre {instance.livre.titre}"
-        message = f"Une nouvelle notification a été créée pour le livre '{instance.livre.titre}'.\n\n" \
-                  f"Type : {instance.get_type_display()}\n" \
-                  f"Quantité : {instance.quantite}\n" \
-                  f"Commentaire : {instance.commentaire}\n" \
-                  f"Date : {instance.date_creation.strftime('%d/%m/%Y %H:%M:%S')}"
-        recipient_list = ['sachamalray2000@gmail.com']  # Remplace par l'email cible
+        message = f"""\
+Bonjour,
 
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            recipient_list,
-            fail_silently=False,  # Pour ne pas échouer silencieusement en cas d'erreur d'envoi
-        )
+Une nouvelle notification a été créée pour le livre "{instance.livre.titre}".
+
+Type de notification : {instance.get_type_display()}
+Quantité : {instance.quantite}
+Commentaire : {instance.commentaire}
+Date de création : {instance.date_creation.strftime('%d/%m/%Y %H:%M:%S')}
+
+Cordialement,
+L'équipe de gestion.
+"""
+        recipient_list = ['sachamalray2000@gmail.com']  # Adresse e-mail cible
+        try:
+            send_mail(
+                subject,
+                message,
+                settings.DEFAULT_FROM_EMAIL,
+                recipient_list,
+                fail_silently=False,
+            )
+            print(f"Email envoyé avec succès à {recipient_list}")
+        except Exception as e:
+            print(f"Erreur lors de l'envoi de l'email : {e}")

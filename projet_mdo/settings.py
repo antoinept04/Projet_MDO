@@ -128,13 +128,12 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Paramètres d'envoi d'email
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.umons.ac.be'  # Remplace par le serveur SMTP d'UMONS
-EMAIL_PORT = 587  # Port pour l'envoi d'email (TLS)
-EMAIL_USE_TLS = True  # Utilisation de TLS pour sécuriser la connexion
-EMAIL_HOST_USER = '231418@umons.ac.be'  # Ton adresse email complète
-EMAIL_HOST_PASSWORD = 'aqwpmzsx666fapbkh94'  # Ton mot de passe ou token d'application
-DEFAULT_FROM_EMAIL = 'no-reply@projet-bibliothèque.com'  # Adresse d'expéditeur
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Serveur SMTP de Gmail
+EMAIL_PORT = 587  # Port SMTP sécurisé avec TLS
+EMAIL_USE_TLS = True  # Utilisation de TLS pour sécuriser la connexion
+EMAIL_HOST_USER = 'sachamalray2000@gmail.com'  # Votre adresse Gmail
+EMAIL_HOST_PASSWORD = 'qlkrnwgbzpekxphz'  # Votre mot de passe d'application (sans espaces)
+DEFAULT_FROM_EMAIL = 'sachamalray2000@gmail.com'  # Adresse utilisée pour envoyer les emails
 
