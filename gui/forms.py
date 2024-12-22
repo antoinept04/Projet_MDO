@@ -83,6 +83,9 @@ class ContributeurForm(forms.ModelForm):
     class Meta:
         model = Contributeur
         fields = ['type', 'nom', 'prenom', 'date_naissance']
+        widgets = {
+            'date_naissance': forms.DateInput(attrs={'type': 'date'}),
+        }
 class IDContributeurForm(forms.Form):
     contributeur_id = forms.IntegerField(label="ID du contributeur")
 class LivreForm(forms.ModelForm):

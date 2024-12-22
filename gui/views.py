@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required #accès aux pages seulement si login
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db import connection
 from django.db.models import Q, Prefetch
 from django.http import HttpResponseRedirect, HttpResponseForbidden #rediriger vers une autre url, refuser l'accès à une url
 from django.shortcuts import render, redirect, get_object_or_404
@@ -811,6 +812,15 @@ class ContributeurCreate(StaffRequiredMixin,CreateView):
     form_class = ContributeurForm
     template_name = 'gui/ajouter_contributeur.html'
     success_url = reverse_lazy('contributeurs_list')
+    def form_valid(self, form):
+        # Appeler la méthode parente pour enregistrer l'objet
+        response = super().form_valid(form)
+
+        # Afficher les requêtes SQL exécutées
+        for query in connection.queries:
+            print(query['sql'])
+
+        return response
 class ContributeurDelete(StaffRequiredMixin,View):
     template_name = 'gui/supprimer_contributeur.html'
 
@@ -918,6 +928,11 @@ class LivreList(StaffRequiredMixin, ListView):
         # Appliquer le tri si valide, sinon fallback au tri par 'titre'
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
+
+        with connection.cursor() as cursor:
+            list(queryset)  # Exécuter la requête pour déclencher le SQL
+            for query in connection.queries:
+                print(query['sql'])
 
         return queryset
 
