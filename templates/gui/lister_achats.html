@@ -194,7 +194,7 @@
     <div class="pagination">
         <span class="step-links">
             {% if page_obj.has_previous %}
-                <a href="?page=1{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}">&laquo; Première</a>
+                <a href="?page=1{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}"style="display:inline;">&laquo; Première</a>
                 <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}{% if request.GET.order %}&order={{ request.GET.order }}{% endif %}">Précédente</a>
             {% endif %}
 

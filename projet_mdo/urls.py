@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path
+from gui.views import custom_404_view
 from gui.views import (
     home, loginPage, logoutUser,
     RoleList,           RoleCreate,
@@ -119,3 +120,6 @@ urlpatterns = [
     path('notifications/<int:notification_id>/delete/', delete_notification, name='delete_notification'),
     path('check_reservations/', check_reservations, name='check_reservations'),
 ]
+
+
+handler404 = custom_404_view

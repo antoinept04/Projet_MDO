@@ -844,29 +844,52 @@ class ContributeurUpdate(StaffRequiredMixin, UpdateView):
 
     def form_invalid(self, form):
         return self.render_to_response(self.get_context_data(form=form))
-class ContributeurResearch(StaffRequiredMixin,ListView):
+class ContributeurResearch(ListView):
     model = Contributeur
     template_name = 'gui/lister_contributeurs.html'
+    context_object_name = 'contributeurs'
 
     def get_queryset(self):
+        # Récupérer les paramètres de recherche et de tri
         search_query = self.request.GET.get('search', '')
+        sort_by = self.request.GET.get('sort_by', 'nom')  # On trie par défaut par nom
+        order = self.request.GET.get('order', 'asc')
+        sort_prefix = '' if order == 'asc' else '-'
+
+        # Définir la recherche de manière générique pour tous les cas
+        query = Q()
 
         if search_query:
-            # Diviser la chaîne de recherche en mots-clés
             keywords = search_query.split()
-            query = Q()
-
             for keyword in keywords:
-                # Ajouter chaque mot aux différents champs de recherche
+                # Recherche sur les champs de Contributeur
                 query |= Q(nom__icontains=keyword) | \
-                         Q(prenom__icontains=keyword)|\
-                        Q(id__icontains=keyword)
+                         Q(prenom__icontains=keyword) | \
+                         Q(id__icontains=keyword)
 
-            # Retourner les livres correspondant aux critères
-            return Contributeur.objects.filter(query).distinct()
 
-        # Si aucun terme de recherche, retourner tous les livres
-        return Contributeur.objects.all()
+
+        auteurs = Contributeur.objects.filter(type='Auteur').filter(query)
+        traducteurs = Contributeur.objects.filter(type='Traducteur').filter(query)
+        illustrateurs = Contributeur.objects.filter(type='Illustrateur').filter(query)
+
+        auteurs = auteurs.order_by(f"{sort_prefix}{sort_by}")
+        traducteurs = traducteurs.order_by(f"{sort_prefix}{sort_by}")
+        illustrateurs = illustrateurs.order_by(f"{sort_prefix}{sort_by}")
+        return auteurs, traducteurs, illustrateurs
+
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        auteurs, traducteurs, illustrateurs = self.get_queryset()
+
+        # Ajouter les commandes au contexte
+        context['auteurs'] = auteurs
+        context['traducteurs'] = traducteurs
+        context['illustrateurs'] = illustrateurs
+
+        return context
+
 @login_required(login_url='login')
 def saisir_ID_contributeur(request):
     if request.method == 'POST':
@@ -1877,3 +1900,6 @@ def delete_notification(request, notification_id):
         notification = get_object_or_404(Notifier, id=notification_id)
         notification.delete()
         return redirect('notifications_list')
+
+def custom_404_view(request, exception):
+    return render(request, 'gui/404.html', status=404)
