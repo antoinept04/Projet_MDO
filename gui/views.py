@@ -816,9 +816,7 @@ class ContributeurCreate(StaffRequiredMixin,CreateView):
         # Appeler la méthode parente pour enregistrer l'objet
         response = super().form_valid(form)
 
-        # Afficher les requêtes SQL exécutées
-        for query in connection.queries:
-            print(query['sql'])
+
 
         return response
 class ContributeurDelete(StaffRequiredMixin,View):
@@ -929,10 +927,7 @@ class LivreList(StaffRequiredMixin, ListView):
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
-        with connection.cursor() as cursor:
-            list(queryset)  # Exécuter la requête pour déclencher le SQL
-            for query in connection.queries:
-                print(query['sql'])
+
 
         return queryset
 
