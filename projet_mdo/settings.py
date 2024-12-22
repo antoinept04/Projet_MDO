@@ -137,3 +137,20 @@ EMAIL_HOST_USER = 'sachamalray2000@gmail.com'  # Votre adresse Gmail
 EMAIL_HOST_PASSWORD = 'qlkrnwgbzpekxphz'  # Votre mot de passe d'application (sans espaces)
 DEFAULT_FROM_EMAIL = 'sachamalray2000@gmail.com'  # Adresse utilisée pour envoyer les emails
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'stream': 'ext://sys.stdout',
+        },
+    },
+    'loggers': {
+        'django.db.backends': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        },
+    },
+}
