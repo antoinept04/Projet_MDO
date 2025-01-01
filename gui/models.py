@@ -11,7 +11,7 @@ from django.db.models import Sum
 from decimal import Decimal
 
 class Ville(models.Model):
-    nom_ville = models.CharField(max_length=100, primary_key=True)
+    nom_ville = models.CharField(max_length=100)
     code_postal = models.CharField(max_length=10)
     pays = models.CharField(max_length=50)
 

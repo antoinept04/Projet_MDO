@@ -2,9 +2,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ajouter une Ville</title>
+    <meta charset="UTF-8"/>
+    <title>Supprimer la Ville</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -110,17 +109,16 @@
 <body>
 {% include 'gui/navbar.html' %}
 
-<div class="form-container">
-    <h2>Ajouter une Ville</h2>
 
-    <form method="post">
+<h2>Supprimer la Ville ?</h2>
 
-        {% csrf_token %}
+<p>Êtes-vous sûr(e) de vouloir supprimer <strong>{{ object.nom_ville }}</strong> ?
+   Cette action est irréversible.</p>
 
-        {{ form.as_p }}
-        <input type="submit" value="Ajouter">
-    </form>
-</div>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Confirmer la suppression</button>
+</form>
 
 </body>
 </html>

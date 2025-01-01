@@ -4,7 +4,7 @@ from gui.views import custom_404_view
 from gui.views import (
     home, loginPage, logoutUser,
     RoleList,           RoleCreate,
-    VilleList,          VilleCreate,
+    VilleList,          VilleCreate,        VilleDelete,        VilleUpdate,
     AdresseList,        create_adresse,     AdresseDelete,                          AdresseResearch,
     PersonneList,       personne_create,    PersonneDelete,     PersonneUpdate,     PersonneResearch,     PersonneSelectView,
     EditeurList,        EditeurCreate,      EditeurDelete,      EditeurUpdate,      EditeurResearch,      saisir_ID_editeur,
@@ -31,6 +31,8 @@ urlpatterns = [
 
     path('villes/', VilleList.as_view(), name='villes_list'),
     path('villes/create/', VilleCreate.as_view(), name='villes_create'),
+    path('ville/<int:pk>/update/', VilleUpdate.as_view(), name='ville_update'),
+    path('ville/<int:pk>/delete/', VilleDelete.as_view(), name='ville_delete'),
 
     path('adresses/', AdresseList.as_view(), name='adresses_list'),
     path('adresses/create/', create_adresse, name='adresses_create'),

@@ -66,7 +66,7 @@ class VilleList(StaffRequiredMixin,ListView):
     template_name = 'gui/lister_villes.html'
 class VilleCreate(StaffRequiredMixin,CreateView):
     model = Ville
-    fields = ['nom', 'code_postal', 'pays']
+    fields = ['nom_ville', 'code_postal', 'pays']
     template_name = 'gui/ajouter_ville.html'
     success_url = reverse_lazy('villes_list')
 def ville_create(request):
@@ -98,6 +98,18 @@ def ville_create(request):
     return render(request, 'gui/ajouter_ville.html', {
         'form_ville': form_ville
     })
+
+class VilleUpdate(StaffRequiredMixin, UpdateView):
+    model = Ville
+    fields = ['nom_ville', 'code_postal', 'pays']
+    template_name = 'gui/modifier_ville.html'
+    success_url = reverse_lazy('villes_list')
+
+
+class VilleDelete(StaffRequiredMixin, DeleteView):
+    model = Ville
+    template_name = 'gui/supprimer_ville.html'
+    success_url = reverse_lazy('villes_list')
 #%%------------------------------GERER-LES-ADRESSES----------------------------------
 class AdresseList(StaffRequiredMixin,ListView):
     model = Adresse

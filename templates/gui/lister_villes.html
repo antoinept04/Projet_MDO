@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -7,91 +8,176 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            background-color: #fff5f5;
+            color: #990000;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
         }
-        .container {
-            width: 80%;
-            margin: 20px auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
+        .navbar {
+            display: flex;
+            justify-content: center;
+            background-color: #cc0000;
+            padding: 10px 0;
         }
-        h2 {
-            color: #333;
+
+        .nav-buttons a {
+            background-color: #990000;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
             text-align: center;
-            margin-bottom: 20px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            margin: 0 10px;
+            transition: background-color 0.3s, transform 0.2s;
         }
+
+        .nav-buttons a:hover {
+            background-color: #cc0000;
+            transform: translateY(-3px);
+        }
+
+        .button-container {
+            margin: 20px;
+        }
+
+        .button-container .button {
+            background-color: #990000;
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+
+        .button-container .button:hover {
+            background-color: #cc0000;
+        }
+
+        .container {
+            margin: 0 auto;
+            max-width: 900px;
+            padding: 0 20px;
+        }
+
+        h2 {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .add-button {
+            display: inline-block;
+            margin-bottom: 10px;
+            background-color: #cc0000;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .add-button:hover {
+            background-color: #990000;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
-            font-size: 16px;
+            margin-top: 20px;
+            border: 1px solid #ccc;
         }
-        table th, table td {
-            padding: 12px 15px;
+
+        th, td {
+            padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border: 1px solid #ccc;
         }
-        table th {
-            background-color: #007BFF;
-            color: white;
+
+        th {
+            background-color: #ffffff;
+            color: #990000;
         }
-        table tr:nth-child(even) {
+
+        tr:nth-child(even) {
             background-color: #f9f9f9;
         }
-        .add-button {
-            display: block;
-            width: fit-content;
-            margin: 20px auto;
-            padding: 10px 20px;
-            text-align: center;
-            background-color: #007BFF;
-            color: white;
+
+        .action-buttons a {
+            display: inline-block;
+            margin-right: 5px;
+            padding: 5px 10px;
+            color: #fff;
             text-decoration: none;
-            border-radius: 5px;
-            font-size: 16px;
+            border-radius: 3px;
+            font-size: 0.9em;
         }
-        .add-button:hover {
-            background-color: #0056b3;
+
+        .action-buttons .edit-button {
+            background-color: #0066cc; /* bleu */
+        }
+
+        .action-buttons .edit-button:hover {
+            background-color: #004da1;
+        }
+
+        .action-buttons .delete-button {
+            background-color: #cc0000; /* rouge */
+        }
+
+        .action-buttons .delete-button:hover {
+            background-color: #990000;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #990000;
         }
     </style>
 </head>
 <body>
-<div class="button-container">
-    <a href="{% url 'homepage' %}" class="button">Retour à l'Accueil</a>
-</div>
+{% include 'gui/navbar.html' %}
+
+
+
 <div class="container">
+
     <h2>Liste des Villes</h2>
-    
-    <a href="/villes/create/" class="add-button">Ajouter une Ville</a>
-    
+
+    <!-- Bouton pour ajouter une ville -->
+    <a href="{% url 'villes_create' %}" class="add-button">Ajouter une Ville</a>
+
     <table>
         <thead>
-            <tr>
-                <th>Nom</th>
-                <th>Code Postal</th>
-                <th>Pays</th>
-            </tr>
+        <tr>
+            <th>Nom</th>
+            <th>Code Postal</th>
+            <th>Pays</th>
+            <th>Actions</th>
+        </tr>
         </thead>
         <tbody>
-            {% for ville in object_list %}
+        {% for ville in object_list %}
             <tr>
                 <td>{{ ville.nom_ville }}</td>
                 <td>{{ ville.code_postal }}</td>
                 <td>{{ ville.pays }}</td>
+                <td class="action-buttons">
+                    <!-- Bouton Modifier -->
+                    <a href="{% url 'ville_update' pk=ville.pk %}" class="edit-button">Modifier</a>
+                    <!-- Bouton Supprimer -->
+                    <a href="{% url 'ville_delete' pk=ville.pk %}" class="delete-button">Supprimer</a>
+                </td>
             </tr>
-            {% empty %}
+        {% empty %}
             <tr>
-                <td colspan="3" style="text-align: center;">Aucune ville trouvée.</td>
+                <td colspan="4" class="empty-message">Aucune ville trouvée.</td>
             </tr>
-            {% endfor %}
+        {% endfor %}
         </tbody>
     </table>
-</div>
 
+</div>
 
 </body>
 </html>
