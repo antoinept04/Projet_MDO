@@ -111,7 +111,9 @@ class VilleDelete(StaffRequiredMixin, DeleteView):
     template_name = 'gui/supprimer_ville.html'
     success_url = reverse_lazy('villes_list')
 #%%------------------------------GERER-LES-ADRESSES----------------------------------
-class AdresseList(StaffRequiredMixin,ListView):
+from django.db.models import Q
+
+class AdresseList(StaffRequiredMixin, ListView):
     model = Adresse
     template_name = 'gui/lister_adresses.html'
 
@@ -119,25 +121,26 @@ class AdresseList(StaffRequiredMixin,ListView):
         sort_by = self.request.GET.get('sort_by', 'id')
         order = self.request.GET.get('order', 'asc')
 
-
         sort_prefix = '' if order == 'asc' else '-'
 
-
         sorting_options = {
-            'id':'id',
-            'rue':'rue',
-            'n_rue':'n_rue',
-            'ville':'ville',
-            'ville_code_postal':'ville__code_postal',
-            'ville_pays':'ville__pays',
+            'id': 'id',
+            'rue': 'rue',
+            'n_rue': 'n_rue',
+            'ville': 'ville',
+            'ville_code_postal': 'ville__code_postal',
+            'ville_pays': 'ville__pays',
         }
+
+        # Récupération du queryset de base
         queryset = super().get_queryset()
 
-
+        # Application du tri seulement
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
         return queryset
+
 @login_required(login_url='login')
 def create_adresse(request):
     if request.method == 'POST':
@@ -182,31 +185,43 @@ def create_adresse(request):
     return render(request, 'gui/ajouter_adresse.html', {
         'adresse_form': adresse_form,
     })
-class AdresseResearch(StaffRequiredMixin,ListView):
+class AdresseResearch(StaffRequiredMixin, ListView):
     model = Adresse
     template_name = 'gui/lister_adresses.html'
 
     def get_queryset(self):
-        search_query = self.request.GET.get('search', '')
+        sort_by = self.request.GET.get('sort_by', 'id')
+        order = self.request.GET.get('order', 'asc')
+        search_query = self.request.GET.get('search', '').strip()
 
+        sort_prefix = '' if order == 'asc' else '-'
+        sorting_options = {
+            'id': 'id',
+            'rue': 'rue',
+            'n_rue': 'n_rue',
+            'ville': 'ville',
+            'ville_code_postal': 'ville__code_postal',
+            'ville_pays': 'ville__pays',
+        }
+
+        queryset = super().get_queryset()
+
+        # --- Filtrage ---
         if search_query:
+            # On coupe la chaîne en mots
+            words = search_query.split()
+            for word in words:
 
-            keywords = search_query.split()
-            query = Q()
-
-            for keyword in keywords:
-
-                query |= Q(rue__icontains=keyword) | \
-                         Q(n_rue__icontains=keyword)|\
-                        Q(ville__nom_ville__icontains=keyword) |\
-                        Q(ville__code_postal__icontains=keyword)|\
-                        Q(ville__pays__icontains=keyword)
+                queryset = queryset.filter(
+                    Q(rue__icontains=word) |
+                    Q(n_rue__icontains=word)
+                )
 
 
-            return Adresse.objects.filter(query).distinct()
+        if sort_by in sorting_options:
+            queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
-
-        return Adresse.objects.all()
+        return queryset
 class AdresseDelete(StaffRequiredMixin, View):
     template_name = 'gui/supprimer_adresse.html'
 
@@ -227,18 +242,21 @@ class AdresseDelete(StaffRequiredMixin, View):
 
         return render(request, self.template_name, {'error': 'Adresse invalide.'})
 #%%------------------------------GERER-LES-PERSONNES---------------------------------
-class PersonneList(StaffRequiredMixin,ListView):
+class PersonneList(StaffRequiredMixin, ListView):
     model = Personne
     template_name = 'gui/lister_personnes.html'
+    context_object_name = 'personnes'  # Optionnel : pour un accès plus clair dans le template
 
     def get_queryset(self):
+        # Récupération des paramètres GET
         sort_by = self.request.GET.get('sort_by', 'nom')
         order = self.request.GET.get('order', 'asc')
+        search_query = self.request.GET.get('q', '').strip()
 
-
+        # Détermination du préfixe de tri
         sort_prefix = '' if order == 'asc' else '-'
 
-
+        # Options de tri autorisées
         sorting_options = {
             'nom': 'nom',
             'prenom': 'prenom',
@@ -250,10 +268,17 @@ class PersonneList(StaffRequiredMixin,ListView):
             'adresse__ville__nom_ville': 'adresse__ville__nom_ville',
         }
 
-
+        # Obtention du queryset de base
         queryset = super().get_queryset()
 
+        # Application du filtre de recherche si une requête est présente
+        if search_query:
+            queryset = queryset.filter(
+                Q(nom__icontains=search_query) |
+                Q(prenom__icontains=search_query)
+            )
 
+        # Application du tri si l'option est valide
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
@@ -1075,27 +1100,22 @@ class LivreUpdate(StaffRequiredMixin, View):
                 livre.contributeurs.add(contributeur)
 
 
-class LivreResearch(StaffRequiredMixin,ListView):
+class LivreResearch(StaffRequiredMixin, ListView):
     model = Livre
     template_name = 'gui/lister_livres.html'
 
     def get_queryset(self):
-        search_query = self.request.GET.get('search', '')
+        search_query = self.request.GET.get('search', '').strip()
 
         if search_query:
 
             keywords = search_query.split()
             query = Q()
 
+
             for keyword in keywords:
-                query |= Q(titre__icontains=keyword) | \
-                         Q(editeur__nom__icontains=keyword) | \
-                         Q(contributeurs__nom__icontains=keyword) | \
-                         Q(isbn13__icontains=keyword) | \
-                         Q(type__icontains=keyword) | \
-                         Q(genre_litteraire__icontains=keyword) | \
-                         Q(sous_genre__icontains=keyword) | \
-                         Q(langue__icontains=keyword)
+                query |= Q(titre__icontains=keyword) | Q(isbn13__icontains=keyword)
+
 
             livres = Livre.objects.filter(query).distinct().prefetch_related(
                 Prefetch('contributeurs', queryset=Contributeur.objects.all())
