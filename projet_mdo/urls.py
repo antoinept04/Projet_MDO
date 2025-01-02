@@ -1,20 +1,25 @@
 from django.contrib import admin
 from django.urls import path
+
 from gui.views import custom_404_view
 from gui.views import (
     home, loginPage, logoutUser,
-    RoleList,           RoleCreate,
-    VilleList,          VilleCreate,        VilleDelete,        VilleUpdate,
-    AdresseList,        create_adresse,     AdresseDelete,                          AdresseResearch,
-    PersonneList,       personne_create,    PersonneDelete,     PersonneUpdate,     PersonneResearch,     PersonneSelectView,
-    EditeurList,        EditeurCreate,      EditeurDelete,      EditeurUpdate,      EditeurResearch,      saisir_ID_editeur,
-    ContributeurList,   ContributeurCreate, ContributeurDelete, ContributeurUpdate, ContributeurResearch, saisir_ID_contributeur,
-    LivreList,          create_livre,       LivreDelete,        LivreUpdate,        LivreResearch,        saisir_isbn,
-    FournisseurList,    fournisseur_create, FournisseurDelete,  FournisseurUpdate,  FournisseurResearch,  SaisirIDFournisseurView,
-    CommanderList,      CommanderCreate,    CommanderDelete,    CommanderUpdate,    CommanderResearch,    saisir_ID_commande,      terminer_commande,
-    ReserverList,       ReserverCreate,     ReserverDelete,     ReserverUpdate,     ReserverResearch,     saisir_ID_reservation,   terminer_reservation,
-    AchatList,          AchatCreate,        AchatDelete,        AchatUpdate,        AchatResearch,        saisir_ID_achat,
-    NotificationList,   check_reservations, mark_notification_done, delete_notification, autres
+    RoleList, RoleCreate,
+    VilleList, VilleCreate, VilleDelete, VilleUpdate,
+    AdresseList, create_adresse, AdresseDelete, AdresseResearch,
+    PersonneList, personne_create, PersonneDelete, PersonneUpdate, PersonneResearch, PersonneSelectView,
+    EditeurList, EditeurCreate, EditeurDelete, EditeurUpdate, EditeurResearch, saisir_ID_editeur,
+    ContributeurList, ContributeurCreate, ContributeurDelete, ContributeurUpdate, ContributeurResearch,
+    saisir_ID_contributeur,
+    LivreList, create_livre, LivreDelete, LivreUpdate, LivreResearch, saisir_isbn,
+    FournisseurList, fournisseur_create, FournisseurDelete, FournisseurUpdate, FournisseurResearch,
+    SaisirIDFournisseurView,
+    CommanderList, CommanderCreate, CommanderDelete, CommanderUpdate, CommanderResearch, saisir_ID_commande,
+    terminer_commande,
+    ReserverList, ReserverCreate, ReserverDelete, ReserverUpdate, ReserverResearch, saisir_ID_reservation,
+    terminer_reservation,
+    AchatList, AchatCreate, AchatDelete, AchatUpdate, AchatResearch, saisir_ID_achat,
+    NotificationList, check_reservations, mark_notification_done, delete_notification, autres
 
 )
 
@@ -44,8 +49,8 @@ urlpatterns = [
     path('personnes/create/', personne_create, name='personnes_create'),
     path('personnes/research/', PersonneResearch.as_view(), name='personnes_research'),
     path('personnes/delete/',PersonneDelete.as_view(), name='personnes_delete'),
-    path('personnes/modifier/', PersonneSelectView.as_view(), name='personnes_select'),  # Sélection de la personne à modifier
-    path('personnes/modifier/<str:email>/', PersonneUpdate.as_view(), name='personnes_update'),  # Modification de la personne
+    path('personnes/modifier/', PersonneSelectView.as_view(), name='personnes_select'),
+    path('personnes/modifier/<str:email>/', PersonneUpdate.as_view(), name='personnes_update'),
 
 
     path('editeurs/', EditeurList.as_view(), name='editeurs_list'),
@@ -67,8 +72,8 @@ urlpatterns = [
     path('livres/', LivreList.as_view(), name='livres_list'),
     path('livres/create/', create_livre, name='livres_create'),
     path('livres/delete/',LivreDelete.as_view(), name='livres_delete'),
-    path('livres/saisir_isbn/', saisir_isbn, name='saisir_isbn'),  # Page pour saisir l'ISBN
-    path('livres/update/<str:isbn13>/', LivreUpdate.as_view(), name='livre_update'),  # Page pour modifier le livre
+    path('livres/saisir_isbn/', saisir_isbn, name='saisir_isbn'),
+    path('livres/update/<str:isbn13>/', LivreUpdate.as_view(), name='livre_update'),
     path('livres/research/', LivreResearch.as_view(), name='livres_research'),
 
     path('achats/', AchatList.as_view(), name='achats_list'),
@@ -101,19 +106,14 @@ urlpatterns = [
 
     path('fournisseurs/', FournisseurList.as_view(), name='fournisseurs_list'),
 
-    # Vue de recherche des fournisseurs
     path('fournisseurs/search/', FournisseurResearch.as_view(), name='fournisseurs_search'),
 
-    # Création d'un nouveau fournisseur
     path('fournisseurs/ajouter/',fournisseur_create, name='fournisseur_create'),
 
-    # Suppression d'un fournisseur
     path('fournisseurs/supprimer/<int:pk>', FournisseurDelete.as_view(), name='fournisseur_delete'),
 
-    # Modification d'un fournisseur spécifique identifié par 'nom_fournisseur'
     path('fournisseurs/modifier/<int:pk>/', FournisseurUpdate.as_view(), name='fournisseurs_update'),
 
-    # Saisie du nom du fournisseur pour redirection vers la modification
     path('fournisseurs/saisir_id/', SaisirIDFournisseurView.as_view(), name='saisir_id_fournisseur'),
 
 

@@ -1,14 +1,16 @@
-from django.db import models
+import datetime
+from decimal import Decimal
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.contrib.auth.models import BaseUserManager
 from django.core.mail import send_mail
-from django.utils import timezone
-import datetime
+from django.db import models
+from django.db.models import Sum
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.db.models import Sum
-from decimal import Decimal
+from django.utils import timezone
+
 
 class Ville(models.Model):
     nom_ville = models.CharField(max_length=100)
@@ -46,7 +48,7 @@ class PersonneManager(BaseUserManager):
         if not email:
             raise ValueError('L\'adresse email doit être définie')
         email = self.normalize_email(email)
-        extra_fields.pop('email', None)  # Supprimer email des extra_fields si elle existe
+        extra_fields.pop('email', None)
         print(f"Creating user with email: {email} and extra_fields: {extra_fields}")
         personne = self.model(email=email, **extra_fields)
         personne.set_password(password)
@@ -63,7 +65,7 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     prenom = models.CharField(max_length=100)
     date_naissance = models.DateField()
     telephone = models.CharField(max_length=15)
-    email = models.EmailField(max_length=50, primary_key=True)  # Champ unique pour l'identification
+    email = models.EmailField(max_length=50, primary_key=True)
     date_creation = models.DateField(auto_now_add=True)
     solde = models.DecimalField(max_digits=10, decimal_places=2)
     adresse = models.ForeignKey('Adresse', on_delete=models.CASCADE)
@@ -75,7 +77,7 @@ class Personne(AbstractBaseUser, PermissionsMixin):
 
     objects = PersonneManager()
 
-    USERNAME_FIELD = 'email'  # Utiliser l'email comme identifiant unique
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['nom', 'prenom']
 
     class Meta:
@@ -84,56 +86,54 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.nom} {self.prenom}"
 
-        # Méthode pour calculer le total des livres achetés
+
 
     def calculer_total_livres_achetes(self):
         total = Achat.objects.filter(personne=self).aggregate(Sum('quantite'))['quantite__sum']
         return total if total else 0
 
-        # Méthode pour mettre à jour le solde
 
-    from decimal import Decimal  # Import pour des calculs précis
+
+
 
     def mise_a_jour_solde(self):
-        # Calcul du nouveau total des livres après le dernier achat
+
         nouveau_total_livres = self.calculer_total_livres_achetes()
 
-        # Récupérer le dernier achat
+
         dernier_achat = Achat.objects.filter(personne=self).order_by('-id').first()
 
         if dernier_achat:
-            # Calcul de l'ancien total en soustrayant la quantité du dernier achat
+
             ancien_total_livres = nouveau_total_livres - dernier_achat.quantite
         else:
-            # Si aucun achat précédent, ancien total est simplement 0
+
             ancien_total_livres = 0
 
-        # Calcul du nombre de multiples de 10 atteints entre l'ancien et le nouveau total
+
         multiples_atteints = (nouveau_total_livres // 10) - (ancien_total_livres // 10)
 
-        if multiples_atteints > 0:  # Si un ou plusieurs multiples de 10 ont été atteints
-            achats = Achat.objects.filter(personne=self).order_by('-id')  # Trier par id décroissant
+        if multiples_atteints > 0:
+            achats = Achat.objects.filter(personne=self).order_by('-id')
             livres_consideres = []
             livres_total = 0
             prix_total = Decimal('0.0')
 
-            # Parcourir les achats dans l'ordre des plus récents
+
             for achat in achats:
-                for _ in range(achat.quantite):  # Ajouter chaque exemplaire du livre
+                for _ in range(achat.quantite):
                     if achat.livre.prix is None:
-                        continue  # Ignorer si le prix est None
+                        continue
                     livres_consideres.append(achat.livre)
                     livres_total += 1
                     prix_total += achat.livre.prix
 
-                    # Arrêter quand on atteint les livres nécessaires pour les multiples atteints
                     if livres_total == multiples_atteints * 10:
                         break
                 if livres_total == multiples_atteints * 10:
                     break
 
-            # Calcul de la remise sur les livres nécessaires
-            remise = prix_total * Decimal('0.05')  # 5% de remise
+            remise = prix_total * Decimal('0.05')
             self.solde += remise
             self.save()
 class Fournisseur(models.Model):
@@ -208,26 +208,24 @@ class Livre(models.Model):
         return self.titre
 
     def save(self, *args, **kwargs):
-        # Vérifie si la quantité disponible est en dessous du minimum requis
+
         notification_exists = Notifier.objects.filter(livre=self, type='quantite_min', termine=False).exists()
 
-        # Si la quantité est en dessous du minimum et qu'aucune notification n'existe, en crée une
         if self.quantite_disponible < self.quantite_minimale:
             if not notification_exists:
                 Notifier.objects.create(
-                    personne=None,  # Pas de personne spécifique
+                    personne=None,
                     livre=self,
                     quantite=self.quantite_disponible,
                     type='quantite_min',
                     commentaire=f"La quantité disponible de '{self.titre}' est en dessous du seuil minimum ({self.quantite_minimale})."
                 )
         else:
-            # Si la quantité est au-dessus du minimum et une notification existe, la supprimer
+
             if notification_exists:
                 notification = Notifier.objects.filter(livre=self, type='quantite_min', termine=False).first()
                 notification.delete()
 
-        # Appelle la méthode save de la classe parente pour effectuer la sauvegarde réelle
         super().save(*args, **kwargs)
 
 
@@ -244,19 +242,17 @@ class Achat(models.Model):
         return f"Achat de {self.quantite} exemplaire(s) de {self.livre.titre} par {self.personne.nom}"
 
     def save(self, *args, **kwargs):
-        # Vérification si l'objet est nouveau
+
         is_new = self.pk is None
 
-        # Validation de la quantité
         if self.quantite > self.livre.quantite_disponible:
             raise ValueError(
                 f"Stock insuffisant pour le livre '{self.livre.titre}'. "
                 f"Disponible : {self.livre.quantite_disponible}, demandé : {self.quantite}."
             )
 
-        super().save(*args, **kwargs)  # Enregistrement de l'achat
+        super().save(*args, **kwargs)
 
-        # Mise à jour du stock du livre (uniquement si l'achat est nouveau)
         if is_new:
             self.livre.quantite_disponible -= self.quantite
             self.livre.save()
@@ -264,7 +260,7 @@ class Achat(models.Model):
 
 @receiver(post_save, sender=Achat)
 def verifier_fidelite(sender, instance, created, **kwargs):
-    if created:  # Vérifie si un achat vient d'être créé
+    if created:
         instance.personne.mise_a_jour_solde()
 class Commander(models.Model):
     STATUT_CHOICES = [
@@ -276,7 +272,7 @@ class Commander(models.Model):
     livre = models.ForeignKey(Livre, on_delete=models.CASCADE)
     date_commande = models.DateField(default=datetime.date.today)
     quantite = models.PositiveIntegerField()
-    fournisseur = models.ForeignKey(Fournisseur, null=True, blank=True, on_delete=models.SET_NULL)  # Replace 1 with the actual Fournisseur ID
+    fournisseur = models.ForeignKey(Fournisseur, null=True, blank=True, on_delete=models.SET_NULL)
     statut = models.CharField(max_length=50, choices=STATUT_CHOICES, default='en cours')
 
 
@@ -308,7 +304,7 @@ class Notifier(models.Model):
         ('reservation', 'Reservation'),
         ('quantite_min', 'Quantite min'),
     ]
-    personne = models.ForeignKey(Personne, on_delete=models.CASCADE, null=True, blank=True)  # Autorise les valeurs NULL
+    personne = models.ForeignKey(Personne, on_delete=models.CASCADE, null=True, blank=True)
     livre = models.ForeignKey(Livre, on_delete=models.CASCADE)
     quantite = models.IntegerField()
     type = models.CharField(max_length=50, choices=TYPE_CHOICES)
@@ -322,10 +318,10 @@ class Notifier(models.Model):
     def __str__(self):
         return f"Notification pour {self.livre.titre} ({self.type})"
 
-# Signal pour envoyer un mail lors de la création d'une notification
+
 @receiver(post_save, sender=Notifier)
 def send_notification_email(sender, instance, created, **kwargs):
-    if created:  # Si une notification est nouvellement créée
+    if created:
         subject = f"Nouvelle notification pour le livre {instance.livre.titre}"
         message = f"""\
 Bonjour,
@@ -340,7 +336,7 @@ Date de création : {instance.date_creation.strftime('%d/%m/%Y %H:%M:%S')}
 Cordialement,
 L'équipe de gestion.
 """
-        recipient_list = ['sachamalray2000@gmail.com']  # Adresse e-mail cible
+        recipient_list = ['sachamalray2000@gmail.com']
         try:
             send_mail(
                 subject,

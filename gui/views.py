@@ -1,25 +1,25 @@
-from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required #accès aux pages seulement si login
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.decorators import login_required  # accès aux pages seulement si login
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.db import connection
+from django.db import transaction
 from django.db.models import Q, Prefetch
-from django.http import HttpResponseRedirect, HttpResponseForbidden #rediriger vers une autre url, refuser l'accès à une url
+from django.http import HttpResponseRedirect, \
+    HttpResponseForbidden  # rediriger vers une autre url, refuser l'accès à une url
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.utils import timezone
 from django.views.generic import ListView, CreateView, DeleteView, UpdateView, View, TemplateView
+
 from gui.models import Role, Ville, Adresse, Personne, Fournisseur, FournisseurAdresse, Editeur, Contributeur, Livre, \
-                       Achat, Commander, Reserver, Notifier
+    Achat, Commander, Reserver, Notifier
 from .decorators import unauthenticated_user_required, staff_required
-from .forms import (VilleForm, AdresseForm, AdresseFormSet, PersonneForm, EmailInputForm, FournisseurForm,
+from .forms import (VilleForm, AdresseForm, PersonneForm, EmailInputForm, FournisseurForm,
                     IDFournisseurForm, FournisseurAdresseFormSet, \
                     EditeurForm, IDEditeurForm, ContributeurForm, IDContributeurForm, LivreForm, ISBNForm, AchatForm,
-                    AchatUpdateForm, IDAchatForm, ReserverUpdateForm, ReserverForm, IDReservationForm, CommanderForm, IDCommandeForm,
+                    AchatUpdateForm, IDAchatForm, ReserverUpdateForm, ReserverForm, IDReservationForm, CommanderForm,
+                    IDCommandeForm,
                     CommanderUpdateForm)
-from django.db import transaction
 
 
 #%%------------------------------LOGIN/LOGOUT----------------------------------------
@@ -47,9 +47,9 @@ def autres(request):
     return render(request, 'gui/autres.html')
 #%%------------------------------PERMISSIONS-----------------------------------------
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
-    login_url = 'login'  # URL de redirection si l'utilisateur n'est pas connecté
+    login_url = 'login'
     def test_func(self):
-        # Vérifie que l'utilisateur a le statut is_staff
+
         return self.request.user.is_staff
 #%%------------------------------GERER-LES-ROLES-------------------------------------
 class RoleList(StaffRequiredMixin,ListView):
@@ -79,16 +79,16 @@ def ville_create(request):
             code_postal = form_ville.cleaned_data['code_postal']
             pays = form_ville.cleaned_data['pays']
 
-            # Vérifier si la ville existe déjà
+
             ville_existante = Ville.objects.filter(nom_ville=nom_ville, code_postal=code_postal).first()
 
             if not ville_existante:
-                # Si la ville n'existe pas, créer une nouvelle ville
+
                 ville = form_ville.save()
             else:
-                # Utiliser la ville existante
+
                 ville = ville_existante
-            return redirect('villes_list')  # Assurez-vous que l'URL existe
+            return redirect('villes_list')
 
     else:
         form_ville = VilleForm()
@@ -116,14 +116,13 @@ class AdresseList(StaffRequiredMixin,ListView):
     template_name = 'gui/lister_adresses.html'
 
     def get_queryset(self):
-        # Récupérer les paramètres GET
-        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : titre
-        order = self.request.GET.get('order', 'asc')  # Par défaut : asc
+        sort_by = self.request.GET.get('sort_by', 'id')
+        order = self.request.GET.get('order', 'asc')
 
-        # Définir le préfixe pour la direction du tri
+
         sort_prefix = '' if order == 'asc' else '-'
 
-        # Options de tri supportées
+
         sorting_options = {
             'id':'id',
             'rue':'rue',
@@ -134,7 +133,7 @@ class AdresseList(StaffRequiredMixin,ListView):
         }
         queryset = super().get_queryset()
 
-        # Appliquer le tri si valide, sinon fallback au tri par titre
+
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
@@ -145,17 +144,17 @@ def create_adresse(request):
         adresse_form = AdresseForm(request.POST)
 
         if adresse_form.is_valid():
-            # Récupérer les informations de l'adresse
+
             rue = adresse_form.cleaned_data['rue']
             n_rue = adresse_form.cleaned_data['n_rue']
 
-            # Récupérer les informations de la ville depuis le formulaire
+
             nom_ville = request.POST.get('nom_ville')
             code_postal = request.POST.get('code_postal')
             pays = request.POST.get('pays')
 
             if nom_ville and code_postal and pays:
-                # Créer ou récupérer la ville correspondante
+
                 ville, created = Ville.objects.get_or_create(
                     nom_ville=nom_ville,
                     defaults={
@@ -164,18 +163,18 @@ def create_adresse(request):
                     }
                 )
 
-                # Vérifier si une adresse identique existe déjà
+
                 if Adresse.objects.filter(rue=rue, n_rue=n_rue, ville=ville).exists():
                     adresse_form.add_error(None, "Cette adresse existe déjà.")
                 else:
-                    # Créer et enregistrer l'adresse
+
                     adresse = adresse_form.save(commit=False)
                     adresse.ville = ville
                     adresse.save()
 
-                    return redirect('adresses_list')  # Rediriger après la création
+                    return redirect('adresses_list')
             else:
-                # Gérer le cas où les informations de la ville sont incomplètes
+
                 adresse_form.add_error(None, "Veuillez remplir les informations de la ville.")
     else:
         adresse_form = AdresseForm()
@@ -191,42 +190,41 @@ class AdresseResearch(StaffRequiredMixin,ListView):
         search_query = self.request.GET.get('search', '')
 
         if search_query:
-            # Diviser la chaîne de recherche en mots-clés
+
             keywords = search_query.split()
             query = Q()
 
             for keyword in keywords:
-                # Ajouter chaque mot aux différents champs de recherche
+
                 query |= Q(rue__icontains=keyword) | \
                          Q(n_rue__icontains=keyword)|\
                         Q(ville__nom_ville__icontains=keyword) |\
                         Q(ville__code_postal__icontains=keyword)|\
                         Q(ville__pays__icontains=keyword)
 
-            # Retourner les livres correspondant aux critères
+
             return Adresse.objects.filter(query).distinct()
 
-        # Si aucun terme de recherche, retourner tous les livres
+
         return Adresse.objects.all()
 class AdresseDelete(StaffRequiredMixin, View):
     template_name = 'gui/supprimer_adresse.html'
 
     def get(self, request):
-        # Afficher le formulaire où l'utilisateur entre l'email de la personne
+
         return render(request, self.template_name)
 
     def post(self, request):
-        # Récupérer l'email de la personne soumis dans le formulaire
+
         adresse_id = request.POST.get('adresse_id')
         if adresse_id:
-            # Obtenir l'objet Personne avec l'email fourni
-            # Assurez-vous que le champ 'email' existe et est unique dans le modèle Personne
+
             adresse = get_object_or_404(Adresse, id=adresse_id)
-            # Supprimer la personne
+
             adresse.delete()
-            # Rediriger vers la liste des personnes après la suppression
+
             return redirect(reverse_lazy('adresses_list'))
-        # Si l'email n'est pas fourni ou invalide, afficher une erreur
+
         return render(request, self.template_name, {'error': 'Adresse invalide.'})
 #%%------------------------------GERER-LES-PERSONNES---------------------------------
 class PersonneList(StaffRequiredMixin,ListView):
@@ -234,14 +232,13 @@ class PersonneList(StaffRequiredMixin,ListView):
     template_name = 'gui/lister_personnes.html'
 
     def get_queryset(self):
-        # Récupérer les paramètres GET
-        sort_by = self.request.GET.get('sort_by', 'nom')  # Par défaut : tri par 'nom'
-        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+        sort_by = self.request.GET.get('sort_by', 'nom')
+        order = self.request.GET.get('order', 'asc')
 
-        # Définir le préfixe pour la direction du tri
+
         sort_prefix = '' if order == 'asc' else '-'
 
-        # Options de tri supportées
+
         sorting_options = {
             'nom': 'nom',
             'prenom': 'prenom',
@@ -253,10 +250,10 @@ class PersonneList(StaffRequiredMixin,ListView):
             'adresse__ville__nom_ville': 'adresse__ville__nom_ville',
         }
 
-        # Récupérer le queryset initial
+
         queryset = super().get_queryset()
 
-        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
+
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
@@ -269,7 +266,7 @@ def personne_create(request):
         form_ville = VilleForm(request.POST)
 
         if form_personne.is_valid() and form_adresse.is_valid() and form_ville.is_valid():
-            # Récupérer ou créer la ville
+
             nom_ville = form_ville.cleaned_data['nom_ville']
             code_postal = form_ville.cleaned_data['code_postal']
             pays = form_ville.cleaned_data['pays']
@@ -280,7 +277,7 @@ def personne_create(request):
                 pays=pays
             )
 
-            # Récupérer ou créer l'adresse
+
             rue = form_adresse.cleaned_data['rue']
             n_rue = form_adresse.cleaned_data['n_rue']
 
@@ -290,7 +287,7 @@ def personne_create(request):
                 ville=ville
             )
 
-            # Gestion du rôle
+
             if request.user.is_superuser:
                 role = form_personne.cleaned_data.get('role')
             else:
@@ -304,7 +301,7 @@ def personne_create(request):
                         'form_ville': form_ville
                     })
 
-            # Vérifier si l'email existe déjà
+
             email = form_personne.cleaned_data['email']
             password = form_personne.cleaned_data['password']
 
@@ -316,14 +313,14 @@ def personne_create(request):
                     'form_ville': form_ville
                 })
 
-            # Récupérer les autres champs
+
             nom = form_personne.cleaned_data['nom']
             prenom = form_personne.cleaned_data['prenom']
             date_naissance = form_personne.cleaned_data['date_naissance']
             telephone = form_personne.cleaned_data['telephone']
             solde = form_personne.cleaned_data['solde']
 
-            # Créer l'utilisateur en fonction du rôle
+
             if str(role) == 'admin':
                 personne = Personne.objects.create_superuser(
                     email=email,
@@ -362,7 +359,7 @@ def personne_create(request):
                     role=role
                 )
 
-            # Redirection après succès
+
             return redirect('personnes_list')
     else:
         form_personne = PersonneForm(user=request.user)
@@ -382,12 +379,12 @@ class PersonneResearch(StaffRequiredMixin,ListView):
         search_query = self.request.GET.get('search', '')
 
         if search_query:
-            # Diviser la chaîne de recherche en mots-clés
+
             keywords = search_query.split()
             query = Q()
 
             for keyword in keywords:
-                # Ajouter chaque mot aux différents champs de recherche
+
                 query |= Q(nom__icontains=keyword) | \
                          Q(prenom__icontains=keyword) | \
                          Q(date_naissance__icontains=keyword) | \
@@ -395,39 +392,36 @@ class PersonneResearch(StaffRequiredMixin,ListView):
                          Q(date_creation__icontains=keyword) | \
                          Q(adresse__ville__nom_ville__icontains=keyword)
 
-            # Retourner les livres correspondant aux critères
+
             return Personne.objects.filter(query).distinct()
 
-        # Si aucun terme de recherche, retourner tous les livres
+
         return Personne.objects.all()
 class PersonneDelete(StaffRequiredMixin, View):
     template_name = 'gui/supprimer_personne.html'
 
     def get(self, request):
-        # Afficher le formulaire où l'utilisateur entre l'email de la personne
+
         return render(request, self.template_name)
 
     def post(self, request):
-        # Récupérer l'email de la personne soumis dans le formulaire
+
         personne_email = request.POST.get('personne_email')
         if personne_email:
-            # Obtenir l'objet Personne avec l'email fourni
+
             personne = get_object_or_404(Personne, email=personne_email)
 
-            # Vérifier les permissions
-            if not request.user.is_superuser:  # Si l'utilisateur n'est pas un superuser
-                roles_interdits = ['employe', 'admin']  # Rôles interdits
-                if personne.role.type in roles_interdits:  # Vérifier le rôle de la personne
+            if not request.user.is_superuser:
+                roles_interdits = ['employe', 'admin']
+                if personne.role.type in roles_interdits:
                     return HttpResponseForbidden(
                         "Vous n'êtes pas autorisé à supprimer cet utilisateur."
                     )
 
-            # Supprimer la personne
             personne.delete()
-            # Rediriger vers la liste des personnes après la suppression
+
             return redirect(reverse_lazy('personnes_list'))
 
-        # Si l'email n'est pas fourni ou invalide, afficher une erreur
         return render(request, self.template_name, {'error': 'Email invalide.'})
 class PersonneSelectView(StaffRequiredMixin, View):
     template_name = 'gui/select_personne.html'
@@ -440,18 +434,15 @@ class PersonneSelectView(StaffRequiredMixin, View):
         form = EmailInputForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
-            # Vérifier si la personne existe
+
             personne = get_object_or_404(Personne, email=email)
 
-            # Vérifier les permissions
-            if not request.user.is_superuser:  # Si l'utilisateur n'est pas un superuser
-                # Récupérer les rôles non autorisés
+            if not request.user.is_superuser:
+
                 roles_interdits = ['employe', 'admin']
                 if personne.role.type in roles_interdits:
-                    # Interdire l'accès si le rôle est employé ou admin
                     return HttpResponseForbidden("Vous n'êtes pas autorisé à modifier cet utilisateur.")
 
-            # Rediriger vers la vue de modification avec l'email comme paramètre
             return redirect(reverse('personnes_update', args=[email]))
         else:
             messages.error(request, 'Veuillez saisir un email valide.')
@@ -481,20 +472,17 @@ class PersonneUpdate(StaffRequiredMixin, View):
         ville_initiale = adresse_initiale.ville if adresse_initiale.ville else None
 
         personne_form = PersonneForm(request.POST, instance=personne, user=request.user)
-        adresse_form = AdresseForm(request.POST)  # On ne lui donne plus instance=adresse_initiale
-        ville_form = VilleForm(request.POST)      # On ne lui donne plus instance=ville_initiale
+        adresse_form = AdresseForm(request.POST)
+        ville_form = VilleForm(request.POST)
 
         if personne_form.is_valid() and adresse_form.is_valid() and ville_form.is_valid():
             with transaction.atomic():
-                # Données nettoyées
+
                 ville_data = ville_form.cleaned_data
                 nom_ville = ville_data.get('nom_ville')
                 code_postal = ville_data.get('code_postal')
                 pays = ville_data.get('pays')
 
-                # Gestion de la ville
-                # Si tous les champs de la ville sont présents, on tente un get_or_create.
-                # Sinon, ville_obj = None
                 if nom_ville and code_postal and pays:
                     ville_obj, _ = Ville.objects.get_or_create(
                         nom_ville=nom_ville,
@@ -504,13 +492,10 @@ class PersonneUpdate(StaffRequiredMixin, View):
                 else:
                     ville_obj = None
 
-                # Gestion de l'adresse
                 adresse_data = adresse_form.cleaned_data
                 rue = adresse_data.get('rue')
                 n_rue = adresse_data.get('n_rue')
 
-                # On vérifie si l'adresse initiale est partagée OU si l'adresse a été modifiée.
-                # L'adresse est considérée modifiée si la rue ou le numéro ou la ville diffèrent.
                 adresse_modifiee = (
                     (rue != adresse_initiale.rue) or
                     (n_rue != adresse_initiale.n_rue) or
@@ -520,8 +505,7 @@ class PersonneUpdate(StaffRequiredMixin, View):
                 adresse_partagee = Adresse.objects.filter(pk=adresse_initiale.pk).exclude(personne=personne).exists()
 
                 if adresse_partagee or adresse_modifiee:
-                    # On crée (ou récupère) une nouvelle adresse correspondant à ces champs
-                    # Pour éviter de créer des doublons inutiles, on peut essayer un get_or_create:
+
                     nouvelle_adresse, _ = Adresse.objects.get_or_create(
                         rue=rue,
                         n_rue=n_rue,
@@ -529,16 +513,14 @@ class PersonneUpdate(StaffRequiredMixin, View):
                     )
                     personne.adresse = nouvelle_adresse
                 else:
-                    # L'adresse n'est pas partagée et n'est pas modifiée, on la laisse telle quelle.
+
                     pass
 
-                # Gestion de la personne
                 personne_form.save()
 
             messages.success(request, 'La personne, son adresse et sa ville ont été mises à jour avec succès.')
             return redirect(reverse_lazy('personnes_list'))
 
-        # Si formulaires invalides, on repasse les instances actuelles
         return render(request, self.template_name, {
             'personne_form': personne_form,
             'adresse_form': adresse_form,
@@ -558,19 +540,17 @@ class FournisseurList(StaffRequiredMixin, ListView):
         sort_prefix = '' if order == 'asc' else '-'
         sorting_options = {
             'nom_fournisseur': 'nom_fournisseur',
-            # 'ville': 'adresses__ville__nom_ville',  # Décommentez si vous souhaitez trier par ville
+            # 'ville': 'adresses__ville__nom_ville',
         }
 
         queryset = super().get_queryset()
 
-        # Filtre le queryset en fonction de la requête de recherche
         if search_query:
             queryset = queryset.filter(
                 Q(nom_fournisseur__icontains=search_query) |
                 Q(adresses__ville__nom_ville__icontains=search_query)
             ).distinct()
 
-        # Trie le queryset en fonction des paramètres de tri
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
         else:
@@ -585,11 +565,10 @@ def fournisseur_create(request):
         if form_fournisseur.is_valid() and formset_adresse.is_valid():
             fournisseur = form_fournisseur.save()
 
-            # Sauvegarder chaque adresse dans le formset
             for form in formset_adresse:
                 if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
                     adresse = form.cleaned_data['adresse']
-                    # Optionnel: Créez une nouvelle adresse si nécessaire
+
                     FournisseurAdresse.objects.create(fournisseur=fournisseur, adresse=adresse)
 
             return redirect('fournisseurs_list')
@@ -606,11 +585,9 @@ class FournisseurDelete(DeleteView):
     template_name = 'gui/supprimer_fournisseur.html'
     success_url = reverse_lazy('fournisseurs_list')
 
-    # Si vous surchargez la méthode get(), assurez-vous d'inclure *args et **kwargs
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    # De même pour la méthode post(), si nécessaire
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
 class FournisseurUpdate(StaffRequiredMixin, UpdateView):
@@ -682,23 +659,18 @@ class EditeurList(ListView):
     template_name = 'gui/lister_editeurs.html'
 
     def get_queryset(self):
-        # Récupérer les paramètres GET
-        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : tri par 'id'
-        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+        sort_by = self.request.GET.get('sort_by', 'id')
+        order = self.request.GET.get('order', 'asc')
 
-        # Définir le préfixe pour la direction du tri
         sort_prefix = '' if order == 'asc' else '-'
 
-        # Options de tri supportées
         sorting_options = {
             'id' : 'id',
             'nom': 'nom'
         }
 
-        # Récupérer le queryset initial
         queryset = super().get_queryset()
 
-        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
@@ -714,18 +686,15 @@ class EditeurDelete(StaffRequiredMixin,View):
     template_name = 'gui/supprimer_editeur.html'
 
     def get(self, request):
-        # Afficher le formulaire où l'utilisateur entre l'ID du livre
         return render(request, self.template_name)
 
     def post(self, request):
-        # Récupérer l'ID du livre soumis dans le formulaire
         editeur_id = request.POST.get('editeur_id')
         if editeur_id:
-            # Obtenir l'objet Livre avec l'ID fourni
             editeur = get_object_or_404(Editeur, pk=editeur_id)
-            # Supprimer le livre
+
             editeur.delete()
-            # Rediriger vers la liste des livres après la suppression
+
             return redirect(reverse_lazy('editeurs_list'))
         return render(request, self.template_name, {'error': "ID de l'éditeur invalide."})
 
@@ -743,22 +712,20 @@ class EditeurUpdate(StaffRequiredMixin,View):
 
         if form.is_valid():
             form.save()
-            return redirect('editeurs_list')  # Rediriger vers la liste des livres après modification
+            return redirect('editeurs_list')
 
         return render(request, self.template_name, {'form': form, 'editeur': editeur})
 
 class EditeurResearch(StaffRequiredMixin,ListView):
-    model = Editeur  # Modèle pour les éditeurs
-    template_name = 'gui/lister_editeurs.html'  # Template pour afficher les résultats
+    model = Editeur
+    template_name = 'gui/lister_editeurs.html'
 
     def get_queryset(self):
         search_query = self.request.GET.get('search', '')
 
         if search_query:
-            # Rechercher le terme dans le champ nom
             return Editeur.objects.filter(nom__icontains=search_query).distinct()
 
-        # Si aucun terme de recherche, retourner tous les éditeurs
         return Editeur.objects.all()
 
 @login_required(login_url='login')
@@ -782,24 +749,19 @@ class ContributeurList(StaffRequiredMixin,ListView):
     template_name = 'gui/lister_contributeurs.html'
 
     def get_queryset(self):
-        # Récupérer les paramètres GET
-        sort_by = self.request.GET.get('sort_by', 'id')  # Par défaut : tri par 'nom'
-        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+        sort_by = self.request.GET.get('sort_by', 'id')
+        order = self.request.GET.get('order', 'asc')
 
-        # Définir le préfixe pour la direction du tri
         sort_prefix = '' if order == 'asc' else '-'
 
-        # Options de tri supportées
         sorting_options = {
             'id':'id',
             'nom': 'nom',
             'prenom': 'prenom',
         }
 
-        # Récupérer le queryset initial
         queryset = super().get_queryset()
 
-        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
@@ -825,7 +787,6 @@ class ContributeurCreate(StaffRequiredMixin,CreateView):
     template_name = 'gui/ajouter_contributeur.html'
     success_url = reverse_lazy('contributeurs_list')
     def form_valid(self, form):
-        # Appeler la méthode parente pour enregistrer l'objet
         response = super().form_valid(form)
 
 
@@ -848,7 +809,7 @@ class ContributeurUpdate(StaffRequiredMixin, UpdateView):
     model = Contributeur
     form_class = ContributeurForm
     template_name = 'gui/modifier_contributeur.html'
-    pk_url_kwarg = 'pk'  # Par défaut, donc vous pouvez supprimer cette ligne
+    pk_url_kwarg = 'pk'
 
     def form_valid(self, form):
         form.save()
@@ -862,19 +823,17 @@ class ContributeurResearch(ListView):
     context_object_name = 'contributeurs'
 
     def get_queryset(self):
-        # Récupérer les paramètres de recherche et de tri
+
         search_query = self.request.GET.get('search', '')
-        sort_by = self.request.GET.get('sort_by', 'nom')  # On trie par défaut par nom
+        sort_by = self.request.GET.get('sort_by', 'nom')
         order = self.request.GET.get('order', 'asc')
         sort_prefix = '' if order == 'asc' else '-'
 
-        # Définir la recherche de manière générique pour tous les cas
         query = Q()
 
         if search_query:
             keywords = search_query.split()
             for keyword in keywords:
-                # Recherche sur les champs de Contributeur
                 query |= Q(nom__icontains=keyword) | \
                          Q(prenom__icontains=keyword) | \
                          Q(id__icontains=keyword)
@@ -895,7 +854,6 @@ class ContributeurResearch(ListView):
         context = super().get_context_data(**kwargs)
         auteurs, traducteurs, illustrateurs = self.get_queryset()
 
-        # Ajouter les commandes au contexte
         context['auteurs'] = auteurs
         context['traducteurs'] = traducteurs
         context['illustrateurs'] = illustrateurs
@@ -910,7 +868,7 @@ def saisir_ID_contributeur(request):
             contributeur_id = form.cleaned_data['contributeur_id']
 
             if Contributeur.objects.filter(id=contributeur_id).exists():
-                # Utiliser 'pk' pour correspondre avec la configuration de l'URL
+
                 return redirect(reverse('contributeurs_update', kwargs={'pk': contributeur_id}))
             else:
                 return render(request, 'gui/saisir_contributeur_ID.html', {'form': form, 'error': 'Contributeur non trouvé.'})
@@ -924,14 +882,12 @@ class LivreList(StaffRequiredMixin, ListView):
     template_name = 'gui/lister_livres.html'
 
     def get_queryset(self):
-        # Récupérer les paramètres GET
-        sort_by = self.request.GET.get('sort_by', 'titre')  # Par défaut : titre
-        order = self.request.GET.get('order', 'asc')  # Par défaut : asc
 
-        # Définir le préfixe pour la direction du tri
+        sort_by = self.request.GET.get('sort_by', 'titre')
+        order = self.request.GET.get('order', 'asc')
+
         sort_prefix = '' if order == 'asc' else '-'
 
-        # Options de tri supportées
         sorting_options = {
             'isbn13': 'isbn13',
             'titre': 'titre',
@@ -947,10 +903,8 @@ class LivreList(StaffRequiredMixin, ListView):
             'editeur': 'editeur',
         }
 
-        # Récupérer le queryset initial
         queryset = super().get_queryset()
 
-        # Précharger les contributeurs de type 'Auteur', 'Traducteur', 'Illustrateur' pour optimiser les requêtes
         contributeurs_prefetch = Prefetch(
             'contributeurs',
             queryset=Contributeur.objects.filter(type__in=['Auteur', 'Traducteur', 'Illustrateur']),
@@ -958,7 +912,6 @@ class LivreList(StaffRequiredMixin, ListView):
         )
         queryset = queryset.prefetch_related(contributeurs_prefetch)
 
-        # Appliquer le tri si valide, sinon fallback au tri par 'titre'
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
 
@@ -969,7 +922,6 @@ class LivreList(StaffRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Ajouter les contributeurs par type pour chaque livre
         for livre in context['object_list']:
             livre.auteurs = [c for c in livre.contributeurs.all() if c.type == 'Auteur']
             livre.traducteurs = [c for c in livre.contributeurs.all() if c.type == 'Traducteur']
@@ -982,41 +934,37 @@ def create_livre(request):
         livre_form = LivreForm(request.POST)
 
         if livre_form.is_valid():
-            # Sauvegarder le livre
+
             livre = livre_form.save()
 
-            # Fonction générique pour ajouter des contributeurs
             def ajouter_contributeurs(noms, prenoms, dates_naissance, type_contributeur):
                 for nom, prenom, date_naissance in zip(noms, prenoms, dates_naissance):
-                    if nom and prenom:  # Vérifier que les informations sont présentes
+                    if nom and prenom:
                         contributeur, created = Contributeur.objects.get_or_create(
                             nom=nom,
                             prenom=prenom,
                             date_naissance=date_naissance if date_naissance else None,
                             type=type_contributeur
                         )
-                        # Ajouter un seul contributeur à chaque fois
+
                         livre.contributeurs.add(contributeur)
 
-            # Ajouter les auteurs
             noms_auteurs = request.POST.getlist('nom_auteur')
             prenoms_auteurs = request.POST.getlist('prenom_auteur')
             dates_naissance_auteurs = request.POST.getlist('date_naissance_auteur')
             ajouter_contributeurs(noms_auteurs, prenoms_auteurs, dates_naissance_auteurs, 'Auteur')
 
-            # Ajouter les traducteurs
             noms_traducteurs = request.POST.getlist('nom_traducteur')
             prenoms_traducteurs = request.POST.getlist('prenom_traducteur')
             dates_naissance_traducteurs = request.POST.getlist('date_naissance_traducteur')
             ajouter_contributeurs(noms_traducteurs, prenoms_traducteurs, dates_naissance_traducteurs, 'Traducteur')
 
-            # Ajouter les illustrateurs
             noms_illustrateurs = request.POST.getlist('nom_illustrateur')
             prenoms_illustrateurs = request.POST.getlist('prenom_illustrateur')
             dates_naissance_illustrateurs = request.POST.getlist('date_naissance_illustrateur')
             ajouter_contributeurs(noms_illustrateurs, prenoms_illustrateurs, dates_naissance_illustrateurs, 'Illustrateur')
 
-            return redirect('livres_list')  # Redirige vers la liste des livres ou une page de succès
+            return redirect('livres_list')
 
     else:
         livre_form = LivreForm()
@@ -1029,18 +977,15 @@ class LivreDelete(StaffRequiredMixin,View):
     template_name = 'gui/supprimer_livre.html'
 
     def get(self, request):
-        # Afficher le formulaire où l'utilisateur entre l'ID du livre
         return render(request, self.template_name)
 
     def post(self, request):
-        # Récupérer l'ID du livre soumis dans le formulaire
         livre_id = request.POST.get('livre_id')
         if livre_id:
-            # Obtenir l'objet Livre avec l'ID fourni
             livre = get_object_or_404(Livre, pk=livre_id)
-            # Supprimer le livre
+
             livre.delete()
-            # Rediriger vers la liste des livres après la suppression
+
             return redirect(reverse_lazy('livres_list'))
         return render(request, self.template_name, {'error': 'ID du livre invalide.'})
 
@@ -1051,7 +996,6 @@ class LivreUpdate(StaffRequiredMixin, View):
     def get(self, request, isbn13):
         livre = get_object_or_404(Livre, isbn13=isbn13)
 
-        # Contributeurs existants
         auteurs_ex = livre.contributeurs.filter(type='Auteur')
         traducteurs_ex = livre.contributeurs.filter(type='Traducteur')
         illustrateurs_ex = livre.contributeurs.filter(type='Illustrateur')
@@ -1072,7 +1016,6 @@ class LivreUpdate(StaffRequiredMixin, View):
         livre = get_object_or_404(Livre, isbn13=isbn13)
         form = LivreForm(request.POST, instance=livre)
 
-        # Contributeurs actuels
         auteurs_ex = livre.contributeurs.filter(type='Auteur')
         traducteurs_ex = livre.contributeurs.filter(type='Traducteur')
         illustrateurs_ex = livre.contributeurs.filter(type='Illustrateur')
@@ -1080,7 +1023,6 @@ class LivreUpdate(StaffRequiredMixin, View):
         if form.is_valid():
             livre = form.save()
 
-            # Supprimer les contributeurs cochés
             for a in auteurs_ex:
                 if request.POST.get(f'delete_auteur_{a.id}', '') == 'on':
                     livre.contributeurs.remove(a)
@@ -1093,7 +1035,6 @@ class LivreUpdate(StaffRequiredMixin, View):
                 if request.POST.get(f'delete_illustrateur_{i.id}', '') == 'on':
                     livre.contributeurs.remove(i)
 
-            # Ajouter les nouveaux contributeurs en création
             noms_auteurs = request.POST.getlist('nom_auteur')
             prenoms_auteurs = request.POST.getlist('prenom_auteur')
             dates_naissance_auteurs = request.POST.getlist('date_naissance_auteur')
@@ -1141,9 +1082,8 @@ class LivreResearch(StaffRequiredMixin,ListView):
     def get_queryset(self):
         search_query = self.request.GET.get('search', '')
 
-        # Filtrer les livres en fonction de la recherche
         if search_query:
-            # Diviser la chaîne de recherche en mots-clés
+
             keywords = search_query.split()
             query = Q()
 
@@ -1157,12 +1097,11 @@ class LivreResearch(StaffRequiredMixin,ListView):
                          Q(sous_genre__icontains=keyword) | \
                          Q(langue__icontains=keyword)
 
-            # Pré-charger les contributeurs pour les livres retournés
             livres = Livre.objects.filter(query).distinct().prefetch_related(
                 Prefetch('contributeurs', queryset=Contributeur.objects.all())
             )
         else:
-            # Si aucun terme de recherche, retourner tous les livres avec leurs contributeurs
+
             livres = Livre.objects.all().prefetch_related(
                 Prefetch('contributeurs', queryset=Contributeur.objects.all())
             )
@@ -1172,7 +1111,6 @@ class LivreResearch(StaffRequiredMixin,ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Ajouter les contributeurs par type pour chaque livre
         for livre in context['object_list']:
             livre.auteurs = [c for c in livre.contributeurs.all() if c.type == 'Auteur']
             livre.traducteurs = [c for c in livre.contributeurs.all() if c.type == 'Traducteur']
@@ -1185,11 +1123,11 @@ def saisir_isbn(request):
         form = ISBNForm(request.POST)
         if form.is_valid():
             isbn13 = form.cleaned_data['isbn13']
-            # Vérifier si le livre existe
+
             if Livre.objects.filter(isbn13=isbn13).exists():
                 return redirect(reverse('livre_update', kwargs={'isbn13': isbn13}))
             else:
-                # Si le livre n'existe pas, afficher un message d'erreur
+
                 return render(request, 'gui/saisir_isbn.html', {'form': form, 'error': 'Livre non trouvé.'})
     else:
         form = ISBNForm()
@@ -1209,7 +1147,7 @@ class AchatList(StaffRequiredMixin,ListView):
             'quantite': 'quantite',
         }
         queryset = super().get_queryset()
-        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
+
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
         return queryset
@@ -1221,35 +1159,32 @@ class AchatCreate(StaffRequiredMixin, CreateView):
 
 
     def form_valid(self, form):
-        # Récupérer les données générales du formulaire
+
         personne = form.cleaned_data['personne']
         date_achat = form.cleaned_data['date_achat']
 
-        # Récupérer les livres et quantités depuis le POST
-        livres = self.request.POST.getlist('livres[]')  # Liste des isbn13
-        quantites = self.request.POST.getlist('quantites[]')  # Quantités associées
+        livres = self.request.POST.getlist('livres[]')
+        quantites = self.request.POST.getlist('quantites[]')
 
         if not livres or not quantites:
             form.add_error(None, "Vous devez ajouter au moins un livre avec une quantité.")
             return self.form_invalid(form)
 
         try:
-            with transaction.atomic():  # Gestion transactionnelle
+            with transaction.atomic():
                 for isbn13, quantite in zip(livres, quantites):
                     if isbn13 and quantite:
-                        quantite = int(quantite)  # Conversion explicite en entier
+                        quantite = int(quantite)
                         if quantite <= 0:
                             form.add_error(None, f"Quantité invalide pour le livre {isbn13}.")
                             return self.form_invalid(form)
-                        # Rechercher le livre via isbn13
 
-                        # Rechercher le livre par isbn13
                         try:
                             livre = Livre.objects.get(isbn13=isbn13)
                         except Livre.DoesNotExist:
                             form.add_error(None, f"Le livre avec l'ISBN {isbn13} n'existe pas.")
                             return self.form_invalid(form)
-                        # Validation stock
+
                         if quantite > livre.quantite_disponible:
                             form.add_error(
                                 None,
@@ -1257,7 +1192,6 @@ class AchatCreate(StaffRequiredMixin, CreateView):
                             )
                             return self.form_invalid(form)
 
-                        # Créer un achat
                         Achat.objects.create(
                             personne=personne,
                             livre=livre,
@@ -1273,7 +1207,7 @@ class AchatCreate(StaffRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['livres'] = Livre.objects.all()  # Passer tous les livres disponibles
+        context['livres'] = Livre.objects.all()
         return context
 class AchatUpdate(StaffRequiredMixin, UpdateView):
     model = Achat
@@ -1284,28 +1218,22 @@ class AchatUpdate(StaffRequiredMixin, UpdateView):
         return get_object_or_404(Achat, pk=self.kwargs['pk'])
 
     def form_valid(self, form):
-        # Récupérer l'instance de l'achat avant modification
         achat_instance = self.get_object()
 
-        # Récupérer le livre et la quantité avant modification
         livre = achat_instance.livre
         ancienne_quantite = achat_instance.quantite
 
-        # Récupérer la nouvelle quantité
         nouvelle_quantite = form.cleaned_data['quantite']
 
-        # Vérifier la différence de quantité
         difference = nouvelle_quantite - ancienne_quantite
 
-        # Mettre à jour le stock du livre (ajouter ou soustraire selon la différence)
         livre.quantite_disponible -= difference
         if livre.quantite_disponible < 0:
             form.add_error('quantite', "Le stock est insuffisant pour cette quantité.")
             return self.form_invalid(form)
 
-        livre.save()  # Sauvegarder la mise à jour du stock
+        livre.save()
 
-        # Enregistrer les modifications de l'achat
         response = super().form_valid(form)
 
         return response
@@ -1324,15 +1252,12 @@ class AchatDelete(StaffRequiredMixin, View):
             try:
                 achat = Achat.objects.get(id=achat_id)
 
-                # Récupérer le livre et la quantité associée à l'achat
                 livre = achat.livre
                 quantite_achat = achat.quantite
 
-                # Mettre à jour la quantité disponible du livre
                 livre.quantite_disponible += quantite_achat
-                livre.save()  # Sauvegarder la mise à jour de la quantité
+                livre.save()
 
-                # Supprimer l'achat
                 achat.delete()
 
                 return redirect(reverse_lazy('achats_list'))
@@ -1378,27 +1303,26 @@ class CommanderList(StaffRequiredMixin, ListView):
     template_name = 'gui/lister_commandes.html'
     context_object_name = 'commandes'
     def get_queryset(self):
-        # Récupérer les paramètres GET
-        sort_by = self.request.GET.get('sort_by', 'date_commande')  # Par défaut : tri par date_commande
-        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+        sort_by = self.request.GET.get('sort_by', 'date_commande')
+        order = self.request.GET.get('order', 'asc')
         sort_prefix = '' if order == 'asc' else '-'
         sorting_options = {
             'id':'id',
             'date':'date_commande',
             'quantite':'quantite',
         }
-        # Récupérer le queryset initial
+
         queryset = super().get_queryset()
-        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
+
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
         return queryset
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Récupérer les commandes en cours et terminées
+
         commandes_en_cours = Commander.objects.filter(statut='en cours')
         commandes_terminees = Commander.objects.filter(statut='terminé')
-        # Appliquer le tri si un paramètre de tri est défini
+
         sort_by = self.request.GET.get('sort_by', 'date_commande')
         order = self.request.GET.get('order', 'asc')
         sort_prefix = '' if order == 'asc' else '-'
@@ -1416,37 +1340,34 @@ class CommanderCreate(StaffRequiredMixin, CreateView):
     success_url = reverse_lazy('commandes_list')
 
     def form_valid(self, form):
-        # Récupérer les données générales du formulaire
+
         personne = form.cleaned_data['personne']
         date_commande = form.cleaned_data['date_commande']
         fournisseur = form.cleaned_data['fournisseur']
         statut = form.cleaned_data['statut']
 
-        # Récupérer les livres et quantités depuis le POST
-        livres = self.request.POST.getlist('livres[]')  # Liste des isbn13
-        quantites = self.request.POST.getlist('quantites[]')  # Quantités associées
+        livres = self.request.POST.getlist('livres[]')
+        quantites = self.request.POST.getlist('quantites[]')
 
         if not livres or not quantites:
             form.add_error(None, "Vous devez ajouter au moins un livre avec une quantité.")
             return self.form_invalid(form)
 
         try:
-            with transaction.atomic():  # Gestion transactionnelle
+            with transaction.atomic():
                 for isbn13, quantite in zip(livres, quantites):
                     if isbn13 and quantite:
-                        quantite = int(quantite)  # Conversion explicite en entier
+                        quantite = int(quantite)
                         if quantite <= 0:
                             form.add_error(None, f"Quantité invalide pour le livre {isbn13}.")
                             return self.form_invalid(form)
 
-                        # Rechercher le livre via isbn13
                         try:
                             livre = Livre.objects.get(isbn13=isbn13)
                         except Livre.DoesNotExist:
                             form.add_error(None, f"Le livre avec l'ISBN {isbn13} n'existe pas.")
                             return self.form_invalid(form)
 
-                        # Créer une commande
                         Commander.objects.create(
                             personne=personne,
                             livre=livre,
@@ -1464,7 +1385,7 @@ class CommanderCreate(StaffRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['livres'] = Livre.objects.all()  # Passer tous les livres disponibles
+        context['livres'] = Livre.objects.all()
         return context
 
 
@@ -1484,7 +1405,6 @@ class CommanderDelete(StaffRequiredMixin, View):
         """
         commande = None
         if pk:
-            # Si un ID de commande est dans l'URL, on le charge pour affichage
             commande = get_object_or_404(Commander, pk=pk)
         return render(request, self.template_name, {'commande': commande})
     def post(self, request, pk=None):
@@ -1495,18 +1415,18 @@ class CommanderDelete(StaffRequiredMixin, View):
         """
         commande_id = pk or request.POST.get('commande_id')
         if commande_id:
-            # Si un ID est fourni, on cherche la commande correspondante
+
             try:
                 commande = Commander.objects.get(id=commande_id)
                 if pk:
-                    # Si on est dans la page de confirmation, on supprime la commande directement
+
                     commande.delete()
-                    return redirect(reverse_lazy('commandes_list'))  # Redirection après suppression
+                    return redirect(reverse_lazy('commandes_list'))
                 else:
-                    # Si on est dans le formulaire de saisie de l'ID, on redirige vers la confirmation
+
                     return redirect(reverse_lazy('commandes_with_ID_delete', kwargs={'pk': commande.id}))
             except Commander.DoesNotExist:
-                # Si la commande n'existe pas avec l'ID donné
+
                 return render(request, self.template_name, {'error': "Commande non trouvée."})
         return render(request, self.template_name, {'error': "ID de commande invalide."})
 class CommanderResearch(ListView):
@@ -1515,35 +1435,30 @@ class CommanderResearch(ListView):
     context_object_name = 'commandes'
 
     def get_queryset(self):
-        # Récupérer les paramètres de recherche et de tri
+
         search_query = self.request.GET.get('search', '')
         sort_by = self.request.GET.get('sort_by', 'date_commande')
         order = self.request.GET.get('order', 'asc')
         sort_prefix = '' if order == 'asc' else '-'
 
-        # Définir la recherche de manière générique pour tous les cas
         query = Q()
 
         if search_query:
             keywords = search_query.split()
             for keyword in keywords:
-                # Recherche sur les champs de Commander
                 query |= Q(statut__icontains=keyword) | \
                          Q(date_commande__icontains=keyword) | \
                          Q(quantite__icontains=keyword) |\
                          Q(id__icontains=keyword)
 
-                # Recherche sur les relations ForeignKey : Personne, Livre, Fournisseur
-                query |= Q(personne__nom__icontains=keyword)  # Personne liée
-                query |= Q(personne__prenom__icontains=keyword)  # Prenom de la personne
-                query |= Q(livre__titre__icontains=keyword)  # Livre lié
-                query |= Q(fournisseur__nom_fournisseur__icontains=keyword)  # Fournisseur lié
+                query |= Q(personne__nom__icontains=keyword)
+                query |= Q(personne__prenom__icontains=keyword)
+                query |= Q(livre__titre__icontains=keyword)
+                query |= Q(fournisseur__nom_fournisseur__icontains=keyword)
 
-        # Filtrer les commandes selon le statut et la recherche
         commandes_en_cours = Commander.objects.filter(statut='en cours').filter(query)
         commandes_terminees = Commander.objects.filter(statut='terminé').filter(query)
 
-        # Appliquer le tri
         commandes_en_cours = commandes_en_cours.order_by(f"{sort_prefix}{sort_by}")
         commandes_terminees = commandes_terminees.order_by(f"{sort_prefix}{sort_by}")
 
@@ -1552,37 +1467,32 @@ class CommanderResearch(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Récupérer les commandes en cours et terminées avec recherche et tri
         commandes_en_cours, commandes_terminees = self.get_queryset()
 
-        # Ajouter les commandes au contexte
         context['commandes_en_cours'] = commandes_en_cours
         context['commandes_terminees'] = commandes_terminees
         return context
 @login_required(login_url='login')
 def terminer_commande(request, pk):
-    if not request.user.is_staff:  # Vérifie que l'utilisateur est autorisé
+    if not request.user.is_staff:
         return HttpResponseForbidden("Vous n'avez pas la permission de faire cette action.")
 
-    # Récupérer la commande
     commande = get_object_or_404(Commander, pk=pk)
     if commande.statut == 'en cours':
-        # Mettre à jour le statut de la commande
+
         commande.statut = 'terminé'
         commande.save()
 
         livre = commande.livre
-        livre.quantite_disponible += commande.quantite  # Ajouter la quantité de la commande
+        livre.quantite_disponible += commande.quantite
         livre.save()
 
-        # Vérifier si le livre est dans la table Reserver
         reservations = Reserver.objects.filter(livre=commande.livre, statut='en cours')
         for reservation in reservations:
-            # Créer une nouvelle notification de type 'commande'
             Notifier.objects.create(
                 personne=reservation.personne,
                 livre=commande.livre,
-                quantite=commande.quantite,  # Assurez-vous que `quantite` correspond bien à la commande
+                quantite=commande.quantite,
                 type='commande',
                 commentaire=f"Le livre '{commande.livre.titre}' réservé est maintenant disponible suite à une commande terminée.",
                 date_creation=timezone.now(),
@@ -1612,9 +1522,8 @@ class ReserverList(StaffRequiredMixin, ListView):
     context_object_name = 'reservations'
 
     def get_queryset(self):
-        # Récupérer les paramètres GET pour le tri
-        sort_by = self.request.GET.get('sort_by', 'date_reservation')  # Par défaut : tri par date_reservation
-        order = self.request.GET.get('order', 'asc')  # Par défaut : ordre ascendant
+        sort_by = self.request.GET.get('sort_by', 'date_reservation')
+        order = self.request.GET.get('order', 'asc')
         sort_prefix = '' if order == 'asc' else '-'
         sorting_options = {
             'id': 'id_commande',
@@ -1622,18 +1531,18 @@ class ReserverList(StaffRequiredMixin, ListView):
             'quantite': 'quantite',
             'statut': 'statut',
         }
-        # Récupérer le queryset initial
+
         queryset = super().get_queryset()
-        # Appliquer le tri si valide, sinon fallback au tri par 'nom'
+
         if sort_by in sorting_options:
             queryset = queryset.order_by(f"{sort_prefix}{sorting_options[sort_by]}")
         return queryset
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Récupérer les commandes en cours et terminées
+
         reservations_en_cours = Reserver.objects.filter(statut='en cours')
         reservations_terminees = Reserver.objects.filter(statut='terminé')
-        # Appliquer le tri si un paramètre de tri est défini
+
         sort_by = self.request.GET.get('sort_by', 'date_reservation')
         order = self.request.GET.get('order', 'asc')
         sort_prefix = '' if order == 'asc' else '-'
@@ -1651,35 +1560,33 @@ class ReserverCreate(StaffRequiredMixin, CreateView):
     success_url = reverse_lazy('reservations_list')
 
     def form_valid(self, form):
-        # Récupérer les données générales du formulaire
+
         personne = form.cleaned_data['personne']
         date_reservation = form.cleaned_data['date_reservation']
         statut = form.cleaned_data['statut']
 
-        # Récupérer les livres et quantités depuis le POST
-        livres = self.request.POST.getlist('livres[]')  # Liste des isbn13
-        quantites = self.request.POST.getlist('quantites[]')  # Quantités associées
+        livres = self.request.POST.getlist('livres[]')
+        quantites = self.request.POST.getlist('quantites[]')
 
         if not livres or not quantites:
             form.add_error(None, "Vous devez ajouter au moins un livre avec une quantité.")
             return self.form_invalid(form)
 
         try:
-            with transaction.atomic():  # Gestion transactionnelle
+            with transaction.atomic():
                 for isbn13, quantite in zip(livres, quantites):
                     if isbn13 and quantite:
-                        quantite = int(quantite)  # Conversion explicite en entier
+                        quantite = int(quantite)
                         if quantite <= 0:
                             form.add_error(None, f"Quantité invalide pour le livre {isbn13}.")
                             return self.form_invalid(form)
-                        # Rechercher le livre via isbn13
+
                         try:
                             livre = Livre.objects.get(isbn13=isbn13)
                         except Livre.DoesNotExist:
                             form.add_error(None, f"Le livre avec l'ISBN {isbn13} n'existe pas.")
                             return self.form_invalid(form)
 
-                        # Créer une réservation
                         Reserver.objects.create(
                             personne=personne,
                             livre=livre,
@@ -1696,13 +1603,13 @@ class ReserverCreate(StaffRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['livres'] = Livre.objects.all()  # Passer tous les livres disponibles
+        context['livres'] = Livre.objects.all()
         return context
 
 
 class ReserverUpdate(StaffRequiredMixin, UpdateView):
     model = Reserver
-    form_class = ReserverUpdateForm  # Formulaire à créer pour Reserver
+    form_class = ReserverUpdateForm
     template_name = 'gui/modifier_reservations.html'
     success_url = reverse_lazy('reservations_list')
 
@@ -1717,7 +1624,6 @@ class ReserverDelete(StaffRequiredMixin, View):
         """
         reservation = None
         if pk:
-            # Si un ID de commande est dans l'URL, on le charge pour affichage
             reservation = get_object_or_404(Reserver, pk=pk)
         return render(request, self.template_name, {'reservation': reservation})
     def post(self, request, pk=None):
@@ -1728,18 +1634,18 @@ class ReserverDelete(StaffRequiredMixin, View):
         """
         reservation_id = pk or request.POST.get('reservation_id')
         if reservation_id:
-            # Si un ID est fourni, on cherche la commande correspondante
+
             try:
                 reservation = Reserver.objects.get(id=reservation_id)
                 if pk:
-                    # Si on est dans la page de confirmation, on supprime la commande directement
+
                     reservation.delete()
-                    return redirect(reverse_lazy('reservations_list'))  # Redirection après suppression
+                    return redirect(reverse_lazy('reservations_list'))
                 else:
-                    # Si on est dans le formulaire de saisie de l'ID, on redirige vers la confirmation
+
                     return redirect(reverse_lazy('reservations_with_ID_delete', kwargs={'pk': reservation.id}))
             except Reserver.DoesNotExist:
-                # Si la commande n'existe pas avec l'ID donné
+
                 return render(request, self.template_name, {'error': "Reservation non trouvée."})
         return render(request, self.template_name, {'error': "ID de reservation invalide."})
 class ReserverResearch(ListView):
@@ -1748,33 +1654,28 @@ class ReserverResearch(ListView):
     context_object_name = 'reservations'
 
     def get_queryset(self):
-        # Récupérer les paramètres de recherche et de tri
+
         search_query = self.request.GET.get('search', '')
         sort_by = self.request.GET.get('sort_by', 'date_reservation')
         order = self.request.GET.get('order', 'asc')
         sort_prefix = '' if order == 'asc' else '-'
 
-        # Définir la recherche de manière générique pour tous les cas
         query = Q()
 
         if search_query:
             keywords = search_query.split()
             for keyword in keywords:
-                # Recherche sur les champs de Reserver
                 query |= Q(statut__icontains=keyword) | \
                          Q(date_reservation__icontains=keyword) | \
                          Q(id__icontains=keyword)
 
-                # Recherche sur les relations ForeignKey : Personne, Livre
-                query |= Q(personne__nom__icontains=keyword)  # Personne liée
-                query |= Q(personne__prenom__icontains=keyword)  # Prenom de la personne
-                query |= Q(livre__titre__icontains=keyword)  # Livre lié
+                query |= Q(personne__nom__icontains=keyword)
+                query |= Q(personne__prenom__icontains=keyword)
+                query |= Q(livre__titre__icontains=keyword)
 
-        # Filtrer les réservations selon le statut et la recherche
         reservations_en_cours = Reserver.objects.filter(statut='en cours').filter(query)
         reservations_terminees = Reserver.objects.filter(statut='terminé').filter(query)
 
-        # Appliquer le tri
         reservations_en_cours = reservations_en_cours.order_by(f"{sort_prefix}{sort_by}")
         reservations_terminees = reservations_terminees.order_by(f"{sort_prefix}{sort_by}")
 
@@ -1783,10 +1684,8 @@ class ReserverResearch(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Récupérer les réservations en cours et terminées avec recherche et tri
         reservations_en_cours, reservations_terminees = self.get_queryset()
 
-        # Ajouter les réservations au contexte
         context['reservations_en_cours'] = reservations_en_cours
         context['reservations_terminees'] = reservations_terminees
         return context
@@ -1799,15 +1698,14 @@ def terminer_reservation(request, pk):
     livre = reservation.livre
 
     if reservation.statut == 'en cours':
-        # Vérifier que la quantité réservée ne dépasse pas le stock disponible
+
         if reservation.quantite > livre.quantite_disponible:
             messages.error(request, "La quantité réservée dépasse le stock disponible.")
-            return redirect('reservations_list')  # Ou rediriger vers une autre page si nécessaire
+            return redirect('reservations_list')
 
         reservation.statut = 'terminé'
         reservation.save()
 
-        # Mise à jour du stock du livre
         livre.quantite_disponible -= reservation.quantite
         livre.save()
 
@@ -1843,20 +1741,19 @@ class NotificationList(StaffRequiredMixin, TemplateView):
         context['notifications_reservation'] = Notifier.objects.filter(type='reservation')
         return context
 
-#class NotificationDelete(StaffRequiredMixin, View):
+
 def check_reservations(request):
     if request.method == "POST":
-        # Calculer la date limite
+
         date_limite = timezone.now().date() - timezone.timedelta(weeks=3)
 
-        # Filtrer les réservations en cours dépassées
         reservations_depassees = Reserver.objects.filter(
             date_reservation__lt=date_limite,
             statut='en cours'
         )
-        # Créer les notifications
+
         for reservation in reservations_depassees:
-            # Vérifier si une notification similaire existe déjà
+
             existe = Notifier.objects.filter(
                 personne=reservation.personne,
                 livre=reservation.livre,
@@ -1876,25 +1773,21 @@ def check_reservations(request):
                     termine=False,
                 )
 
-        # Rediriger vers la liste des notifications
         return redirect('notifications_list')
 
-    # Rediriger si la méthode n'est pas POST
     return redirect('notifications_list')
 
 
 def mark_notification_done(request, notification_id):
     if request.method == 'POST':
-        # Récupérer la notification
+
         notification = get_object_or_404(Notifier, id=notification_id)
 
-        # Marquer la notification comme terminée
         notification.termine = True
         notification.save()
 
-        # Vérifier si la notification est liée à une réservation
         if notification.type == 'reservation' and notification.personne and notification.livre:
-            # Rechercher la réservation correspondante
+
             reservation = Reserver.objects.filter(
                 personne=notification.personne,
                 livre=notification.livre,
@@ -1902,7 +1795,6 @@ def mark_notification_done(request, notification_id):
             ).first()
 
             if reservation:
-                # Mettre à jour le statut de la réservation
                 reservation.statut = 'terminé'
                 reservation.save()
 

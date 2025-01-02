@@ -1,7 +1,9 @@
 from django import forms
-from .models import Ville, Adresse, Role, Personne, Fournisseur, FournisseurAdresse, Editeur, Contributeur, Livre,  \
-     Achat, Commander, Reserver, Notifier
 from django.forms import modelformset_factory, inlineformset_factory
+
+from .models import Ville, Adresse, Personne, Fournisseur, FournisseurAdresse, Editeur, Contributeur, Livre, \
+    Achat, Commander, Reserver
+
 
 class EmailInputForm(forms.Form):
     email = forms.EmailField(
@@ -30,9 +32,9 @@ class VilleForm(forms.ModelForm):
 
         try:
             ville = Ville.objects.get(nom_ville=nom_ville, code_postal=code_postal, pays=pays)
-            self.instance = ville  # Utiliser l'instance existante
+            self.instance = ville
         except Ville.DoesNotExist:
-            pass  # La ville n'existe pas, le formulaire créera une nouvelle ville
+            pass
 
         return cleaned_data
 class AdresseForm(forms.ModelForm):
@@ -48,7 +50,7 @@ AdresseFormSet = modelformset_factory(
     form=AdresseForm,
     extra=1,
     can_delete=True
-) #formset pour la création de fournisseurs
+)
 class PersonneForm(forms.ModelForm):
     class Meta:
         model = Personne
@@ -72,11 +74,11 @@ class PersonneForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # Extraire l'utilisateur passé via les kwargs
+
         self.user = kwargs.pop('user', None)
         super(PersonneForm, self).__init__(*args, **kwargs)
 
-        # Si l'utilisateur n'est pas un superutilisateur, retirer le champ 'role'
+
         if self.user and not self.user.is_superuser:
             self.fields.pop('role', None)
 class ContributeurForm(forms.ModelForm):
@@ -104,7 +106,6 @@ class LivreForm(forms.ModelForm):
 
     def save(self, commit=True):
         livre = super().save(commit=False)
-        # Gestion de l'éditeur
         editeur_nom = self.cleaned_data['editeur_nom']
         if editeur_nom:
             editeur, created = Editeur.objects.get_or_create(nom=editeur_nom)
@@ -123,35 +124,34 @@ class IDEditeurForm(forms.Form):
 class CommanderForm(forms.ModelForm):
     class Meta:
         model = Commander
-        fields = ['personne', 'date_commande', 'fournisseur', 'statut']  # Ajout du fournisseur 'fournisseur',
+        fields = ['personne', 'date_commande', 'fournisseur', 'statut']
         widgets = {
             'date_commande': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Filtrer les personnes ayant le rôle "Employé" ou "Admin"
+
         self.fields['personne'].queryset = Personne.objects.filter(
-            role__type__in=['employé', 'admin']  # Filtrage par 'role__type'
+            role__type__in=['employé', 'admin']
         )
-        # Ajouter un queryset pour le champ fournisseur (si nécessaire)
-        #self.fields['fournisseur'].queryset = Fournisseur.objects.all()  # Toutes les valeurs de Fournisseur
+
 class CommanderUpdateForm(forms.ModelForm):
     class Meta:
         model = Commander
-        fields = ['personne', 'livre', 'date_commande', 'quantite', 'fournisseur', 'statut']  # Ajout du fournisseur 'fournisseur',
+        fields = ['personne', 'livre', 'date_commande', 'quantite', 'fournisseur', 'statut']
         widgets = {
             'date_commande': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Filtrer les personnes ayant le rôle "Employé" ou "Admin"
+
         self.fields['personne'].queryset = Personne.objects.filter(
-            role__type__in=['employé', 'admin']  # Filtrage par 'role__type'
+            role__type__in=['employé', 'admin']
         )
-        # Ajouter un queryset pour le champ fournisseur (si nécessaire)
-        #self.fields['fournisseur'].queryset = Fournisseur.objects.all()  # Toutes les valeurs de Fournisseur
+
+
 class IDCommandeForm(forms.Form):
     commande_id = forms.IntegerField(label="ID de la commande")
 class ReserverForm(forms.ModelForm):
@@ -164,8 +164,8 @@ class ReserverForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)  # Utilisation de super() simplifié
-        # Filtrer les personnes ayant le rôle "client"
+        super().__init__(*args, **kwargs)
+
         self.fields['personne'].queryset = Personne.objects.filter(role__type='client')
 
 class ReserverUpdateForm(forms.ModelForm):
@@ -179,8 +179,8 @@ class ReserverUpdateForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)  # Utilisation de super() simplifié
-        # Filtrer les personnes ayant le rôle "client"
+        super().__init__(*args, **kwargs)
+
         self.fields['personne'].queryset = Personne.objects.filter(role__type='client')
 
 class IDReservationForm(forms.Form):
@@ -188,14 +188,15 @@ class IDReservationForm(forms.Form):
 class FournisseurForm(forms.ModelForm):
     class Meta:
         model = Fournisseur
-        fields = ['nom_fournisseur']  # 'adresses' n'est plus inclus
+        fields = ['nom_fournisseur']
 class IDFournisseurForm(forms.Form):
     nom_fournisseur = forms.CharField(label="Nom du Fournisseur", max_length=100)
 class FournisseurAdresseForm(forms.ModelForm):
     class Meta:
         model = FournisseurAdresse
         fields = ['adresse']
-# Formset pour gérer plusieurs adresses
+
+
 FournisseurAdresseFormSet = inlineformset_factory(
     Fournisseur,
     FournisseurAdresse,
@@ -213,9 +214,9 @@ class AchatForm(forms.ModelForm):
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Filtrer les personnes ayant le rôle "client"
+
         self.fields['personne'].queryset = Personne.objects.filter(
-            role__type__in=['client']  # Filtrage par 'role__type'
+            role__type__in=['client']
         )
 class IDAchatForm(forms.Form):
     achat_id = forms.IntegerField(label="ID de l'achat'")
@@ -230,5 +231,5 @@ class AchatUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Filtrer les personnes ayant le rôle "client"
+
         self.fields['personne'].queryset = Personne.objects.filter(role__type='client')
