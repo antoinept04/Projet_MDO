@@ -1272,15 +1272,19 @@ class AchatDelete(StaffRequiredMixin, View):
             try:
                 achat = Achat.objects.get(id=achat_id)
 
-                livre = achat.livre
-                quantite_achat = achat.quantite
+                if pk:
+                    livre = achat.livre
+                    quantite_achat = achat.quantite
 
-                livre.quantite_disponible += quantite_achat
-                livre.save()
+                    livre.quantite_disponible += quantite_achat
+                    livre.save()
 
-                achat.delete()
+                    achat.delete()
+                    return redirect(reverse_lazy('achats_list'))
+                else:
+                    return redirect(reverse_lazy('achats_with_ID_delete', kwargs={'pk': achat_id}))
 
-                return redirect(reverse_lazy('achats_list'))
+
 
             except Achat.DoesNotExist:
                 return render(request, self.template_name, {'error': "Achat non trouvé."})
@@ -1351,8 +1355,6 @@ class CommanderList(StaffRequiredMixin, ListView):
         context['commandes_en_cours'] = commandes_en_cours
         context['commandes_terminees'] = commandes_terminees
         return context
-
-
 class CommanderCreate(StaffRequiredMixin, CreateView):
     model = Commander
     form_class = CommanderForm
@@ -1407,8 +1409,6 @@ class CommanderCreate(StaffRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['livres'] = Livre.objects.all()
         return context
-
-
 class CommanderUpdate(StaffRequiredMixin, UpdateView):
     model = Commander
     form_class = CommanderUpdateForm

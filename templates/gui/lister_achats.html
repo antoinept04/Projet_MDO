@@ -175,10 +175,7 @@
                 <td>
                     <div class="action-buttons">
                         <a href="{% url 'achats_update' achat.id %}" class="btn-warning">Modifier</a>
-                        <form method="POST" action="{% url 'achats_with_ID_delete' achat.id %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn-danger">Supprimer</button>
-                        </form>
+                        <a href="{% url 'achats_with_ID_delete' pk=achat.id %}" class="button">Supprimer</a>
                     </div>
                 </td>
             </tr>
