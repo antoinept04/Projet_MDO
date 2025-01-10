@@ -61,7 +61,7 @@ class PersonneForm(forms.ModelForm):
             'date_naissance': 'Date de naissance',
             'telephone': 'Téléphone',
             'email': 'Email',
-            'password': 'Mot de passe (sauf pour un client)',
+            'password': 'Mot de passe ',
             'solde': 'Solde',
             'role': 'Rôle'
         }
