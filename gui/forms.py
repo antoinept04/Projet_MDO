@@ -81,6 +81,7 @@ class PersonneForm(forms.ModelForm):
 
         if self.user and not self.user.is_superuser:
             self.fields.pop('role', None)
+
 class ContributeurForm(forms.ModelForm):
     class Meta:
         model = Contributeur

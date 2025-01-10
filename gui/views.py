@@ -319,9 +319,9 @@ def personne_create(request):
                 role = form_personne.cleaned_data.get('role')
             else:
                 try:
-                    role = Role.objects.get(type='Client')
+                    role = Role.objects.get(type='client')
                 except Role.DoesNotExist:
-                    form_personne.add_error('role', 'Le rôle "client" n\'existe pas.')
+                    form_personne.add_error(None, 'Le rôle "client" n\'existe pas.')
                     return render(request, 'gui/ajouter_personne.html', {
                         'form_personne': form_personne,
                         'form_adresse': form_adresse,
