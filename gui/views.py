@@ -20,6 +20,7 @@ from .forms import (VilleForm, AdresseForm, PersonneForm, EmailInputForm, Fourni
                     AchatUpdateForm, IDAchatForm, ReserverUpdateForm, ReserverForm, IDReservationForm, CommanderForm,
                     IDCommandeForm,
                     CommanderUpdateForm)
+from django.core.paginator import Paginator
 
 
 #%%------------------------------LOGIN/LOGOUT----------------------------------------
@@ -116,6 +117,7 @@ from django.db.models import Q
 class AdresseList(StaffRequiredMixin, ListView):
     model = Adresse
     template_name = 'gui/lister_adresses.html'
+    paginate_by = 10
 
     def get_queryset(self):
         sort_by = self.request.GET.get('sort_by', 'id')
@@ -772,7 +774,7 @@ def saisir_ID_editeur(request):
 class ContributeurList(StaffRequiredMixin,ListView):
     model = Contributeur
     template_name = 'gui/lister_contributeurs.html'
-
+    paginate_by = 5
     def get_queryset(self):
         sort_by = self.request.GET.get('sort_by', 'id')
         order = self.request.GET.get('order', 'asc')
@@ -793,18 +795,27 @@ class ContributeurList(StaffRequiredMixin,ListView):
         return queryset
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        # Filtrer par type
         auteurs = Contributeur.objects.filter(type='Auteur')
         traducteurs = Contributeur.objects.filter(type='Traducteur')
         illustrateurs = Contributeur.objects.filter(type='Illustrateur')
-        sort_by = self.request.GET.get('sort_by', 'id')
-        order = self.request.GET.get('order', 'asc')
-        sort_prefix = '' if order == 'asc' else '-'
-        auteurs = auteurs.order_by(f"{sort_prefix}{sort_by}")
-        traducteurs = traducteurs.order_by(f"{sort_prefix}{sort_by}")
-        illustrateurs = illustrateurs.order_by(f"{sort_prefix}{sort_by}")
-        context['auteurs'] = auteurs
-        context['traducteurs'] = traducteurs
-        context['illustrateurs'] = illustrateurs
+
+        # Pagination pour chaque groupe
+        paginator_auteurs = Paginator(auteurs, self.paginate_by)
+        paginator_traducteurs = Paginator(traducteurs, self.paginate_by)
+        paginator_illustrateurs = Paginator(illustrateurs, self.paginate_by)
+
+        # Récupérer la page spécifique pour chaque groupe
+        page_auteurs = self.request.GET.get('page_auteurs', 1)  # Par défaut page 1
+        page_traducteurs = self.request.GET.get('page_traducteurs', 1)
+        page_illustrateurs = self.request.GET.get('page_illustrateurs', 1)
+
+        # Appliquer la pagination à chaque groupe
+        context['auteurs'] = paginator_auteurs.get_page(page_auteurs)
+        context['traducteurs'] = paginator_traducteurs.get_page(page_traducteurs)
+        context['illustrateurs'] = paginator_illustrateurs.get_page(page_illustrateurs)
+
         return context
 class ContributeurCreate(StaffRequiredMixin,CreateView):
     model = Contributeur

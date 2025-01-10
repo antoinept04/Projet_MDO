@@ -124,7 +124,23 @@
             {% endfor %}
         </tbody>
     </table>
-    
+<div class="pagination">
+    <span class="step-links">
+        {% if auteurs.has_previous %}
+            <a href="?page_auteurs=1&sort_by={{ request.GET.sort_by }}&order={{ request.GET.order }}">First</a>
+            <a href="?page_auteurs={{ auteurs.previous_page_number }}&sort_by={{ request.GET.sort_by }}&order={{ request.GET.order }}">Previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ auteurs.number }} of {{ auteurs.paginator.num_pages }}.
+        </span>
+
+        {% if auteurs.has_next %}
+            <a href="?page_auteurs={{ auteurs.next_page_number }}&sort_by={{ request.GET.sort_by }}&order={{ request.GET.order }}">Next</a>
+            <a href="?page_auteurs={{ auteurs.paginator.num_pages }}&sort_by={{ request.GET.sort_by }}&order={{ request.GET.order }}">Last</a>
+        {% endif %}
+    </span>
+</div>
 <h2 style="color: #990000; text-align: center; font-size: 2em;">Traducteurs</h2>
     <table>
         <thead>
@@ -146,7 +162,23 @@
             {% endfor %}
         </tbody>
     </table>
+<div class="pagination">
+    <span class="step-links">
+        {% if traducteurs.has_previous %}
+            <a href="?page_traducteurs=1&sort_by={{ request.GET.sort_by }}&order={{ request.GET.order }}">First</a>
+            <a href="?page_traducteurs={{ traducteurs.previous_page_number }}&sort_by={{ request.GET.sort_by }}&order={{ request.GET.order }}">Previous</a>
+        {% endif %}
 
+        <span class="current">
+            Page {{ traducteurs.number }} of {{ traducteurs.paginator.num_pages }}.
+        </span>
+
+        {% if traducteurs.has_next %}
+            <a href="?page_traducteurs={{ traducteurs.next_page_number }}&sort_by={{ request.GET.sort_by }}&order={{ request.GET.order }}">Next</a>
+            <a href="?page_traducteurs={{ traducteurs.paginator.num_pages }}&sort_by={{ request.GET.sort_by }}&order={{ request.GET.order }}">Last</a>
+        {% endif %}
+    </span>
+</div>
 <h2 style="color: #990000; text-align: center; font-size: 2em;">Illustrateurs</h2>
     <table>
         <thead>
@@ -168,5 +200,22 @@
             {% endfor %}
         </tbody>
     </table>
+<div class="pagination">
+    <span class="step-links">
+        {% if illustrateurs.has_previous %}
+            <a href="?page_illustrateurs=1&sort_by={{ request.GET.sort_by }}&order={{ request.GET.order }}">First</a>
+            <a href="?page_illustrateurs={{ illustrateurs.previous_page_number }}&sort_by={{ request.GET.sort_by }}&order={{ request.GET.order }}">Previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ illustrateurs.number }} of {{ illustrateurs.paginator.num_pages }}.
+        </span>
+
+        {% if illustrateurs.has_next %}
+            <a href="?page_illustrateurs={{ illustrateurs.next_page_number }}&sort_by={{ request.GET.sort_by }}&order={{ request.GET.order }}">Next</a>
+            <a href="?page_illustrateurs={{ illustrateurs.paginator.num_pages }}&sort_by={{ request.GET.sort_by }}&order={{ request.GET.order }}">Last</a>
+        {% endif %}
+    </span>
+</div>
 </body>
 </html>

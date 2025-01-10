@@ -1,5 +1,6 @@
 import datetime
 from decimal import Decimal
+from email.policy import default
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
@@ -60,6 +61,7 @@ class PersonneManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
 
         return self.create_user(email, password, **extra_fields)
+
 class Personne(AbstractBaseUser, PermissionsMixin):
     nom = models.CharField(max_length=100)
     prenom = models.CharField(max_length=100)
@@ -67,7 +69,7 @@ class Personne(AbstractBaseUser, PermissionsMixin):
     telephone = models.CharField(max_length=15)
     email = models.EmailField(max_length=50, primary_key=True)
     date_creation = models.DateField(auto_now_add=True)
-    solde = models.DecimalField(max_digits=10, decimal_places=2)
+    solde = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     adresse = models.ForeignKey('Adresse', on_delete=models.CASCADE)
     role = models.ForeignKey('Role', on_delete=models.CASCADE)
 

@@ -95,18 +95,43 @@
     <!-- Navbar -->
     {% include 'gui/navbar.html' %}
 
-    <h1>Créer une Commande</h1>
+    <h1>Créer une Adresse</h1>
 
-    <form method="post">
-        {% csrf_token %}
+    <form method="POST">
+    {% csrf_token %}
+    
+    {{ adresse_form.as_p }}
 
-        <div class="form-group">
-            {{ form.as_p }}
-        </div>
+    <h3>Informations sur la ville</h3>
+    <div>
+      <label for="id_nom_ville">Nom de la ville</label>
+      <input type="text" name="nom_ville" id="id_nom_ville" required>
+    </div>
+    <div>
+      <label for="id_code_postal">Code postal</label>
+      <input type="text" name="code_postal" id="id_code_postal" required>
+    </div>
+    <div>
+      <label for="id_pays">Pays</label>
+      <input type="text" name="pays" id="id_pays" required>
+    </div>
 
-        <button type="submit">Enregistrer</button>
-        <a href="{% url 'commandes_list' %}" class="btn btn-secondary">Annuler</a>
-    </form>
+    <div>
+      <button type="submit">Soumettre</button>
+    </div>
+  </form>
+
+  {% if adresse_form.errors %}
+    <div class="errors">
+      <ul>
+        {% for field in adresse_form %}
+          {% for error in field.errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
 
 </body>
 </html>
