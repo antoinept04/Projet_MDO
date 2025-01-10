@@ -248,7 +248,7 @@ class PersonneList(StaffRequiredMixin, ListView):
     model = Personne
     template_name = 'gui/lister_personnes.html'
     context_object_name = 'personnes'  # Optionnel : pour un accès plus clair dans le template
-
+    paginate_by = 10
     def get_queryset(self):
         # Récupération des paramètres GET
         sort_by = self.request.GET.get('sort_by', 'nom')
